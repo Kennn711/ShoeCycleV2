@@ -15,8 +15,12 @@ return new class extends Migration
             $table->id();
             $table->foreignId('category_id');
             $table->string('name', 30);
-            $table->decimal('price', 10, 2);
+            $table->string('brand_name', 50)->nullable();
             $table->text("description");
+
+            $table->string('slug')->unique();
+            $table->boolean('is_active')->default(true);
+            $table->softDeletes();
             $table->timestamps();
         });
     }

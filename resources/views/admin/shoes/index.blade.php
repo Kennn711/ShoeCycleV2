@@ -104,8 +104,8 @@
                 <table class="table table-zebra">
                     <thead class="bg-gray-50 text-gray-700">
                         <tr>
-                            <th class="sortable" data-sort="product_code">
-                                Kode Produk
+                            <th class="sortable" data-sort="no">
+                                No
                                 <i class="fas fa-sort ml-1"></i>
                             </th>
                             <th class="sortable" data-sort="name">
@@ -116,16 +116,8 @@
                                 Kategori
                                 <i class="fas fa-sort ml-1"></i>
                             </th>
-                            <th class="sortable" data-sort="size">
-                                Ukuran
-                                <i class="fas fa-sort ml-1"></i>
-                            </th>
-                            <th class="sortable" data-sort="stock">
-                                Stok
-                                <i class="fas fa-sort ml-1"></i>
-                            </th>
-                            <th class="sortable" data-sort="price">
-                                Harga
+                            <th class="sortable" data-sort="brand">
+                                Merk
                                 <i class="fas fa-sort ml-1"></i>
                             </th>
                             <th class="sortable" data-sort="description">
