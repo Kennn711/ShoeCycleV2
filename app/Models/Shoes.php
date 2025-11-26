@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Pest\Support\Str;
+use Illuminate\Support\Str;
 
 class Shoes extends Model
 {
@@ -27,7 +27,7 @@ class Shoes extends Model
 
         static::creating(function ($shoe) {
             if (empty($shoe->slug)) {
-                $shoe->slug = Str::slugify($shoe->name);
+                $shoe->slug = Str::slug($shoe->name);
             }
         });
     }
