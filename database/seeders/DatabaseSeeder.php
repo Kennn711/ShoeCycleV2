@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
+use App\Models\Category;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -15,11 +15,29 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        $categoryData = [
+            [
+                'category_name' => 'Running',
+            ],
+            [
+                'category_name' => 'Casual',
+            ],
+            [
+                'category_name' => 'Sneakers',
+            ],
+            [
+                'category_name' => 'Oxford',
+            ],
+            [
+                'category_name' => 'Loafers',
+            ],
+            [
+                'category_name' => 'Basketball',
+            ]
+        ];
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        foreach ($categoryData as $key => $val) {
+            Category::create($val);
+        }
     }
 }

@@ -48,7 +48,7 @@ class ShoesController extends Controller
                     'required',
                     'exists:categories,id'
                 ],
-                'brand' => [
+                'brand_name' => [
                     'nullable',
                     'string',
                     'max:50'
@@ -73,10 +73,8 @@ class ShoesController extends Controller
                 'description.max' => 'Deskripsi maksimal 1000 karakter',
             ]);
 
-            // Generate slug
             $validation['slug'] = Str::slug($validation['name']);
 
-            // Create shoe
             $shoe = Shoes::create($validation);
 
             return redirect()
@@ -116,31 +114,11 @@ class ShoesController extends Controller
 
         try {
             $validated = $request->validate([
-                'name' => [
-                    'required',
-                    'string',
-                    'min:3',
-                    'max:100',
-                    'unique:shoes,name,' . $id
-                ],
-                'category_id' => [
-                    'required',
-                    'exists:categories,id'
-                ],
-                'brand' => [
-                    'nullable',
-                    'string',
-                    'max:50'
-                ],
-                'description' => [
-                    'nullable',
-                    'string',
-                    'max:1000'
-                ],
-                'is_active' => [
-                    'required',
-                    'boolean'
-                ]
+                'name' => 'required|string|min:3|max:100|unique:shoes,name,' . $id,
+                'category_id' => 'required|exists:categories,id',
+                'brand_name' => 'nullable|string|max:50', // ✅ GANTI
+                'description' => 'nullable|string|max:1000',
+                'is_active' => 'required|boolean'
             ], [
                 'name.required' => 'Nama sepatu tidak boleh kosong',
                 'name.min' => 'Nama sepatu minimal 3 karakter',
@@ -148,11 +126,10 @@ class ShoesController extends Controller
                 'name.unique' => 'Nama sepatu sudah digunakan',
                 'category_id.required' => 'Kategori harus dipilih',
                 'category_id.exists' => 'Kategori tidak valid',
-                'brand.max' => 'Merk maksimal 50 karakter',
+                'brand_name.max' => 'Merk maksimal 50 karakter', // ✅ GANTI
                 'description.max' => 'Deskripsi maksimal 1000 karakter',
             ]);
 
-            // Update slug if name changed
             if ($shoe->name !== $validated['name']) {
                 $validated['slug'] = Str::slug($validated['name']);
             }
@@ -161,7 +138,7 @@ class ShoesController extends Controller
 
             return redirect()
                 ->route('shoes.index')
-                ->with('success', 'Sepatu berhasil diperbarui');
+                ->with('success', "Sepatu \"{$shoe->name}\" berhasil diperbarui");
         } catch (\Illuminate\Validation\ValidationException $e) {
             return redirect()
                 ->route('shoes.index')
@@ -178,14 +155,17 @@ class ShoesController extends Controller
     public function destroy(string $id)
     {
         try {
-            Shoes::findOrFail($id)->delete();
+            $shoe = Shoes::findOrFail($id);
+            $shoeName = $shoe->name;
+            $shoe->delete();
 
             return redirect()
-                ->route('shoes.index');
+                ->route('shoes.index')
+                ->with('success', "Sepatu \"{$shoeName}\" berhasil dihapus");
         } catch (\Exception $e) {
             return redirect()
                 ->route('shoes.index')
-                ->with('error', 'Gagal menghapus sepatu');
+                ->with('error', 'Gagal menghapus sepatu: ' . $e->getMessage());
         }
     }
 }

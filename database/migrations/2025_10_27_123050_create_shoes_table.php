@@ -15,13 +15,13 @@ return new class extends Migration
             $table->id();
             $table->foreignId('category_id');
             $table->string('name', 30);
-            $table->string('brand_name', 50)->nullable();
+            $table->string('brand_name', 50);
             $table->text("description");
 
             $table->string('slug')->unique();
             $table->boolean('is_active')->default(true);
-            $table->softDeletes();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

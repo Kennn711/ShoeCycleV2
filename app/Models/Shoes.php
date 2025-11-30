@@ -7,10 +7,12 @@ use Illuminate\Support\Str;
 
 class Shoes extends Model
 {
+    protected $table = 'shoes';
+
     protected $fillable = [
         'category_id',
         'name',
-        'brand',
+        'brand_name',
         'description',
         'slug',
         'is_active'
