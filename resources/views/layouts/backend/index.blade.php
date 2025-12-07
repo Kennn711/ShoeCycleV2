@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="{{ asset('assets/vendor/fontawesome/css/all.min.css') }}">
 
     @vite('resources/css/app.css')
+    @stack('styles')
 </head>
 
 <body class="bg-gray-50">

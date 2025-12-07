@@ -25,7 +25,7 @@
 
             <!-- Tabel (Parent Menu with Submenu) -->
             <div>
-                <button id="tabel-toggle" class="parent-menu w-full flex items-center justify-between px-3 py-3 rounded-lg transition-colors {{ Route::is('shoes.*', 'category.*', 'shoes-size.*') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' }}">
+                <button id="tabel-toggle" class="parent-menu w-full flex items-center justify-between px-3 py-3 rounded-lg transition-colors {{ Route::is('shoes.*', 'category.*', 'shoes-size.*', 'shoes-variant.*') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' }}">
                     <div class="flex items-center gap-3">
                         <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h18a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1m0 8h18a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1m5-4v12" />
@@ -54,7 +54,7 @@
                         </svg>
                         <span>Kategori</span>
                     </a>
-                    <a href="" class="submenu-item w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ Route::is('shoes-size.*') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' }} text-sm">
+                    <a href="{{ route('shoes-variant.index') }}" class="submenu-item w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ Route::is('shoes-variant.*') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' }} text-sm">
                         <svg class="w-4 h-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                             <path fill="#000000" d="M9 7h2l1 2.5L13 7h2l-2 5l2 5h-2l-1-2.5l-1 2.5H9l2-5zm7 0h2v8h4v2h-6zm-8 8c0 1.11-.89 2-2 2H2v-2h4v-2H4v-2h2V9H2V7h4a2 2 0 0 1 2 2v1.5c0 .83-.67 1.5-1.5 1.5c.83 0 1.5.67 1.5 1.5z" />
                         </svg>
