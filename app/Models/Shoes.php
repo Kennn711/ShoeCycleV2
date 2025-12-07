@@ -42,7 +42,7 @@ class Shoes extends Model
     // Relationship: 1 shoe has many variants
     public function variants()
     {
-        return $this->hasMany(ShoesVariant::class);
+        return $this->hasMany(ShoesVariant::class, 'shoe_id');
     }
 
     // Accessor: Get all available colors

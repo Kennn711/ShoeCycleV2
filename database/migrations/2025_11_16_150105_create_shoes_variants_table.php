@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('shoe_id');
             $table->string('color', 50);
+            $table->string('color_code', 20)->nullable();
             $table->integer('size');
             $table->decimal('price', 10, 2);
             $table->integer('stock')->default(0);
