@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DriverController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\ShoesController;
 use App\Http\Controllers\ShoesVariantController;
@@ -16,18 +17,23 @@ Route::get('/', [PurchaseController::class, 'landing'])->name('landing-page');
 // Authentication routes
 Route::get('/login', [AuthController::class, 'login'])->name('login');
 
+// DRIVER START
+// DRIVER END
 
+
+// CUSTOMER START
+// CUSTOMER END
+
+
+// ADMIN START
 // Dashboard admin
 Route::get('/dashboard', [DashboardController::class, 'admin'])->name('dashboard-admin');
 
-
-// CRUD routes for resources
 Route::resource('/shoes', ShoesController::class);
 Route::resource('/category', CategoryController::class);
-
-
-Route::resource('shoes-variant', ShoesVariantController::class);
-
+Route::resource('/shoes-variant', ShoesVariantController::class);
+Route::get('/driver', [DriverController::class, 'index'])->name("driver.index");
 
 // Transaction
 Route::get('/transaction', [TransactionController::class, 'index'])->name('transaction.index');
+// ADMIN END

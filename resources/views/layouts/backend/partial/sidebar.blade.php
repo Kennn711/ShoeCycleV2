@@ -25,7 +25,7 @@
 
             <!-- Tabel (Parent Menu with Submenu) -->
             <div>
-                <button id="tabel-toggle" class="parent-menu w-full flex items-center justify-between px-3 py-3 rounded-lg transition-colors {{ Route::is('shoes.*', 'category.*', 'shoes-size.*', 'shoes-variant.*') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' }}">
+                <button id="tabel-toggle" class="parent-menu w-full flex items-center justify-between px-3 py-3 rounded-lg transition-colors {{ Route::is('shoes.*', 'category.*', 'shoes-size.*', 'shoes-variant.*', 'driver.index') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' }}">
                     <div class="flex items-center gap-3">
                         <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h18a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1m0 8h18a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1m5-4v12" />
@@ -39,6 +39,12 @@
 
                 <!-- Submenu -->
                 <div id="tabel-submenu" class="ml-4 mt-1 space-y-1 overflow-hidden transition-all duration-300 ease-in-out" style="max-height: 0;">
+                    <a href="{{ route('driver.index') }}" class="submenu-item w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ Route::is('driver.index') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' }} text-sm">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m7.5 4.27 9 5.15M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Zm-18-1 8.7 5 8.7-5M12 22V12" />
+                        </svg>
+                        <span>Driver</span>
+                    </a>
                     <a href="{{ route('shoes.index') }}" class="submenu-item w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ Route::is('shoes.*') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' }} text-sm">
                         <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m7.5 4.27 9 5.15M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Zm-18-1 8.7 5 8.7-5M12 22V12" />

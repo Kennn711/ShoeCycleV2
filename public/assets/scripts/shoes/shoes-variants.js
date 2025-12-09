@@ -380,10 +380,12 @@ $(document).ready(function () {
                     }</td>
                     <td class="text-right">
                         <div class="flex gap-1 justify-end">
-                            <button class="btn btn-xs bg-yellow-100 text-yellow-600 hover:bg-yellow-200 border-none" onclick="alert('Fitur edit akan datang')"><i class="fa-solid fa-pen-to-square"></i></button>
-                            <button class="btn btn-xs bg-red-100 text-red-600 hover:bg-red-200 border-none" onclick="openDeleteModal(${
-                                v.id
-                            }, '${shoeName}', '${v.color}', '${v.size}', '${
+                        <button class="btn btn-sm text-[17px] bg-yellow-100 text-yellow-600 hover:bg-yellow-200 border-none" onclick="openEditModal(${
+                            v.id
+                        }, '${shoeName}')"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button class="btn btn-sm text-[17px] bg-red-100 text-red-600 hover:bg-red-200 border-none" onclick="openDeleteModal(${
+                            v.id
+                        }, '${shoeName}', '${v.color}', '${v.size}', '${
                     v.color_code
                 }')"><i class="fa-solid fa-trash-can"></i></button>
                         </div>
@@ -414,4 +416,291 @@ $(document).ready(function () {
 
         document.getElementById("modal_hapus_varian").showModal();
     };
+
+    // ... Kode Create & Delete sebelumnya ...
+
+    // ==========================================
+    // 6. LOGIC EDIT / UPDATE VARIAN
+    // ==========================================
+
+    // State Edit
+    let editOriginalState = {}; // Menyimpan data awal untuk perbandingan
+    let editNewFiles = []; // File baru yang diupload saat edit
+    let deletedImageIds = []; // ID gambar lama yang dihapus
+
+    // Helper: Reset Edit Form
+    function resetEditForm() {
+        $("#form-edit-variant")[0].reset();
+        editNewFiles = [];
+        deletedImageIds = [];
+        editOriginalState = {};
+
+        $("#edit-global-error").addClass("hidden");
+        $(".input-error").removeClass("input-error");
+        $("[id^='edit-error-']").addClass("hidden");
+
+        $("#edit-existing-images").html("");
+        $("#edit-new-image-preview").html("").addClass("hidden");
+
+        $("#btn-submit-edit")
+            .prop("disabled", true)
+            .addClass("opacity-50 cursor-not-allowed");
+    }
+
+    // A. Buka Modal Edit & Fetch Data
+    // NOTE: Anda perlu update tombol edit di tabel list varian agar memanggil fungsi ini
+    window.openEditModal = function (variantId, shoeName) {
+        resetEditForm();
+        $("#edit-shoe-info").text(`Edit varian: ${shoeName}`);
+        $("#edit-variant-id").val(variantId);
+
+        // Fetch Data
+        $.ajax({
+            url: `/shoes-variant/${variantId}`, // Asumsi route show resource
+            method: "GET",
+            success: function (response) {
+                const data = response.data;
+
+                // Populate Inputs
+                $("#edit-input-color").val(data.color);
+                $("#edit-color-picker").val(data.color_code || "#000000");
+                $("#edit-color-hex").val(data.color_code || "#000000");
+                $("#edit-input-size").val(data.size);
+                $("#edit-input-price").val(data.price);
+                $("#edit-input-stock").val(data.stock);
+                $("#edit-input-sku").val(data.sku);
+
+                if (data.is_available)
+                    $("#edit-status-1").prop("checked", true);
+                else $("#edit-status-0").prop("checked", true);
+
+                // Render Existing Images
+                renderExistingImages(data.images);
+
+                // Simpan Original State untuk perbandingan "No Changes"
+                editOriginalState = {
+                    color: data.color,
+                    color_code: data.color_code || "#000000",
+                    size: parseInt(data.size),
+                    price: parseFloat(data.price),
+                    stock: parseInt(data.stock),
+                    sku: data.sku,
+                    is_available: data.is_available ? "1" : "0",
+                    total_images: data.images.length,
+                };
+
+                document.getElementById("modal_edit_varian").showModal();
+            },
+            error: function () {
+                alert("Gagal mengambil data varian.");
+            },
+        });
+    };
+
+    // B. Render Existing Images
+    function renderExistingImages(images) {
+        const container = $("#edit-existing-images");
+        container.html("");
+
+        images.forEach((img) => {
+            // Asumsi path storage sudah dilink
+            const imgUrl = `/storage/${img.image_path}`;
+            const html = `
+                <div class="relative group aspect-square rounded-lg overflow-hidden border border-gray-200" id="existing-img-${
+                    img.id
+                }">
+                    <img src="${imgUrl}" class="w-full h-full object-cover">
+                    ${
+                        img.is_primary
+                            ? '<div class="absolute top-1 left-1 bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded-full z-10 shadow">Utama</div>'
+                            : ""
+                    }
+                    <button type="button" class="absolute top-1 right-1 btn btn-xs btn-circle btn-error text-white opacity-0 group-hover:opacity-100 transition-opacity z-10" 
+                            onclick="markImageDeleted(${img.id})">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
+            `;
+            container.append(html);
+        });
+    }
+
+    // C. Mark Image as Deleted
+    window.markImageDeleted = function (id) {
+        deletedImageIds.push(id);
+        $(`#existing-img-${id}`).addClass("hidden"); // Sembunyikan visual
+        validateEditForm(); // Cek validasi lagi
+    };
+
+    // D. Validation Logic (With Comparison)
+    function validateEditForm() {
+        const currentColor = $("#edit-input-color").val().trim();
+        const currentSize = parseInt($("#edit-input-size").val());
+        const currentPrice = parseFloat($("#edit-input-price").val());
+        const currentStock = parseInt($("#edit-input-stock").val());
+        const currentSku = $("#edit-input-sku").val().trim();
+        const currentStatus = $("input[name='is_available']:checked").val();
+        const currentColorCode = $("#edit-color-hex").val();
+
+        // 1. Cek Validasi Input Dasar (Required dll)
+        let isValidFormat = true;
+        if (currentColor === "") isValidFormat = false;
+        if (isNaN(currentPrice) || currentPrice < 0) isValidFormat = false;
+
+        // 2. Cek Aturan Gambar (Sisa Gambar Lama + Gambar Baru harus > 0)
+        const remainingImages =
+            editOriginalState.total_images - deletedImageIds.length;
+        const totalImagesNow = remainingImages + editNewFiles.length;
+
+        if (totalImagesNow <= 0) {
+            isValidFormat = false;
+            $("#edit-error-images").removeClass("hidden");
+        } else {
+            $("#edit-error-images").addClass("hidden");
+        }
+
+        // 3. Cek Apakah Ada Perubahan? (Logic Comparison)
+        let hasChanges = false;
+        if (currentColor !== editOriginalState.color) hasChanges = true;
+        if (currentSize !== editOriginalState.size) hasChanges = true;
+        if (currentPrice !== editOriginalState.price) hasChanges = true;
+        if (currentStock !== editOriginalState.stock) hasChanges = true;
+
+        // Handle null sku comparison safely
+        const origSku =
+            editOriginalState.sku === null ? "" : editOriginalState.sku;
+        if (currentSku !== origSku) hasChanges = true;
+
+        if (currentStatus !== editOriginalState.is_available) hasChanges = true;
+        if (currentColorCode !== editOriginalState.color_code)
+            hasChanges = true;
+
+        // Cek perubahan gambar
+        if (deletedImageIds.length > 0) hasChanges = true;
+        if (editNewFiles.length > 0) hasChanges = true;
+
+        // Final Button State
+        const btn = $("#btn-submit-edit");
+        if (isValidFormat && hasChanges) {
+            btn.prop("disabled", false).removeClass(
+                "opacity-50 cursor-not-allowed"
+            );
+        } else {
+            btn.prop("disabled", true).addClass(
+                "opacity-50 cursor-not-allowed"
+            );
+        }
+    }
+
+    // Listeners Edit
+    $(
+        "#edit-input-color, #edit-input-price, #edit-input-stock, #edit-input-sku, #edit-color-hex"
+    ).on("input", validateEditForm);
+    $("#edit-input-size, input[name='is_available']").on(
+        "change",
+        validateEditForm
+    );
+
+    // Color Picker Sync Edit
+    $("#edit-color-picker").on("input", function () {
+        $("#edit-color-hex").val(this.value);
+        validateEditForm();
+    });
+    $("#edit-color-hex").on("input", function () {
+        if (this.value.match(/^#[0-9A-F]{6}$/i))
+            $("#edit-color-picker").val(this.value);
+    });
+
+    // E. New Image Upload (Edit Mode) - Copied logic form Create but separate container
+    const editDropzone = document.getElementById("edit-image-dropzone");
+    const editFileInput = document.getElementById("edit-image-upload");
+
+    if (editDropzone) {
+        editDropzone.addEventListener("click", () => editFileInput.click());
+        editDropzone.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            editDropzone.classList.add("border-blue-400", "bg-blue-50");
+        });
+        editDropzone.addEventListener("dragleave", () =>
+            editDropzone.classList.remove("border-blue-400", "bg-blue-50")
+        );
+        editDropzone.addEventListener("drop", (e) => {
+            e.preventDefault();
+            editDropzone.classList.remove("border-blue-400", "bg-blue-50");
+            handleEditFiles(e.dataTransfer.files);
+        });
+        editFileInput.addEventListener("change", () =>
+            handleEditFiles(editFileInput.files)
+        );
+    }
+
+    function handleEditFiles(files) {
+        if (!files.length) return;
+        Array.from(files).forEach((file) => {
+            if (!file.type.startsWith("image/")) return;
+            const fileId = Date.now() + Math.random().toString(36).substr(2, 9);
+            editNewFiles.push({ id: fileId, file: file });
+
+            // Render Preview New Image
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const div = document.createElement("div");
+                div.className =
+                    "relative group aspect-square rounded-lg overflow-hidden border border-green-300 image-preview-item";
+                div.setAttribute("data-id", fileId);
+                div.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">
+                    <div class="absolute top-1 left-1 bg-green-500 text-white text-[10px] px-2 rounded z-10">Baru</div>
+                    <button type="button" class="absolute top-1 right-1 btn btn-xs btn-circle btn-error text-white opacity-0 group-hover:opacity-100 transition-opacity z-10" onclick="removeEditNewImage('${fileId}')"><i class="fa-solid fa-times"></i></button>`;
+                $("#edit-new-image-preview").append(div);
+            };
+            reader.readAsDataURL(file);
+        });
+        $("#edit-new-image-preview").removeClass("hidden");
+        validateEditForm();
+    }
+
+    window.removeEditNewImage = function (id) {
+        editNewFiles = editNewFiles.filter((f) => f.id !== id);
+        $(`#edit-new-image-preview [data-id="${id}"]`).remove();
+        validateEditForm();
+    };
+
+    // F. AJAX UPDATE SUBMISSION
+    $("#form-edit-variant").on("submit", function (e) {
+        e.preventDefault();
+
+        const btn = $("#btn-submit-edit");
+        btn.prop("disabled", true).html(
+            '<span class="loading loading-spinner"></span> Updating...'
+        );
+
+        let formData = new FormData(this);
+        formData.append("deleted_images", deletedImageIds.join(",")); // Kirim ID yg dihapus
+        editNewFiles.forEach((f) => formData.append("images[]", f.file)); // Kirim File baru
+
+        const variantId = $("#edit-variant-id").val();
+
+        $.ajax({
+            url: `/shoes-variant/${variantId}`, // Method PUT via POST _method spoofing
+            method: "POST", // FormData butuh POST, Laravel baca _method: PUT
+            data: formData,
+            contentType: false,
+            processData: false,
+            success: function (response) {
+                document.getElementById("modal_edit_varian").close();
+                window.location.reload(); // Reload tanpa alert
+            },
+            error: function (xhr) {
+                btn.prop("disabled", false).html(
+                    '<i class="fa-solid fa-save mr-2"></i> Update'
+                );
+                let msg = "Gagal update.";
+                if (xhr.status === 422) {
+                    msg = xhr.responseJSON.message || "Periksa inputan anda.";
+                }
+                $("#edit-error-message").text(msg);
+                $("#edit-global-error").removeClass("hidden");
+            },
+        });
+    });
 });

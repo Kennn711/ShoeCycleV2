@@ -5,31 +5,49 @@
 
 @section('backend-content')
     <div class="space-y-6">
-        {{-- Header Section (Tombol Tambah DIHAPUS sesuai request) --}}
         <div class="flex justify-between items-center">
             <h2 class="text-2xl font-bold text-gray-900">Varian Sepatu</h2>
         </div>
 
         {{-- Filter & Search Controls --}}
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-            <div class="flex flex-col md:flex-row gap-4 justify-between">
-                <div class="flex flex-wrap gap-4">
-                    <div class="flex items-center gap-2">
-                        <span class="text-sm font-medium">Merek:</span>
-                        <select class="select select-sm select-bordered w-full max-w-xs bg-white">
-                            <option>Semua</option>
-                            {{-- Nanti bisa diisi via backend --}}
-                        </select>
+            {{-- Bungkus SEMUA filter dalam satu form agar filter bekerja bersamaan --}}
+            <form action="{{ route('shoes-variant.index') }}" method="GET">
+
+                <div class="flex flex-col md:flex-row gap-4 justify-between">
+                    {{-- Bagian Filter Kiri --}}
+                    <div class="flex flex-wrap gap-4">
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-medium">Merek</span>
+                            <select name="brand" class="select select-sm select-bordered w-full max-w-xs bg-white" onchange="this.form.submit()">
+                                <option value="">Semua</option>
+                                @foreach ($brands as $brand)
+                                    <option value="{{ $brand }}" {{ request('brand') == $brand ? 'selected' : '' }}>
+                                        {{ $brand }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    {{-- Bagian Search Kanan --}}
+                    <div class="flex items-center gap-2 w-full md:w-auto">
+                        <label class="input input-bordered input-md flex items-center gap-2 bg-white w-full md:w-64">
+                            <i class="fas fa-search text-gray-400"></i>
+                            <input type="text" name="q" class="grow text-black min-w-0" placeholder="Cari sepatu..." value="{{ request('q') }}" />
+                        </label>
+
+                        <button type="submit" class="btn btn-md bg-blue-500 hover:bg-blue-600 text-white border-none">
+                            Cari
+                        </button>
                     </div>
                 </div>
-                <div class="flex items-end gap-2">
-                    <label class="input input-bordered input-md flex items-center gap-2 bg-white w-full md:w-auto">
-                        <i class="fas fa-search text-gray-400"></i>
-                        <input type="text" class="grow text-black" placeholder="Cari sepatu..." />
-                    </label>
-                </div>
-            </div>
+            </form>
         </div>
+
+        {{-- ======================================================================== --}}
+        {{-- GRID CARDS OF SHOES --}}
+        {{-- ======================================================================== --}}
 
         {{-- Grid Cards --}}
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -50,11 +68,11 @@
                     <h3 class="text-lg font-bold text-gray-900 mb-2 truncate" title="{{ $shoe->name }}">{{ $shoe->name }}</h3>
                     <div class="space-y-2 mb-4 text-sm text-gray-600">
                         <div class="flex justify-between">
-                            <span>Varian:</span>
-                            <span class="font-bold">{{ $shoe->variants->count() }}</span>
+                            <span>Merk :</span>
+                            <span class="font-bold">{{ $shoe->brand_name }}</span>
                         </div>
                         <div class="flex justify-between">
-                            <span>Stok Total:</span>
+                            <span>Stok Total :</span>
                             {{-- Menggunakan Accessor dari Model --}}
                             <span class="font-bold">{{ $shoe->total_stock }}</span>
                         </div>
@@ -375,6 +393,136 @@
                     </button>
                 </div>
             </form>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button>close</button></form>
+    </dialog>
+
+    {{-- 4. MODAL EDIT VARIAN --}}
+    <dialog id="modal_edit_varian" class="modal modal-bottom sm:modal-middle">
+        <div class="modal-box bg-white max-w-4xl max-h-[90vh] overflow-hidden p-0 flex flex-col">
+            {{-- Header --}}
+            <div class="sticky top-0 bg-white z-10 p-4 border-b border-gray-200 flex justify-between items-start">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                        <i class="fa-solid fa-pen-to-square text-2xl text-yellow-600"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-900">Edit Varian Sepatu</h3>
+                        <p class="text-sm text-gray-500" id="edit-shoe-info">-</p>
+                    </div>
+                </div>
+                <button class="btn btn-sm btn-circle btn-ghost" onclick="document.getElementById('modal_edit_varian').close()">✕</button>
+            </div>
+
+            {{-- Form Edit --}}
+            <div class="overflow-y-auto p-6 flex-1">
+                <form id="form-edit-variant" method="POST" enctype="multipart/form-data" class="space-y-6">
+                    @csrf
+                    @method('PUT')
+                    <input type="hidden" id="edit-variant-id">
+                    <input type="hidden" name="deleted_images" id="edit-deleted-images"> {{-- Menyimpan ID gambar yg dihapus --}}
+
+                    {{-- Informasi Dasar --}}
+                    <div class="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                        <h4 class="font-semibold text-gray-900 mb-4 flex items-center gap-2"><i class="fa-solid fa-circle-info text-blue-500"></i> Informasi Dasar</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="form-control">
+                                <label class="label"><span class="label-text font-medium">Warna <span class="text-red-500">*</span></span></label>
+                                <input type="text" name="color" id="edit-input-color" class="input input-bordered w-full bg-white" required>
+                                <span id="edit-error-color" class="text-red-500 text-xs mt-1 hidden"></span>
+                            </div>
+                            <div class="form-control">
+                                <label class="label"><span class="label-text font-medium">Kode Warna</span></label>
+                                <div class="flex gap-2">
+                                    <input type="color" name="color_code" id="edit-color-picker" class="w-10 h-10 cursor-pointer rounded border p-0">
+                                    <input type="text" name="color_code_hex" id="edit-color-hex" class="input input-bordered w-full bg-white font-mono" maxlength="7">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Ukuran & Harga --}}
+                    <div class="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                        <h4 class="font-semibold text-gray-900 mb-4 flex items-center gap-2"><i class="fa-solid fa-ruler text-blue-500"></i> Ukuran & Harga</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="form-control">
+                                <label class="label"><span class="label-text font-medium">Ukuran <span class="text-red-500">*</span></span></label>
+                                <select name="size" id="edit-input-size" class="select select-bordered w-full bg-white" required>
+                                    @for ($i = 35; $i <= 48; $i++)
+                                        <option value="{{ $i }}">EU {{ $i }}</option>
+                                    @endfor
+                                </select>
+                            </div>
+                            <div class="form-control">
+                                <label class="label"><span class="label-text font-medium">Harga <span class="text-red-500">*</span></span></label>
+                                <div class="relative w-full">
+                                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 z-10"><span class="text-gray-500 font-semibold sm:text-sm">Rp</span></div>
+                                    <input type="number" name="price" id="edit-input-price" class="input input-bordered w-full bg-white pl-10 text-gray-900" required>
+                                </div>
+                                <span id="edit-error-price" class="text-red-500 text-xs mt-1 hidden"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Stok & SKU --}}
+                    <div class="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                        <h4 class="font-semibold text-gray-900 mb-4 flex items-center gap-2"><i class="fa-solid fa-boxes-stacked text-blue-500"></i> Stok & SKU</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="form-control">
+                                <label class="label"><span class="label-text font-medium">Stok</span></label>
+                                <input type="number" name="stock" id="edit-input-stock" class="input input-bordered w-full bg-white" min="0">
+                            </div>
+                            <div class="form-control">
+                                <label class="label"><span class="label-text font-medium">SKU (Opsional)</span></label>
+                                <input type="text" name="sku" id="edit-input-sku" class="input input-bordered w-full bg-white font-mono">
+                            </div>
+                        </div>
+                        <div class="form-control mt-4">
+                            <label class="label"><span class="label-text font-medium">Status</span></label>
+                            <div class="flex items-center gap-4">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="is_available" value="1" id="edit-status-1" class="radio radio-primary"><span class="label-text">Tersedia</span></label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="is_available" value="0" id="edit-status-0" class="radio radio-primary"><span class="label-text">Tidak Tersedia</span></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Manage Gambar --}}
+                    <div class="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                        <h4 class="font-semibold text-gray-900 mb-4 flex items-center gap-2"><i class="fa-solid fa-images text-blue-500"></i> Gambar Varian</h4>
+
+                        {{-- 1. Gambar Existing --}}
+                        <p class="text-sm text-gray-500 mb-2 font-medium">Gambar Saat Ini:</p>
+                        <div id="edit-existing-images" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                            {{-- Diisi via JS --}}
+                        </div>
+                        <span id="edit-error-images" class="text-red-500 text-xs hidden mb-4 block">Jangan hapus semua gambar. Sisakan minimal 1 atau upload baru.</span>
+
+                        {{-- 2. Upload Baru --}}
+                        <p class="text-sm text-gray-500 mb-2 font-medium border-t border-gray-200 pt-4">Tambah Gambar Baru:</p>
+                        <div class="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center hover:border-blue-400 transition-colors cursor-pointer bg-white" id="edit-image-dropzone">
+                            <div class="flex flex-col items-center justify-center">
+                                <i class="fa-solid fa-plus text-2xl text-gray-400 mb-1"></i>
+                                <p class="text-gray-500 text-sm">Klik / Drag untuk tambah</p>
+                                <input type="file" name="images[]" id="edit-image-upload" class="hidden" accept="image/*" multiple>
+                            </div>
+                        </div>
+                        <div id="edit-new-image-preview" class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 hidden"></div>
+                    </div>
+
+                    {{-- Global Error --}}
+                    <div id="edit-global-error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 mx-5">
+                        <span class="block sm:inline" id="edit-error-message"></span>
+                    </div>
+                </form>
+            </div>
+
+            {{-- Footer --}}
+            <div class="p-4 border-t border-gray-200 bg-white flex justify-end gap-2">
+                <button type="button" class="btn btn-ghost text-gray-700" onclick="document.getElementById('modal_edit_varian').close()">Batal</button>
+                <button type="submit" form="form-edit-variant" id="btn-submit-edit" class="btn bg-yellow-500 hover:bg-yellow-600 text-white cursor-not-allowed opacity-50" disabled>
+                    <i class="fas fa-edit mr-2 text-xl"></i> Ubah
+                </button>
+            </div>
         </div>
         <form method="dialog" class="modal-backdrop"><button>close</button></form>
     </dialog>
