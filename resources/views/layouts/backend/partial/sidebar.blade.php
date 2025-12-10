@@ -83,6 +83,13 @@
                 </svg>
                 <span>Settings</span>
             </button>
+
+            <a href="{{ route('landing-page') }}" class="menu-item w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Zm6 13V12h6v10" />
+                </svg>
+                <span>Keluar</span>
+            </a>
         </nav>
     </div>
 </aside>

@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DriverController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\ShoesController;
 use App\Http\Controllers\ShoesVariantController;
@@ -11,7 +12,7 @@ use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 
 // Landing page (before login)
-Route::get('/', [PurchaseController::class, 'landing'])->name('landing-page');
+Route::get('/', [HomeController::class, 'index'])->name('landing-page');
 
 // Authentication routes
 Route::get('/login', [AuthController::class, 'login'])->name('login');
