@@ -5,8 +5,15 @@ namespace Database\Seeders;
 use App\Models\Category;
 use App\Models\Shoe;
 use App\Models\Shoes;
+use App\Models\ShoesVariant;
+use App\Models\User;
+use App\Models\VariantImages;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Pest\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
@@ -17,6 +24,24 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $sourcePath = public_path('assets/upload/testing/dummy.jpg');
+
+        if (File::exists($sourcePath)) {
+            // 1. Buat folder di storage jika belum ada
+            Storage::makeDirectory('public/profile-pictures');
+            Storage::makeDirectory('public/variant-shoes');
+
+            // 2. Copy file dari assets ke storage
+            // Kita copy agar storage:link bisa membacanya
+            File::copy($sourcePath, storage_path('app/public/profile-pictures/dummy.jpg'));
+            File::copy($sourcePath, storage_path('app/public/variant-shoes/dummy.jpg'));
+
+            $this->command->info('Gambar dummy berhasil disalin ke Storage!');
+        } else {
+            $this->command->warn('PERINGATAN: File dummy.jpg tidak ditemukan di ' . $sourcePath);
+            $this->command->warn('Gambar akan broken di aplikasi.');
+        }
+
         // Seed Categories
         $categoryData = [
             ['category_name' => 'Running'],
@@ -208,6 +233,54 @@ class DatabaseSeeder extends Seeder
 
         foreach ($shoeData as $val) {
             Shoes::create($val);
+        }
+
+
+        // Seed Driver
+        for ($i = 1; $i <= 10; $i++) {
+            User::create([
+                'name' => "Driver " . $i,
+                'role' => 'driver',
+                'email' => "driver{$i}@shoecycle.com",
+                'password' => Hash::make('123456'),
+                'email_verified_at' => now(),
+                // Path ini sekarang valid karena file sudah dicopy di langkah 0
+                'profile_picture' => 'profile-pictures/dummy.jpg',
+            ]);
+        }
+
+        // Seed Shoes Variant
+        $colors = ['Black', 'White', 'Red', 'Navy', 'Grey', 'Green'];
+        $sizes = [39, 40, 41, 42, 43, 44];
+
+        $totalShoes = count($shoeData);
+
+        for ($i = 1; $i <= 10; $i++) {
+            $shoeId = rand(1, $totalShoes); // Random ID dari data yang ada
+            $color = $colors[array_rand($colors)];
+            $size = $sizes[array_rand($sizes)];
+            $price = rand(500, 3000) * 1000;
+
+            $sku = strtoupper("SHOE-{$shoeId}-" . substr($color, 0, 3) . "-{$size}-" . Str::random(4));
+
+            $variant = ShoesVariant::create([
+                'shoe_id' => $shoeId,
+                'color' => $color . ' Edition',
+                'color_code' => '#000000',
+                'size' => $size,
+                'price' => $price,
+                'stock' => rand(5, 50),
+                'sku' => $sku,
+                'is_available' => true,
+            ]);
+
+            // PERBAIKAN: Gunakan VariantImage (Singular)
+            VariantImages::create([
+                'shoe_variant_id' => $variant->id,
+                'image_path' => 'variant-shoes/dummy.jpg',
+                'is_primary' => true,
+                'order' => 1,
+            ]);
         }
     }
 }
