@@ -154,7 +154,7 @@
                     <h2 class="text-4xl font-bold text-gray-900 mb-3 font-heading">Koleksi Terbaru</h2>
                     <p class="text-gray-500 text-lg">Pilihan eksklusif untuk gaya Anda.</p>
                 </div>
-                <a href="#" class="btn btn-outline rounded-full text-white px-8 bg-blue-500 hover:bg-blue-600  border-gray-300">
+                <a href="#" class="btn btn-outline rounded-lg text-white px-8 bg-blue-500 hover:bg-blue-600  border-gray-300">
                     Lihat Semua
                 </a>
             </div>
@@ -357,11 +357,6 @@
                     </svg>
                     <span>Hubungi Customer Service</span>
                 </a>
-
-                <div class="w-32 h-32 bg-red-400 
-            transition-all duration-300 
-            hover:bg-blue-400 hover:scale-110">
-                </div>
             </div>
         </div>
     </section>
