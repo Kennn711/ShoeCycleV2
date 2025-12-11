@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light" class="scroll-smooth">
+<html lang="id" data-theme="light" class="scroll-smooth">
 
 <head>
     <meta charset="UTF-8">
@@ -12,24 +12,34 @@
     {{-- Favicon --}}
     <link rel="icon" type="image/x-icon" href="{{ asset('assets/upload/logo/logo.png') }}">
 
-    {{-- 1. Google Fonts (Inter & Poppins) --}}
+    {{-- Google Fonts - DM Sans & Outfit untuk kesan modern --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
 
-    {{-- 2. FontAwesome (Untuk Ikon) --}}
+    {{-- FontAwesome --}}
     <link rel="stylesheet" href="{{ asset('assets/vendor/fontawesome/css/all.min.css') }}">
 
-    {{-- 3. AOS Animation CSS --}}
+    {{-- AOS Animation --}}
     <link rel="stylesheet" href="{{ asset('assets/vendor/aos/aos.css') }}">
 
-    {{-- 4. Vite (Tailwind + Custom CSS/JS) --}}
+    {{-- Vite --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <style>
-        /* Custom Font Settings */
+        :root {
+            --font-body: 'DM Sans', system-ui, -apple-system, sans-serif;
+            --font-heading: 'Outfit', system-ui, -apple-system, sans-serif;
+            --color-primary: #2563eb;
+            --color-primary-dark: #1e40af;
+            --color-accent: #f59e0b;
+            --navbar-height: 80px;
+        }
+
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: var(--font-body);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         h1,
@@ -39,119 +49,175 @@
         h5,
         h6,
         .font-heading {
-            font-family: 'Poppins', sans-serif;
+            font-family: var(--font-heading);
+            letter-spacing: -0.02em;
+        }
+
+        /* Navbar Enhancement */
+        .navbar-glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px) saturate(180%);
+            -webkit-backdrop-filter: blur(12px) saturate(180%);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .navbar-glass.scrolled {
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
         }
     </style>
     @stack('styles')
 </head>
 
-<body class="flex flex-col min-h-screen bg-white text-gray-800">
+<body class="flex flex-col min-h-screen bg-slate-50 text-gray-900">
 
     {{-- ========================================================= --}}
-    {{-- NAVBAR SECTION                                            --}}
+    {{-- NAVBAR SECTION - Cleaner & More Professional            --}}
     {{-- ========================================================= --}}
-    <div class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 shadow-sm transition-all duration-300" id="navbar">
-        <div class="navbar container mx-auto px-4">
+    <nav class="navbar-glass fixed top-0 left-0 right-0 z-50" id="navbar">
+        <div class="container mx-auto px-4 lg:px-6">
+            <div class="flex items-center justify-between h-20">
 
-            {{-- Navbar Start: Logo & Mobile Menu --}}
-            <div class="navbar-start">
-                {{-- Dropdown Mobile --}}
-                <div class="dropdown">
-                    <div tabindex="0" role="button" class="btn btn-ghost lg:hidden">
-                        <i class="fas fa-bars text-xl"></i>
-                    </div>
-                    <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
-                        <li><a href="{{ url('/') }}">Beranda</a></li>
-                        <li><a href="#categories">Kategori</a></li>
-                        <li><a href="#new-arrivals">Terbaru</a></li>
-                        <li><a href="#">Tentang Kami</a></li>
-                    </ul>
-                </div>
-
-                {{-- Logo --}}
-                <a href="{{ route('landing-page') }}" class="btn btn-ghost text-xl font-heading font-bold text-blue-600">
-                    <img src="{{ asset('assets/upload/logo/logo.png') }}" alt="Logo" class="w-8 h-8 mr-2 object-contain">
-                    ShoeCycle
-                </a>
-            </div>
-
-            {{-- Navbar Center: Desktop Menu --}}
-            <div class="navbar-center hidden lg:flex">
-                <ul class="menu menu-horizontal px-1 font-medium text-gray-600">
-                    <li><a href="{{ url('/') }}" class="hover:text-blue-600">Beranda</a></li>
-                    <li>
-                        <details>
-                            <summary class="hover:text-blue-600">Belanja</summary>
-                            <ul class="p-2 bg-white shadow-lg rounded-xl border border-gray-100 min-w-[200px]">
-                                <li><a href="#">Semua Produk</a></li>
-                                <li><a href="#">Pria</a></li>
-                                <li><a href="#">Wanita</a></li>
-                                <li><a href="#">Anak-anak</a></li>
-                            </ul>
-                        </details>
-                    </li>
-                    <li><a href="#new-arrivals" class="hover:text-blue-600">Terbaru</a></li>
-                    <li><a href="#" class="hover:text-blue-600">Lacak Pesanan</a></li>
-                </ul>
-            </div>
-
-            {{-- Navbar End: Search, Cart, Profile --}}
-            <div class="navbar-end gap-2">
-                {{-- Search Button (Ghost) --}}
-                <button class="btn btn-ghost btn-circle text-gray-500 hover:text-blue-600">
-                    <i class="fas fa-search text-lg"></i>
-                </button>
-
-                {{-- Cart Button --}}
-                <div class="dropdown dropdown-end">
-                    <div tabindex="0" role="button" class="btn btn-ghost btn-circle text-gray-500 hover:text-blue-600">
-                        <div class="indicator">
-                            <i class="fas fa-shopping-bag text-lg"></i>
-                            <span class="badge badge-sm badge-primary indicator-item">0</span>
+                {{-- Logo & Brand --}}
+                <div class="flex items-center gap-12">
+                    <a href="{{ route('landing-page') }}" class="flex items-center gap-3 group">
+                        <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:shadow-blue-500/40 transition-all">
+                            <img src="{{ asset('assets/upload/logo/logo.png') }}" alt="Logo" class="w-10 h-10 object-contain rounded-xl">
                         </div>
-                    </div>
-                    <div tabindex="0" class="mt-3 z-[1] card card-compact dropdown-content w-52 bg-base-100 shadow border border-gray-100">
-                        <div class="card-body">
-                            <span class="font-bold text-lg">0 Barang</span>
-                            <span class="text-info">Subtotal: Rp 0</span>
-                            <div class="card-actions">
-                                <button class="btn btn-primary btn-block btn-sm text-white">Lihat Keranjang</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Auth Buttons --}}
-                @auth
-                    {{-- Jika User Login --}}
-                    <div class="dropdown dropdown-end">
-                        <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar border border-gray-200">
-                            <div class="w-10 rounded-full">
-                                {{-- Gunakan foto profil user atau default --}}
-                                <img src="https://ui-avatars.com/api/?name={{ Auth::user()->name }}&background=0D8ABC&color=fff" alt="User" />
-                            </div>
-                        </div>
-                        <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52 border border-gray-100">
-                            <li class="menu-title px-4 py-2">Hai, {{ Auth::user()->name }}</li>
-                            <li><a href="#"><i class="fas fa-user mr-2"></i> Profil Saya</a></li>
-                            <li><a href="#"><i class="fas fa-box-open mr-2"></i> Pesanan Saya</a></li>
-                            <li class="border-t border-gray-100 mt-1 pt-1">
-                                <form method="POST" action="{{ route('logout') }}">
-                                    @csrf
-                                    <button type="submit" class="text-red-500 hover:bg-red-50 w-full text-left"><i class="fas fa-sign-out-alt mr-2"></i> Logout</button>
-                                </form>
-                            </li>
-                        </ul>
-                    </div>
-                @else
-                    {{-- Jika Belum Login --}}
-                    <a href="{{ route('login') }}" class="btn btn-primary btn-sm px-5 rounded-full text-white ml-2">
-                        Login
+                        <span class="text-xl font-bold text-gray-900 font-heading hidden sm:block">ShoeCycle</span>
                     </a>
-                @endauth
+
+                    {{-- Desktop Navigation --}}
+                    <div class="hidden lg:flex items-center gap-1">
+                        <a href="{{ url('/') }}" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
+                            Beranda
+                        </a>
+                        <div class="dropdown dropdown-hover">
+                            <div tabindex="0" role="button" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all flex items-center gap-1">
+                                Belanja <i class="fas fa-chevron-down text-xs"></i>
+                            </div>
+                            <ul tabindex="0" class="dropdown-content menu p-2 shadow-xl bg-white rounded-xl w-56 border border-gray-100 mt-1">
+                                <li><a href="#" class="text-sm">Semua Produk</a></li>
+                                <li><a href="#" class="text-sm">Pria</a></li>
+                                <li><a href="#" class="text-sm">Wanita</a></li>
+                                <li><a href="#" class="text-sm">Anak-anak</a></li>
+                            </ul>
+                        </div>
+                        <a href="#new-arrivals" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
+                            Koleksi
+                        </a>
+                        <a href="#" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
+                            Pesanan Saya
+                        </a>
+                    </div>
+                </div>
+
+                {{-- Right Actions --}}
+                <div class="flex items-center gap-2">
+                    {{-- Search --}}
+                    <button class="btn btn-ghost btn-circle text-gray-600 hover:text-blue-600 hover:bg-blue-50 hidden sm:flex">
+                        <i class="fas fa-search text-lg"></i>
+                    </button>
+
+                    {{-- Cart --}}
+                    <div class="dropdown dropdown-end">
+                        <div tabindex="0" role="button" class="btn btn-ghost btn-circle text-gray-600 hover:text-blue-600 hover:bg-blue-50">
+                            <div class="indicator">
+                                <i class="fas fa-shopping-bag text-lg"></i>
+                                <span class="badge badge-sm bg-blue-600 text-white border-none indicator-item">0</span>
+                            </div>
+                        </div>
+                        <div tabindex="0" class="dropdown-content mt-3 z-[1] card card-compact w-72 bg-white shadow-xl border border-gray-100 rounded-xl">
+                            <div class="card-body">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="font-bold text-lg">Keranjang</span>
+                                    <span class="text-sm text-gray-500">0 item</span>
+                                </div>
+                                <div class="text-center py-8">
+                                    <i class="fas fa-shopping-bag text-4xl text-gray-300 mb-3"></i>
+                                    <p class="text-sm text-gray-500">Keranjang masih kosong</p>
+                                </div>
+                                <button class="btn btn-primary btn-sm rounded-lg text-white">Mulai Belanja</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Auth Section --}}
+                    @auth
+                        <div class="dropdown dropdown-end">
+                            <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
+                                <div class="w-9 rounded-full ring-2 ring-gray-200 ring-offset-2">
+                                    <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=2563eb&color=fff&bold=true" alt="{{ Auth::user()->name }}" />
+                                </div>
+                            </div>
+                            <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow-xl bg-white rounded-xl w-56 border border-gray-100">
+                                <li class="menu-title px-4 py-2">
+                                    <span class="text-xs text-gray-500">Hai, {{ Auth::user()->name }}</span>
+                                </li>
+                                <li><a href="#" class="text-sm"><i class="fas fa-user mr-2 w-4"></i> Profil Saya</a></li>
+                                <li><a href="#" class="text-sm"><i class="fas fa-box-open mr-2 w-4"></i> Pesanan Saya</a></li>
+                                <li class="border-t border-gray-100 mt-1 pt-1">
+                                    <form method="POST" action="{{ route('logout') }}">
+                                        @csrf
+                                        <button type="submit" class="text-red-500 hover:bg-red-50 w-full text-left text-sm">
+                                            <i class="fas fa-sign-out-alt mr-2 w-4"></i> Logout
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    @else
+                        <a href="{{ route('login') }}" class="btn btn-primary btn-sm rounded-lg text-white text-sm px-6 ml-2 hidden sm:flex">
+                            Masuk
+                        </a>
+                    @endauth
+
+                    {{-- Mobile Menu Toggle --}}
+                    <button class="btn btn-ghost btn-circle lg:hidden" onclick="toggleMobileMenu()">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
+
+        {{-- Mobile Menu --}}
+        <div id="mobileMenu" class="lg:hidden hidden bg-white border-t border-gray-100">
+            <div class="container mx-auto px-4 py-4">
+                <div class="flex flex-col gap-2">
+                    <a href="{{ url('/') }}" class="px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-blue-50 rounded-lg">Beranda</a>
+                    <a href="#" class="px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-blue-50 rounded-lg">Semua Produk</a>
+                    <a href="#new-arrivals" class="px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-blue-50 rounded-lg">Koleksi</a>
+                    <a href="#" class="px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-blue-50 rounded-lg">Pesanan Saya</a>
+                    @guest
+                        <a href="{{ route('login') }}" class="btn btn-primary btn-sm rounded-lg text-white mt-2">Login</a>
+                    @endguest
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    {{-- Spacer untuk fixed navbar --}}
+    <div style="height: var(--navbar-height);"></div>
 
     {{-- ========================================================= --}}
     {{-- MAIN CONTENT                                              --}}
@@ -161,67 +227,98 @@
     </main>
 
     {{-- ========================================================= --}}
-    {{-- FOOTER SECTION                                            --}}
+    {{-- FOOTER SECTION - Modern & Clean                          --}}
     {{-- ========================================================= --}}
-    <footer class="bg-gray-900 text-gray-300 pt-16 pb-8">
-        <div class="container mx-auto px-4">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+    <footer class="bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 text-gray-300 pt-16 pb-8 relative overflow-hidden">
+        {{-- Decorative elements --}}
+        <div class="absolute top-0 right-0 w-96 h-96 bg-blue-600 rounded-full opacity-5 blur-3xl"></div>
+        <div class="absolute bottom-0 left-0 w-80 h-80 bg-purple-600 rounded-full opacity-5 blur-3xl"></div>
+
+        <div class="container mx-auto px-4 relative z-10">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
 
                 {{-- Brand Info --}}
-                <div class="col-span-1 md:col-span-1">
-                    <a href="#" class="text-2xl font-bold text-white font-heading flex items-center gap-2 mb-4">
-                        <img src="{{ asset('assets/upload/logo/logo.png') }}" alt="Logo" class="w-8 h-8 bg-white rounded-full p-1">
-                        ShoeCycle
-                    </a>
-                    <p class="text-sm leading-relaxed mb-6">
+                <div class="lg:col-span-1">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
+                            <img src="{{ asset('assets/upload/logo/logo.png') }}" alt="Logo" class="w-10 h-10 object-contain rounded-xl">
+                        </div>
+                        <span class="text-2xl font-bold text-white font-heading">ShoeCycle</span>
+                    </div>
+                    <p class="text-sm leading-relaxed text-gray-400 mb-6">
                         Platform e-commerce sepatu terpercaya dengan layanan pengiriman lokal tercepat di Mojokerto. Kualitas original, harga bersahabat.
                     </p>
-                    <div class="flex gap-4">
-                        <a href="#" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-colors"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-pink-600 hover:text-white transition-colors"><i class="fab fa-instagram"></i></a>
-                        <a href="#" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-green-500 hover:text-white transition-colors"><i class="fab fa-whatsapp"></i></a>
+                    <div class="flex gap-3">
+                        <a href="#" class="w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all group">
+                            <i class="bi bi-facebook group-hover:scale-110 transition-transform"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center hover:bg-pink-600 hover:text-white transition-all group">
+                            <i class="fab fa-instagram group-hover:scale-110 transition-transform"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center hover:bg-green-500 hover:text-white transition-all group">
+                            <i class="fab fa-whatsapp group-hover:scale-110 transition-transform"></i>
+                        </a>
                     </div>
                 </div>
 
-                {{-- Links 1 --}}
+                {{-- Quick Links --}}
                 <div>
-                    <h3 class="text-white font-bold mb-4 uppercase text-sm tracking-wider">Belanja</h3>
-                    <ul class="space-y-2 text-sm">
-                        <li><a href="#" class="hover:text-white transition-colors">Semua Produk</a></li>
-                        <li><a href="#" class="hover:text-white transition-colors">Pria</a></li>
-                        <li><a href="#" class="hover:text-white transition-colors">Wanita</a></li>
-                        <li><a href="#" class="hover:text-white transition-colors">Diskon</a></li>
+                    <h3 class="text-white font-bold mb-4 text-sm uppercase tracking-wider">Belanja</h3>
+                    <ul class="space-y-2.5">
+                        <li><a href="#" class="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-2">
+                                <i class="fas fa-chevron-right text-xs text-blue-600"></i> Semua Produk
+                            </a></li>
+                        <li><a href="#" class="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-2">
+                                <i class="fas fa-chevron-right text-xs text-blue-600"></i> Pria
+                            </a></li>
+                        <li><a href="#" class="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-2">
+                                <i class="fas fa-chevron-right text-xs text-blue-600"></i> Wanita
+                            </a></li>
+                        <li><a href="#" class="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-2">
+                                <i class="fas fa-chevron-right text-xs text-blue-600"></i> Diskon
+                            </a></li>
                     </ul>
                 </div>
 
-                {{-- Links 2 --}}
+                {{-- Support --}}
                 <div>
-                    <h3 class="text-white font-bold mb-4 uppercase text-sm tracking-wider">Bantuan</h3>
-                    <ul class="space-y-2 text-sm">
-                        <li><a href="#" class="hover:text-white transition-colors">Lacak Pesanan</a></li>
-                        <li><a href="#" class="hover:text-white transition-colors">Syarat & Ketentuan</a></li>
-                        <li><a href="#" class="hover:text-white transition-colors">Kebijakan Privasi</a></li>
-                        <li><a href="#" class="hover:text-white transition-colors">Hubungi Kami</a></li>
+                    <h3 class="text-white font-bold mb-4 text-sm uppercase tracking-wider">Bantuan</h3>
+                    <ul class="space-y-2.5">
+                        <li><a href="#" class="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-2">
+                                <i class="fas fa-chevron-right text-xs text-blue-600"></i>Pesanan Saya
+                            </a></li>
+                        <li><a href="#" class="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-2">
+                                <i class="fas fa-chevron-right text-xs text-blue-600"></i> Syarat & Ketentuan
+                            </a></li>
+                        <li><a href="#" class="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-2">
+                                <i class="fas fa-chevron-right text-xs text-blue-600"></i> Kebijakan Privasi
+                            </a></li>
+                        <li><a href="#" class="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-2">
+                                <i class="fas fa-chevron-right text-xs text-blue-600"></i> Hubungi Kami
+                            </a></li>
                     </ul>
                 </div>
 
                 {{-- Newsletter --}}
                 <div>
-                    <h3 class="text-white font-bold mb-4 uppercase text-sm tracking-wider">Tetap Terhubung</h3>
-                    <p class="text-sm mb-4">Dapatkan info promo terbaru langsung ke inboxmu.</p>
-                    <div class="join w-full">
-                        <input class="input input-bordered input-sm join-item w-full bg-gray-800 border-gray-700 text-white" placeholder="Email kamu..." />
-                        <button class="btn btn-primary btn-sm join-item text-white">Join</button>
+                    <h3 class="text-white font-bold mb-4 text-sm uppercase tracking-wider">Tetap Terhubung</h3>
+                    <p class="text-sm text-gray-400 mb-4">Dapatkan info promo terbaru langsung ke inbox Anda.</p>
+                    <div class="flex gap-2">
+                        <input type="email" placeholder="Email Anda..." class="input input-sm bg-gray-800 border-gray-700 text-white focus:border-blue-600 flex-1 rounded-lg" />
+                        <button class="btn btn-primary btn-sm text-white rounded-lg px-4">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
                     </div>
                 </div>
             </div>
 
-            <div class="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center text-sm">
-                <p>&copy; {{ date('Y') }} ShoeCycle. All rights reserved.</p>
-                <div class="flex gap-4 mt-4 md:mt-0">
-                    <i class="fab fa-cc-visa text-2xl text-gray-500 hover:text-white"></i>
-                    <i class="fab fa-cc-mastercard text-2xl text-gray-500 hover:text-white"></i>
-                    <i class="fas fa-wallet text-2xl text-gray-500 hover:text-white"></i>
+            <div class="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center text-sm gap-4">
+                <p class="text-gray-500">&copy; {{ date('Y') }} ShoeCycle. All rights reserved.</p>
+                <div class="flex items-center gap-4">
+                    <span class="text-gray-500 text-xs">Metode Pembayaran:</span>
+                    <i class="fab fa-cc-visa text-2xl text-gray-600 hover:text-white transition-colors"></i>
+                    <i class="fab fa-cc-mastercard text-2xl text-gray-600 hover:text-white transition-colors"></i>
+                    <i class="fas fa-wallet text-2xl text-gray-600 hover:text-white transition-colors"></i>
                 </div>
             </div>
         </div>
@@ -230,27 +327,43 @@
     {{-- ========================================================= --}}
     {{-- SCRIPTS                                                   --}}
     {{-- ========================================================= --}}
-
-    {{-- AOS Animation JS --}}
-    <script src="assets/vendor/aos/aos.js"></script>
+    <script src="{{ asset('assets/vendor/aos/aos.js') }}"></script>
     <script>
         // Init AOS
         AOS.init({
-            duration: 800,
+            duration: 600,
             once: true,
-            offset: 100,
+            offset: 50,
+            easing: 'ease-out-cubic'
         });
 
         // Navbar Scroll Effect
-        window.addEventListener('scroll', function() {
-            const navbar = document.getElementById('navbar');
-            if (window.scrollY > 50) {
-                navbar.classList.add('shadow-md');
-                navbar.classList.replace('bg-white/80', 'bg-white/95');
+        const navbar = document.getElementById('navbar');
+        let lastScroll = 0;
+
+        window.addEventListener('scroll', () => {
+            const currentScroll = window.pageYOffset;
+
+            if (currentScroll > 50) {
+                navbar.classList.add('scrolled');
             } else {
-                navbar.classList.remove('shadow-md');
-                navbar.classList.replace('bg-white/95', 'bg-white/80');
+                navbar.classList.remove('scrolled');
             }
+
+            lastScroll = currentScroll;
+        });
+
+        // Mobile Menu Toggle
+        function toggleMobileMenu() {
+            const mobileMenu = document.getElementById('mobileMenu');
+            mobileMenu.classList.toggle('hidden');
+        }
+
+        // Close mobile menu on link click
+        document.querySelectorAll('#mobileMenu a').forEach(link => {
+            link.addEventListener('click', () => {
+                document.getElementById('mobileMenu').classList.add('hidden');
+            });
         });
     </script>
 
