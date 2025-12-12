@@ -175,11 +175,10 @@
                                     <span class="text-xs text-gray-500">Hai, {{ Auth::user()->name }}</span>
                                 </li>
                                 <li><a href="#" class="text-sm"><i class="fas fa-user mr-2 w-4"></i> Profil Saya</a></li>
-                                <li><a href="#" class="text-sm"><i class="fas fa-box-open mr-2 w-4"></i> Pesanan Saya</a></li>
                                 <li class="border-t border-gray-100 mt-1 pt-1">
                                     <form method="POST" action="{{ route('logout') }}">
                                         @csrf
-                                        <button type="submit" class="text-red-500 hover:bg-red-50 w-full text-left text-sm">
+                                        <button type="submit" class="text-red-500  w-full text-left text-sm">
                                             <i class="fas fa-sign-out-alt mr-2 w-4"></i> Logout
                                         </button>
                                     </form>
@@ -187,9 +186,10 @@
                             </ul>
                         </div>
                     @else
-                        <a href="{{ route('login') }}" class="btn btn-primary btn-sm rounded-lg text-white text-sm px-6 ml-2 hidden sm:flex">
+                        {{-- Ubah href menjadi onclick --}}
+                        <button onclick="openLoginModal()" class="btn btn-primary btn-sm rounded-lg text-white text-sm px-6 ml-2 hidden sm:flex shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition-all transform hover:-translate-y-0.5">
                             Masuk
-                        </a>
+                        </button>
                     @endauth
 
                     {{-- Mobile Menu Toggle --}}
@@ -336,6 +336,223 @@
         </div>
     </footer>
 
+    {{-- ========================================================= --}}
+    {{-- MODAL LOGIN                                              --}}
+    {{-- ========================================================= --}}
+    <dialog id="login_modal" class="modal modal-bottom sm:modal-middle">
+        <div class="modal-box bg-white p-0 overflow-hidden shadow-2xl rounded-2xl max-w-md w-full relative">
+
+            {{-- Close Button --}}
+            <form method="dialog">
+                <button class="btn btn-sm btn-circle btn-ghost absolute right-3 top-3 z-10 text-white-500 hover:bg-gray-100">✕</button>
+            </form>
+
+            <div class="flex flex-col">
+                {{-- Header Image / Illustration (Optional) --}}
+                <div class="h-32 bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center relative overflow-hidden">
+                    <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+                    <div class="text-center z-10">
+                        <div class="w-16 h-16 bg-white rounded-xl mx-auto flex items-center justify-center shadow-lg mb-2">
+                            <img src="{{ asset('assets/upload/logo/logo.png') }}" alt="Logo" class="w-14 h-14 object-contain rounded-xl">
+                        </div>
+                        <h3 class="text-white font-bold text-lg font-heading">Masuk ke akun anda</h3>
+                    </div>
+                </div>
+
+                {{-- Login Form --}}
+                <div class="p-8 pt-6">
+                    <form id="form-login" action="{{ route('login') }}" method="POST" class="space-y-4">
+                        @csrf
+
+                        {{-- Email Input --}}
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text font-medium text-gray-700">Email</span>
+                            </label>
+                            <div class="relative">
+                                {{-- Ikon Email (SVG) --}}
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                    </svg>
+                                </div>
+                                <input type="email" name="email" id="login-email" placeholder="akun@gmail.com" class="input input-bordered w-full pl-10 bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors rounded-xl" required />
+                            </div>
+                            <span class="text-xs text-red-500 mt-1 hidden" id="error-login-email"></span>
+                        </div>
+
+                        {{-- Password Input --}}
+                        <div class="form-control">
+                            <label class="label flex justify-between">
+                                <span class="label-text font-medium text-gray-700">Password</span>
+                            </label>
+                            <div class="relative">
+                                {{-- Ikon Lock (SVG) --}}
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                    </svg>
+                                </div>
+                                <input type="password" name="password" id="login-password" placeholder="••••••••" class="input input-bordered w-full pl-10 pr-10 bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors rounded-xl" required />
+                                {{-- Tombol Toggle Eye --}}
+                                <button type="button" onclick="togglePassword('login-password', this)" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer focus:outline-none">
+                                    {{-- Ikon Eye (SVG) - Default: Eye Open --}}
+                                    <svg id="icon-eye" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                    {{-- Ikon Eye Slash (Hidden by default) --}}
+                                    <svg id="icon-eye-slash" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <span class="text-xs text-red-500 mt-1 hidden" id="error-login-password"></span>
+                        </div>
+
+                        {{-- Global Error Alert --}}
+                        <div id="login-global-error" class="alert alert-error text-sm py-3 rounded-lg hidden flex flex-row items-center justify-between shadow-sm border border-red-800">
+
+                            {{-- Kiri: Ikon & Pesan --}}
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-exclamation-circle text-red-600"></i>
+                                <span id="login-error-msg" class="text-red-700 font-medium text-left">Login gagal.</span>
+                            </div>
+
+                            {{-- Kanan: Tombol Close (X) --}}
+                            <button type="button" class="btn btn-xs btn-circle btn-ghost text-red-600 hover:bg-red-100 border-none" onclick="document.getElementById('login-global-error').classList.add('hidden')">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+
+                        {{-- Submit Button --}}
+                        <button type="submit" id="btn-login-submit" class="btn btn-primary w-full rounded-xl text-white shadow-lg shadow-blue-500/30 mt-2 
+               disabled:bg-blue-400 disabled:text-white disabled:border-blue-400 disabled:cursor-not-allowed" disabled>
+                            <span class="loading loading-spinner loading-sm hidden" id="login-loading"></span>
+                            Masuk
+                        </button>
+                    </form>
+
+                    {{-- Divider --}}
+                    <div class="divider text-xs text-gray-400 my-4">ATAU</div>
+
+                    {{-- Register Link --}}
+                    <p class="text-center text-sm text-gray-600 mt-2">
+                        Belum punya akun? <button onclick="switchToRegister()" type="button" class="text-blue-600 font-bold hover:underline cursor-pointer">Daftar Sekarang</button>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+            <button>close</button>
+        </form>
+    </dialog>
+
+    {{-- ========================================================= --}}
+    {{-- MODAL REGISTER                                           --}}
+    {{-- ========================================================= --}}
+    <dialog id="register_modal" class="modal modal-bottom sm:modal-middle">
+        <div class="modal-box bg-white p-0 overflow-hidden shadow-2xl rounded-2xl max-w-md w-full relative">
+
+            {{-- Close Button --}}
+            <form method="dialog">
+                <button class="btn btn-sm btn-circle btn-ghost absolute right-3 top-3 z-10 text-black-500 hover:bg-gray-100">✕</button>
+            </form>
+
+            <div class="flex flex-col">
+                {{-- Header Image / Illustration (Optional) --}}
+                <div class="h-32 bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center relative overflow-hidden">
+                    <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+                    <div class="text-center z-10">
+                        <div class="w-16 h-16 bg-white rounded-xl mx-auto flex items-center justify-center shadow-lg mb-2">
+                            <img src="{{ asset('assets/upload/logo/logo.png') }}" alt="Logo" class="w-14 h-14 object-contain rounded-xl">
+                        </div>
+                        <h3 class="text-white font-bold text-lg font-heading">Buat akun baru</h3>
+                    </div>
+                </div>
+
+                {{-- Register Form --}}
+                <div class="p-8 pt-6">
+                    <form id="form-register" action="{{ route('register') }}" method="POST" class="space-y-4">
+                        @csrf
+
+                        {{-- Nama Lengkap --}}
+                        <div class="form-control">
+                            <label class="label"><span class="label-text font-medium text-gray-700">Nama Lengkap</span></label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+                                    <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                </div>
+                                <input type="text" name="name" id="reg-name" placeholder="Nama Lengkap" class="input input-bordered w-full pl-10 bg-gray-50 focus:bg-white rounded-xl" required />
+                            </div>
+                            <span class="text-xs text-red-500 mt-1 hidden" id="error-reg-name"></span>
+                        </div>
+
+                        {{-- Email --}}
+                        <div class="form-control">
+                            <label class="label"><span class="label-text font-medium text-gray-700">Email</span></label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+                                    <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
+                                <input type="email" name="email" id="reg-email" placeholder="contoh@email.com" class="input input-bordered w-full pl-10 bg-gray-50 focus:bg-white rounded-xl" required />
+                            </div>
+                            <span class="text-xs text-red-500 mt-1 hidden" id="error-reg-email"></span>
+                        </div>
+
+                        {{-- Password --}}
+                        <div class="form-control">
+                            <label class="label"><span class="label-text font-medium text-gray-700">Password</span></label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+                                    <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                    </svg>
+                                </div>
+                                <input type="password" name="password" id="reg-password" placeholder="Min. 8 karakter" class="input input-bordered w-full pl-10 pr-10 bg-gray-50 focus:bg-white rounded-xl" required />
+                                <button type="button" onclick="togglePassword('reg-password', this)" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer focus:outline-none z-10">
+                                    <svg class="w-5 h-5 icon-eye" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                    <svg class="w-5 h-5 icon-slash hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <span class="text-xs text-red-500 mt-1 hidden" id="error-reg-password"></span>
+                        </div>
+
+                        {{-- Global Error --}}
+                        <div id="reg-global-error" class="alert alert-error text-sm py-2 rounded-lg hidden">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span id="reg-error-msg">Registrasi gagal.</span>
+                        </div>
+
+                        {{-- Submit --}}
+                        <button type="submit" id="btn-reg-submit" class="btn btn-primary w-full rounded-xl text-white shadow-lg shadow-blue-500/30 mt-2 disabled:bg-blue-400 disabled:text-white disabled:border-blue-400" disabled>
+                            <span class="loading loading-spinner loading-sm hidden" id="reg-loading"></span>
+                            Daftar
+                        </button>
+                    </form>
+
+                    <div class="divider text-xs text-gray-400 my-4">Sudah punya akun?</div>
+
+                    {{-- Switch to Login --}}
+                    <button onclick="switchToLogin()" class="btn btn-outline w-full rounded-xl border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 font-medium normal-case">
+                        Masuk ke Akun Saya
+                    </button>
+                </div>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button>close</button></form>
+    </dialog>
+
+    <script src="{{ asset('assets/vendor/fontawesome/js/all.min.js') }}"></script>
     <script src="{{ asset('assets/vendor/jquery/jquery.min.js') }}"></script>
     <script src="{{ asset('assets/vendor/aos/aos.js') }}"></script>
     <script>
@@ -376,6 +593,279 @@
             });
         });
     </script>
+
+    {{-- Login Modal Script --}}
+    <script>
+        // --- 1. MODAL CONTROLS ---
+        function openLoginModal() {
+            // Reset form saat dibuka
+            $('#form-login')[0].reset();
+            $('.input-error').removeClass('input-error');
+            $('[id^="error-login-"]').addClass('hidden');
+            $('#login-global-error').addClass('hidden');
+            $('#btn-login-submit').prop('disabled', true);
+
+            document.getElementById('login_modal').showModal();
+        }
+
+        // Toggle Password Visibility (Updated for SVG)
+        function togglePassword(inputId, btn) {
+            const input = document.getElementById(inputId);
+            const iconEye = btn.querySelector('#icon-eye');
+            const iconSlash = btn.querySelector('#icon-eye-slash');
+
+            if (input.type === "password") {
+                input.type = "text";
+                iconEye.classList.add('hidden');
+                iconSlash.classList.remove('hidden');
+            } else {
+                input.type = "password";
+                iconEye.classList.remove('hidden');
+                iconSlash.classList.add('hidden');
+            }
+        }
+
+        // --- VALIDASI LOGIN (CUSTOM MESSAGES) ---
+        function validateLogin() {
+            const email = $('#login-email').val().trim();
+            const password = $('#login-password').val();
+            const btn = $('#btn-login-submit');
+            let isValid = true;
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            // 1. Validasi Email
+            if (email === '') {
+                // Jika kosong, anggap tidak valid tapi jangan munculkan error merah dulu (supaya bersih)
+                isValid = false;
+            } else if (!emailRegex.test(email)) {
+                // Jika diketik tapi format salah -> Munculkan Error
+                $('#error-login-email').text('Format email tidak valid').removeClass('hidden');
+                isValid = false;
+            } else {
+                // Jika benar -> Sembunyikan Error
+                $('#error-login-email').addClass('hidden');
+            }
+
+            // 2. Validasi Password
+            if (password === '') {
+                isValid = false;
+            } else if (password.length < 6) {
+                $('#error-login-password').text('Password minimal 6 karakter').removeClass('hidden');
+                isValid = false;
+            } else {
+                $('#error-login-password').addClass('hidden');
+            }
+
+            // 3. Update Tombol Masuk
+            if (isValid) {
+                // Aktifkan Tombol
+                btn.prop('disabled', false)
+                    .removeClass('btn-disabled disabled:bg-blue-400 disabled:text-white disabled:border-blue-400');
+            } else {
+                // Matikan Tombol (Tetap Biru Pudar sesuai request sebelumnya)
+                btn.prop('disabled', true)
+                    .addClass('btn-disabled disabled:bg-blue-400 disabled:text-white disabled:border-blue-400');
+            }
+        }
+
+        // Trigger Validation
+        $('#login-email, #login-password').on('input', validateLogin);
+
+        // --- 3. AJAX LOGIN SUBMISSION ---
+        $('#form-login').on('submit', function(e) {
+            e.preventDefault();
+
+            const btn = $('#btn-login-submit');
+            const loading = $('#login-loading');
+            const globalError = $('#login-global-error');
+            const errorMsg = $('#login-error-msg');
+
+            // UI Loading State
+            btn.prop('disabled', true);
+            loading.removeClass('hidden');
+            globalError.addClass('hidden');
+            $('.input-error').removeClass('input-error');
+            $('[id^="error-login-"]').addClass('hidden');
+
+            $.ajax({
+                url: $(this).attr('action'),
+                method: 'POST',
+                data: $(this).serialize(),
+                success: function(response) {
+                    // Jika admin, dia akan ke /dashboard
+                    // Jika customer, dia akan ke / (landing page)
+                    window.location.href = response.redirect_url;
+                },
+                error: function(xhr) {
+                    btn.prop('disabled', false);
+                    loading.addClass('hidden');
+
+                    if (xhr.status === 422) {
+                        // Error Validasi Laravel (Email/Password salah format/salah data)
+                        const errors = xhr.responseJSON.errors;
+
+                        if (errors.email) {
+                            $('#login-email').addClass('input-error');
+                            $('#error-login-email').text(errors.email[0]).removeClass('hidden');
+                        }
+                        if (errors.password) {
+                            $('#login-password').addClass('input-error');
+                            $('#error-login-password').text(errors.password[0]).removeClass('hidden');
+                        }
+                    } else if (xhr.status === 401 || xhr.status === 429) {
+                        // Error Auth (Salah password atau too many attempts)
+                        // Pesan error dari Laravel biasanya ada di 'message' atau 'email' error bag
+                        let msg = xhr.responseJSON.message || 'Email atau password salah.';
+                        errorMsg.text(msg);
+                        globalError.removeClass('hidden');
+                    } else {
+                        errorMsg.text('Terjadi kesalahan server. Coba lagi nanti.');
+                        globalError.removeClass('hidden');
+                    }
+                }
+            });
+        });
+
+        // --- SWITCH MODALS ---
+        function switchToRegister() {
+            document.getElementById('login_modal').close(); // Tutup Login
+            setTimeout(() => {
+                // Reset form register
+                $('#form-register')[0].reset();
+                $('.input-error').removeClass('input-error');
+                $('[id^="error-reg-"]').addClass('hidden');
+                $('#reg-global-error').addClass('hidden');
+                $('#btn-reg-submit').prop('disabled', true);
+
+                document.getElementById('register_modal').showModal(); // Buka Register
+            }, 200); // Delay dikit biar transisi halus
+        }
+
+        function switchToLogin() {
+            document.getElementById('register_modal').close();
+            setTimeout(() => {
+                openLoginModal(); // Fungsi yang sudah ada
+            }, 200);
+        }
+
+        // --- VALIDASI REGISTER (CUSTOM MESSAGES) ---
+        function validateRegister() {
+            const name = $('#reg-name').val().trim();
+            const email = $('#reg-email').val().trim();
+            const password = $('#reg-password').val();
+            const btn = $('#btn-reg-submit');
+            let isValid = true;
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            // Validasi Nama
+            if (name === '') {
+                // Opsional: Tampilkan error jika kosong (saat ini logicnya hanya matikan tombol)
+                isValid = false;
+            } else if (name.length < 3) {
+                $('#error-reg-name').text('Nama minimal 3 karakter').removeClass('hidden');
+                isValid = false;
+            } else {
+                $('#error-reg-name').addClass('hidden');
+            }
+
+            // Validasi Email
+            if (email === '') {
+                isValid = false;
+            } else if (!emailRegex.test(email)) {
+                $('#error-reg-email').text('Format email tidak valid').removeClass('hidden');
+                isValid = false;
+            } else {
+                $('#error-reg-email').addClass('hidden');
+            }
+
+            // Validasi Password
+            if (password === '') {
+                isValid = false;
+            } else if (password.length < 8) {
+                $('#error-reg-password').text('Password minimal 8 karakter').removeClass('hidden');
+                isValid = false;
+            } else {
+                $('#error-reg-password').addClass('hidden');
+            }
+
+            // Update Tombol Submit
+            if (isValid) {
+                btn.prop('disabled', false).removeClass('btn-disabled disabled:bg-blue-400 disabled:text-white disabled:border-blue-400');
+            } else {
+                btn.prop('disabled', true).addClass('btn-disabled disabled:bg-blue-400 disabled:text-white disabled:border-blue-400');
+            }
+        }
+
+        // Trigger Validation Register
+        $('#reg-name, #reg-email, #reg-password').on('input', validateRegister);
+
+        // --- AJAX REGISTER SUBMISSION ---
+        $('#form-register').on('submit', function(e) {
+            e.preventDefault();
+
+            const btn = $('#btn-reg-submit');
+            const loading = $('#reg-loading');
+            const globalError = $('#reg-global-error');
+            const errorMsg = $('#reg-error-msg');
+
+            btn.prop('disabled', true);
+            loading.removeClass('hidden');
+            globalError.addClass('hidden');
+            $('.input-error').removeClass('input-error');
+            $('[id^="error-reg-"]').addClass('hidden');
+
+            $.ajax({
+                url: $(this).attr('action'),
+                method: 'POST',
+                data: $(this).serialize(),
+                success: function(response) {
+                    // Sukses daftar -> Auto login -> Reload
+                    window.location.reload();
+                },
+                error: function(xhr) {
+                    btn.prop('disabled', false);
+                    loading.addClass('hidden');
+
+                    if (xhr.status === 422) {
+                        const errors = xhr.responseJSON.errors;
+                        if (errors.name) {
+                            $('#reg-name').addClass('input-error');
+                            $('#error-reg-name').text(errors.name[0]).removeClass('hidden');
+                        }
+                        if (errors.email) {
+                            $('#reg-email').addClass('input-error');
+                            $('#error-reg-email').text(errors.email[0]).removeClass('hidden');
+                        }
+                        if (errors.password) {
+                            $('#reg-password').addClass('input-error');
+                            $('#error-reg-password').text(errors.password[0]).removeClass('hidden');
+                        }
+                    } else {
+                        errorMsg.text('Gagal mendaftar. Silakan coba lagi.');
+                        globalError.removeClass('hidden');
+                    }
+                }
+            });
+        });
+    </script>
+    {{-- Auto Open Login Modal jika ada session --}}
+    @if (session('open_modal'))
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                // Panggil fungsi buka modal yang sudah kita buat
+                openLoginModal();
+
+                // Opsional: Tampilkan pesan error di dalam modal jika ada
+                @if (session('error'))
+                    // Masukkan pesan ke dalam alert error di modal login
+                    $('#login-error-msg').text("{{ session('error') }}");
+                    $('#login-global-error').removeClass('hidden');
+                @endif
+            });
+        </script>
+    @endif
 
     @stack('scripts')
 </body>

@@ -16,64 +16,75 @@
         <!-- Menu -->
         <nav class="flex-1 px-3 py-6 space-y-2 overflow-y-auto">
             <!-- Dashboard -->
-            <a href="{{ route('dashboard-admin') }}" class="menu-item w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors {{ Route::is('dashboard-admin') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' }}">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Zm6 13V12h6v10" />
-                </svg>
-                <span>Dashboard</span>
-            </a>
-
-            <!-- Tabel (Parent Menu with Submenu) -->
-            <div>
-                <button id="tabel-toggle" class="parent-menu w-full flex items-center justify-between px-3 py-3 rounded-lg transition-colors {{ Route::is('shoes.*', 'category.*', 'shoes-size.*', 'shoes-variant.*', 'driver.index') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' }}">
-                    <div class="flex items-center gap-3">
-                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h18a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1m0 8h18a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1m5-4v12" />
-                        </svg>
-                        <span class="flex-1 text-left">Tabel</span>
-                    </div>
-                    <svg id="tabel-icon" class="w-4 h-4 transition-transform duration-300 ease-in-out flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 18 6-6-6-6" />
+            @if (auth()->user()->role === 'admin')
+                <a href="{{ route('dashboard-admin') }}" class="menu-item w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors {{ Route::is('dashboard-admin') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' }}">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Zm6 13V12h6v10" />
                     </svg>
-                </button>
+                    <span>Dashboard</span>
+                </a>
 
-                <!-- Submenu -->
-                <div id="tabel-submenu" class="ml-4 mt-1 space-y-1 overflow-hidden transition-all duration-300 ease-in-out" style="max-height: 0;">
-                    <a href="{{ route('driver.index') }}" class="submenu-item w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ Route::is('driver.index') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' }} text-sm">
-                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m7.5 4.27 9 5.15M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Zm-18-1 8.7 5 8.7-5M12 22V12" />
+                <!-- Tabel (Parent Menu with Submenu) -->
+                <div>
+                    <button id="tabel-toggle" class="parent-menu w-full flex items-center justify-between px-3 py-3 rounded-lg transition-colors {{ Route::is('shoes.*', 'category.*', 'shoes-size.*', 'shoes-variant.*', 'driver.index') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' }}">
+                        <div class="flex items-center gap-3">
+                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h18a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1m0 8h18a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1m5-4v12" />
+                            </svg>
+                            <span class="flex-1 text-left">Tabel</span>
+                        </div>
+                        <svg id="tabel-icon" class="w-4 h-4 transition-transform duration-300 ease-in-out flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 18 6-6-6-6" />
                         </svg>
-                        <span>Driver</span>
-                    </a>
-                    <a href="{{ route('shoes.index') }}" class="submenu-item w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ Route::is('shoes.*') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' }} text-sm">
-                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m7.5 4.27 9 5.15M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Zm-18-1 8.7 5 8.7-5M12 22V12" />
-                        </svg>
-                        <span>Sepatu</span>
-                    </a>
-                    <a href="{{ route('category.index') }}" class="submenu-item w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ Route::is('category.*') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' }} text-sm">
-                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <rect width="7" height="7" x="3" y="3" rx="1" />
-                            <rect width="7" height="7" x="14" y="3" rx="1" />
-                            <rect width="7" height="7" x="14" y="14" rx="1" />
-                            <rect width="7" height="7" x="3" y="14" rx="1" />
-                        </svg>
-                        <span>Kategori</span>
-                    </a>
-                    <a href="{{ route('shoes-variant.index') }}" class="submenu-item w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ Route::is('shoes-variant.*') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' }} text-sm">
-                        <svg class="w-4 h-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                            <path fill="#000000" d="M9 7h2l1 2.5L13 7h2l-2 5l2 5h-2l-1-2.5l-1 2.5H9l2-5zm7 0h2v8h4v2h-6zm-8 8c0 1.11-.89 2-2 2H2v-2h4v-2H4v-2h2V9H2V7h4a2 2 0 0 1 2 2v1.5c0 .83-.67 1.5-1.5 1.5c.83 0 1.5.67 1.5 1.5z" />
-                        </svg>
-                        <span>Varian Sepatu</span>
-                    </a>
-                    <a href="{{ route('transaction.index') }}" class="submenu-item w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-gray-600 hover:bg-gray-50 text-sm">
-                        <svg class="w-4 h-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 24 24">
-                            <path fill="#000000" d="M20 2H10a3 3 0 0 0-3 3v7a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V5a3 3 0 0 0-3-3Zm1 10a1 1 0 0 1-1 1H10a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1Zm-3.5-4a1.49 1.49 0 0 0-1 .39a1.5 1.5 0 1 0 0 2.22a1.5 1.5 0 1 0 1-2.61ZM16 17a1 1 0 0 0-1 1v1a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-4h1a1 1 0 0 0 0-2H3v-1a1 1 0 0 1 1-1a1 1 0 0 0 0-2a3 3 0 0 0-3 3v7a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-1a1 1 0 0 0-1-1ZM6 18h1a1 1 0 0 0 0-2H6a1 1 0 0 0 0 2Z" />
-                        </svg>
-                        <span>Transaksi</span>
-                    </a>
+                    </button>
+
+                    <!-- Submenu -->
+                    <div id="tabel-submenu" class="ml-4 mt-1 space-y-1 overflow-hidden transition-all duration-300 ease-in-out" style="max-height: 0;">
+                        <a href="{{ route('driver.index') }}" class="submenu-item w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ Route::is('driver.index') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' }} text-sm">
+                            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m7.5 4.27 9 5.15M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Zm-18-1 8.7 5 8.7-5M12 22V12" />
+                            </svg>
+                            <span>Driver</span>
+                        </a>
+                        <a href="{{ route('shoes.index') }}" class="submenu-item w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ Route::is('shoes.*') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' }} text-sm">
+                            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m7.5 4.27 9 5.15M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Zm-18-1 8.7 5 8.7-5M12 22V12" />
+                            </svg>
+                            <span>Sepatu</span>
+                        </a>
+                        <a href="{{ route('category.index') }}" class="submenu-item w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ Route::is('category.*') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' }} text-sm">
+                            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <rect width="7" height="7" x="3" y="3" rx="1" />
+                                <rect width="7" height="7" x="14" y="3" rx="1" />
+                                <rect width="7" height="7" x="14" y="14" rx="1" />
+                                <rect width="7" height="7" x="3" y="14" rx="1" />
+                            </svg>
+                            <span>Kategori</span>
+                        </a>
+                        <a href="{{ route('shoes-variant.index') }}" class="submenu-item w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ Route::is('shoes-variant.*') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' }} text-sm">
+                            <svg class="w-4 h-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                <path fill="#000000" d="M9 7h2l1 2.5L13 7h2l-2 5l2 5h-2l-1-2.5l-1 2.5H9l2-5zm7 0h2v8h4v2h-6zm-8 8c0 1.11-.89 2-2 2H2v-2h4v-2H4v-2h2V9H2V7h4a2 2 0 0 1 2 2v1.5c0 .83-.67 1.5-1.5 1.5c.83 0 1.5.67 1.5 1.5z" />
+                            </svg>
+                            <span>Varian Sepatu</span>
+                        </a>
+                        <a href="{{ route('transaction.index') }}" class="submenu-item w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-gray-600 hover:bg-gray-50 text-sm">
+                            <svg class="w-4 h-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 24 24">
+                                <path fill="#000000" d="M20 2H10a3 3 0 0 0-3 3v7a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V5a3 3 0 0 0-3-3Zm1 10a1 1 0 0 1-1 1H10a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1Zm-3.5-4a1.49 1.49 0 0 0-1 .39a1.5 1.5 0 1 0 0 2.22a1.5 1.5 0 1 0 1-2.61ZM16 17a1 1 0 0 0-1 1v1a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-4h1a1 1 0 0 0 0-2H3v-1a1 1 0 0 1 1-1a1 1 0 0 0 0-2a3 3 0 0 0-3 3v7a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-1a1 1 0 0 0-1-1ZM6 18h1a1 1 0 0 0 0-2H6a1 1 0 0 0 0 2Z" />
+                            </svg>
+                            <span>Transaksi</span>
+                        </a>
+                    </div>
                 </div>
-            </div>
+            @endif
+
+            @if (auth()->user()->role === 'driver')
+                <a href="{{ route('dashboard-driver') }}" class="menu-item w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors {{ Route::is('dashboard-driver') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' }}">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Zm6 13V12h6v10" />
+                    </svg>
+                    <span>Dashboard</span>
+                </a>
+            @endif
 
             <!-- Settings -->
             <button data-page="settings" class="menu-item w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors text-gray-600 hover:bg-gray-50">
@@ -84,12 +95,16 @@
                 <span>Settings</span>
             </button>
 
-            <a href="{{ route('landing-page') }}" class="menu-item w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Zm6 13V12h6v10" />
-                </svg>
-                <span>Keluar</span>
-            </a>
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit" class="menu-item w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors text-left hover:bg-red-50 hover:text-red-600">
+                    {{-- Ikon Logout (Pintu Keluar) --}}
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                    </svg>
+                    <span>Keluar</span>
+                </button>
+            </form>
         </nav>
     </div>
 </aside>
