@@ -12,7 +12,8 @@ use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 
 // Landing page (before login)
-Route::get('/', [HomeController::class, 'index'])->name('landing-page');
+Route::get('/shoecycle', [HomeController::class, 'index'])->name('landing-page');
+Route::get('/shoecycle/{slug}', [HomeController::class, 'detailShoes'])->name('detail-shoes');
 
 // Authentication routes
 Route::get('/login', [AuthController::class, 'login'])->name('login');

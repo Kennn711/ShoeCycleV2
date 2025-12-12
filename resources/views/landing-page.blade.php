@@ -206,7 +206,7 @@
                                 </div>
 
                                 {{-- Kanan: Button Lihat (Dipindah kesini) --}}
-                                <a href="#" class="btn btn-sm rounded-full bg-blue-500 hover:bg-blue-600 text-white border-none px-4 font-normal shadow-sm transition-colors duration-300">
+                                <a href="{{ route('detail-shoes', $shoe->slug) }}" class="btn btn-sm rounded-full bg-blue-500 hover:bg-blue-600 text-white border-none px-4 font-normal shadow-sm transition-colors duration-300">
                                     Lihat Selengkapnya
                                 </a>
                             </div>
@@ -348,8 +348,6 @@
             {{-- Contact Support --}}
             <div class="mt-12 text-center" data-aos="fade-up">
                 <p class="text-gray-600 mb-4">Masih ada pertanyaan lain?</p>
-
-                {{-- TOMBOL YANG DIPERBAIKI --}}
                 <a href="https://wa.me/6285162698173?text=Halo,%20saya%20ingin%20bertanya" target="_blank" class="inline-flex items-center gap-3 px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-600/30 group">
                     <svg class="w-6 h-6 transition-transform" fill="currentColor" viewBox="0 0 24 24">
                         <path

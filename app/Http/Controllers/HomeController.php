@@ -50,10 +50,63 @@ class HomeController extends Controller
         return view('landing-page', compact('categories', 'newArrivals', 'brands'));
     }
 
-    public function detailShoes($id)
+    public function detailShoes($slug)
     {
-        $shoes = Shoes::with(['category', 'variants.images'])->findOrFail($id);
+        // 1. Ambil data sepatu berdasarkan Slug
+        // Eager load: Kategori, Varian, dan Gambar Varian
+        $shoe = Shoes::with(['category', 'variants.images' => function ($q) {
+            $q->orderBy('order', 'asc');
+        }])
+            ->where('slug', $slug)
+            ->where('is_active', true)
+            ->firstOrFail();
 
-        return view('customer.detail-shoes', compact('shoes'));
+        // 2. Siapkan Data Varian untuk Frontend (Grouping)
+        // Kita butuh list warna unik dan ukuran unik untuk ditampilkan di tombol
+        $uniqueColors = $shoe->variants->unique('color')->values();
+
+        // Kita juga butuh mapping data lengkap (Stok, Harga, Gambar) per kombinasi Warna & Ukuran
+        // Format: [ "Hitam_42" => { price: 500000, stock: 5, images: [...] } ]
+        $variantMap = [];
+        $availableSizesPerColor = [];
+
+        foreach ($shoe->variants as $variant) {
+            $key = $variant->color . '_' . $variant->size; // Key kombinasi
+
+            // Simpan data detail per varian
+            $variantMap[$key] = [
+                'id' => $variant->id,
+                'price' => $variant->price,
+                'stock' => $variant->stock,
+                'sku' => $variant->sku,
+                'formatted_price' => 'Rp ' . number_format($variant->price, 0, ',', '.'),
+                'is_available' => $variant->is_available && $variant->stock > 0,
+                'images' => $variant->images->map(function ($img) {
+                    return asset('storage/' . $img->image_path);
+                })
+            ];
+
+            // Grouping Size berdasarkan Warna (agar user tahu size mana yang ready untuk warna tertentu)
+            $availableSizesPerColor[$variant->color][] = $variant->size;
+        }
+
+        // Ambil range harga awal untuk tampilan default
+        $minPrice = $shoe->variants->min('price');
+        $maxPrice = $shoe->variants->max('price');
+        $priceRange = ($minPrice == $maxPrice)
+            ? 'Rp ' . number_format($minPrice, 0, ',', '.')
+            : 'Rp ' . number_format($minPrice, 0, ',', '.') . ' - Rp ' . number_format($maxPrice, 0, ',', '.');
+
+        // Ambil gambar default (dari varian pertama) untuk tampilan awal
+        $defaultImages = $shoe->variants->first() ? $shoe->variants->first()->images : collect([]);
+
+        return view('customer.detail-shoes', compact(
+            'shoe',
+            'uniqueColors',
+            'variantMap',
+            'priceRange',
+            'availableSizesPerColor',
+            'defaultImages'
+        ));
     }
 }

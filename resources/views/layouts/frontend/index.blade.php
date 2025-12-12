@@ -147,7 +147,7 @@
                                 <span class="badge badge-sm bg-blue-600 text-white border-none indicator-item">0</span>
                             </div>
                         </div>
-                        <div tabindex="0" class="dropdown-content mt-3 z-[1] card card-compact w-72 bg-white shadow-xl border border-gray-100 rounded-xl">
+                        <div tabindex="0" class="dropdown-content mt-3 z-1 card card-compact w-72 bg-white shadow-xl border border-gray-100 rounded-xl">
                             <div class="card-body">
                                 <div class="flex items-center justify-between mb-3">
                                     <span class="font-bold text-lg">Keranjang</span>
@@ -170,7 +170,7 @@
                                     <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=2563eb&color=fff&bold=true" alt="{{ Auth::user()->name }}" />
                                 </div>
                             </div>
-                            <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow-xl bg-white rounded-xl w-56 border border-gray-100">
+                            <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-1 p-2 shadow-xl bg-white rounded-xl w-56 border border-gray-100">
                                 <li class="menu-title px-4 py-2">
                                     <span class="text-xs text-gray-500">Hai, {{ Auth::user()->name }}</span>
                                 </li>
@@ -336,9 +336,7 @@
         </div>
     </footer>
 
-    {{-- ========================================================= --}}
-    {{-- SCRIPTS                                                   --}}
-    {{-- ========================================================= --}}
+    <script src="{{ asset('assets/vendor/jquery/jquery.min.js') }}"></script>
     <script src="{{ asset('assets/vendor/aos/aos.js') }}"></script>
     <script>
         // Init AOS
