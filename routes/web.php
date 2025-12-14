@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DriverController;
@@ -19,6 +20,9 @@ Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/register', [AuthController::class, 'register'])->name('register');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
+Route::middleware(['auth', 'customer'])->group(function () {
+    Route::get('cart', [CartController::class, 'index'])->name('cart.index');
+});
 
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/dashboard-admin', [DashboardController::class, 'admin'])->name('dashboard-admin');

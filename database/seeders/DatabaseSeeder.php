@@ -257,6 +257,14 @@ class DatabaseSeeder extends Seeder
             'email_verified_at' => now()
         ]);
 
+        User::create([
+            'name' => "Customer",
+            'role' => 'customer',
+            'email' => "customer@gmail.com",
+            'password' => Hash::make('12345678'),
+            'email_verified_at' => now()
+        ]);
+
         // Seed Shoes Variant
         $colors = ['Black', 'White', 'Red', 'Navy', 'Grey', 'Green'];
         $sizes = [39, 40, 41, 42, 43, 44];

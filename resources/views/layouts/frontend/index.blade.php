@@ -157,7 +157,7 @@
                                     <i class="fas fa-shopping-bag text-4xl text-gray-300 mb-3"></i>
                                     <p class="text-sm text-gray-500">Keranjang masih kosong</p>
                                 </div>
-                                <button class="btn btn-primary btn-sm rounded-lg text-white">Mulai Belanja</button>
+                                <a href="{{ route('cart.index') }}" class="btn btn-primary btn-sm rounded-lg text-white">Mulai Belanja</a>
                             </div>
                         </div>
                     </div>
