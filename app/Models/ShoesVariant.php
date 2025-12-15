@@ -42,7 +42,7 @@ class ShoesVariant extends Model
     }
 
     // Relationship: Variant belongs to 1 shoe
-    public function shoes()
+    public function shoe()
     {
         return $this->belongsTo(Shoes::class);
     }

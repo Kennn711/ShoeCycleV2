@@ -109,7 +109,7 @@
 
                     {{-- Desktop Navigation --}}
                     <div class="hidden lg:flex items-center gap-1">
-                        <a href="{{ url('/') }}" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
+                        <a href="{{ route('landing-page') }}" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
                             Beranda
                         </a>
                         <div class="dropdown dropdown-hover">

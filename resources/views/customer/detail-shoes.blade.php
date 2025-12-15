@@ -123,7 +123,7 @@
                                 </div>
 
                                 {{-- Main Buttons --}}
-                                <button id="btn-buy-now" class="btn bg-blue-600 hover:bg-blue-700 text-white border-none flex-1 h-12 text-base rounded-xl shadow-lg shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all" disabled>
+                                <button id="btn-add-to-cart" class="btn bg-blue-600 hover:bg-blue-700 text-white border-none flex-1 h-12 text-base rounded-xl shadow-lg shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all" disabled>
                                     <i class="fas fa-shopping-bag mr-2"></i> Masukkan Keranjang
                                 </button>
                             </div>
@@ -430,8 +430,65 @@
 
         // --- 8. ADD TO CART ACTION ---
         $('#btn-add-to-cart').click(function() {
-            // Logic AJAX Add to Cart disini nanti
-            alert(`Menambahkan ke keranjang:\nSepatu: {{ $shoe->name }}\nWarna: ${selectedColor}\nUkuran: ${selectedSize}\nQty: ${$('#qty-input').val()}`);
+
+            // --- VALIDASI LOGIN (Blade Directive) ---
+            // Kita inject status login dari server ke variabel JS
+            const isLoggedIn = {{ Auth::check() ? 'true' : 'false' }};
+
+            if (!isLoggedIn) {
+                // Jika belum login, buka modal dan hentikan proses
+                openLoginModal();
+                // Opsional: Tampilkan pesan di modal agar user tau kenapa dia disuruh login
+                $('#login-error-msg').text("Silakan login untuk belanja.").parent().removeClass('hidden');
+                return;
+            }
+
+            // --- JIKA SUDAH LOGIN, LANJUT PROSES ---
+            const btn = $(this);
+            const originalText = btn.html();
+
+            // 1. Validasi Client Side (Warna & Ukuran)
+            if (!selectedColor || !selectedSize) {
+                alert('Pilih warna dan ukuran dulu'); // Atau pakai toast
+                return;
+            }
+
+            // 2. Loading State
+            btn.prop('disabled', true).html('<span class="loading loading-spinner loading-xs"></span> Menyimpan...');
+
+            // 3. AJAX Request
+            $.ajax({
+                url: "{{ route('cart.store') }}",
+                method: "POST",
+                data: {
+                    _token: "{{ csrf_token() }}",
+                    shoe_slug: "{{ $shoe->slug }}", // Pastikan slug dikirim
+                    color: selectedColor,
+                    size: selectedSize,
+                    qty: $('#qty-input').val()
+                },
+                success: function(response) {
+                    // Balikkan tombol
+                    btn.prop('disabled', false).html(originalText);
+
+                    if (response.status === 'success') {
+                        // Tampilkan Notifikasi Sukses (Bisa ganti SweetAlert nanti)
+                        alert(response.message);
+
+                        // Update Badge Cart di Navbar (Cari elemen badge di navbar Anda)
+                        $('.badge-cart-count').text(response.cart_count); // Pastikan class badge di navbar sesuai
+                    }
+                },
+                error: function(xhr) {
+                    btn.prop('disabled', false).html(originalText);
+
+                    let msg = 'Terjadi kesalahan.';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        msg = xhr.responseJSON.message;
+                    }
+                    alert(msg);
+                }
+            });
         });
     </script>
 @endpush
