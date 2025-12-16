@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\HomeController;
@@ -21,10 +22,12 @@ Route::post('/register', [AuthController::class, 'register'])->name('register');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::middleware(['auth', 'customer'])->group(function () {
-    Route::get('cart', [CartController::class, 'index'])->name('cart.index');
+    Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
     Route::post('/cart/store', [CartController::class, 'addToCart'])->name('cart.store');
     Route::put('/cart/{id}', [CartController::class, 'updateQty'])->name('cart.update-qty');
     Route::delete('/cart/destroy/{id}', [CartController::class, 'destroy'])->name('cart.destroy');
+
+    Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
 });
 
 Route::middleware(['auth', 'admin'])->group(function () {

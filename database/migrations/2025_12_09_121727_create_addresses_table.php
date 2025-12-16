@@ -19,7 +19,7 @@ return new class extends Migration
 
             // Informasi Alamat Fisik
             $table->enum('label', ['Home', 'Office', 'Apartment', 'Boarding House', 'Other']); // label_alamat (Rumah, Kantor, dll)
-            $table->text('full_address');           // alamat_lengkap (Jalan, RT/RW, No. Rumah)
+            $table->text('full_address');           // alamat   _lengkap (Jalan, RT/RW, No. Rumah)
             $table->string('district');         // Kecamatan (PENTING: Magersari, Kranggan, Prajurit Kulon, dll)
             $table->string('village')->nullable(); // Kelurahan/Desa
 

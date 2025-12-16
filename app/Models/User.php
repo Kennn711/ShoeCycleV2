@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\Address;
 
 class User extends Authenticatable
 {
@@ -35,11 +36,6 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    public function addresses()
-    {
-        return $this->hasMany(Address::class);
-    }
-
     /**
      * Get the attributes that should be cast.
      *
@@ -51,5 +47,16 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function addresses()
+    {
+        return $this->hasMany(Address::class);
+    }
+
+    // Mengambil satu alamat utama (Helper)
+    public function primaryAddress()
+    {
+        return $this->hasOne(Address::class)->where('is_primary', true);
     }
 }

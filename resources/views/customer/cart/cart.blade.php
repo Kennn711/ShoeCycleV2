@@ -1,11 +1,11 @@
 @extends('layouts/frontend/index')
-@section('title', 'Keranjang Belanja | ShoeCycle')
+@section('title', 'Keranjang | ShoeCycle')
 
 @section('frontend-content')
     <section class="py-10 bg-slate-50 min-h-[80vh]">
         <div class="container mx-auto px-4">
 
-            <h1 class="text-3xl font-bold text-gray-900 font-heading mb-8">Keranjang Belanja</h1>
+            <h1 class="text-3xl font-bold text-gray-900 font-heading mb-8">Keranjang</h1>
 
             @if ($cartItems->count() > 0)
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -44,7 +44,7 @@
                                 <div class="flex gap-4 sm:gap-6">
                                     {{-- Checkbox --}}
                                     <div class="flex items-center">
-                                        <input type="checkbox" class="checkbox checkbox-primary checkbox-sm rounded-md item-checkbox" data-price="{{ $item->variant->price * $item->quantity }}" checked {{ $isOutOfStock ? 'disabled' : '' }} />
+                                        <input type="checkbox" class="checkbox checkbox-primary checkbox-sm rounded-md item-checkbox" data-unit-price="{{ $item->variant->price }}" checked {{ $isOutOfStock ? 'disabled' : '' }} />
                                     </div>
 
                                     {{-- Image --}}
@@ -108,7 +108,7 @@
                     <div class="lg:col-span-4">
                         <div class="sticky top-24 space-y-4">
                             <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-lg shadow-blue-100/50">
-                                <h3 class="font-bold text-lg text-gray-900 mb-4">Ringkasan Belanja</h3>
+                                <h3 class="font-bold text-lg text-gray-900 mb-4">Ringkasan</h3>
 
                                 <div class="flex justify-between items-center mb-6">
                                     <span class="font-bold text-lg text-gray-900">Total Belanja</span>
@@ -117,9 +117,10 @@
                                     </span>
                                 </div>
 
-                                <button class="btn btn-primary w-full rounded-xl text-white font-bold h-12 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:-translate-y-0.5 transition-all">
+                                {{-- SESUDAHNYA (ANCHOR LINK) --}}
+                                <a href="{{ route('checkout.index') }}" class="btn btn-primary w-full rounded-xl text-white font-bold h-12 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:-translate-y-0.5 transition-all">
                                     Beli (<span id="total-items-count">{{ $cartItems->count() }}</span>)
-                                </button>
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -144,18 +145,74 @@
     <script>
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-        // --- 1. UPDATE QUANTITY ---
+        // --- 1. FUNGSI HITUNG TOTAL (DIPERBAIKI) ---
+        function calculateTotal() {
+            let total = 0;
+            let count = 0;
+
+            document.querySelectorAll('.item-checkbox:checked').forEach(checkbox => {
+                // 1. Ambil row elemen parent
+                const row = checkbox.closest('.cart-item-row');
+
+                // 2. Ambil Harga Satuan dari atribut data-unit-price (LEBIH AMAN)
+                // Pastikan diparsing ke Float/Int agar tidak dianggap string
+                const unitPrice = parseFloat(checkbox.getAttribute('data-unit-price')) || 0;
+
+                // 3. Ambil Quantity dari input number
+                const qtyInput = row.querySelector('input[type="number"]');
+                const qty = parseInt(qtyInput.value) || 0;
+
+                // 4. Hitung
+                total += unitPrice * qty;
+                count++;
+            });
+
+            // Update UI
+            document.getElementById('grand-total-display').innerText = 'Rp ' + new Intl.NumberFormat('id-ID').format(total);
+            document.getElementById('total-items-count').innerText = count;
+
+            // Disable tombol beli jika tidak ada yang dipilih
+            const btnBuy = document.querySelector('.btn-primary.w-full'); // Selector disesuaikan agar kena tombol yg benar
+            if (count === 0) {
+                btnBuy.disabled = true;
+                btnBuy.classList.add('cursor-not-allowed', 'bg-blue-400');
+            } else {
+                btnBuy.disabled = false;
+                btnBuy.classList.remove('cursor-not-allowed', 'bg-blue-400');
+            }
+        }
+
+        // Event Listener untuk Checkbox Satuan
+        document.querySelectorAll('.item-checkbox').forEach(cb => {
+            cb.addEventListener('change', calculateTotal);
+        });
+
+        // Event Listener Check All
+        const checkAll = document.getElementById('check-all');
+        if (checkAll) {
+            checkAll.addEventListener('change', function() {
+                const checkboxes = document.querySelectorAll('.item-checkbox');
+                checkboxes.forEach(cb => {
+                    if (!cb.disabled) cb.checked = this.checked;
+                });
+                calculateTotal();
+            });
+        }
+
+        // Panggil saat load pertama kali
+        calculateTotal();
+
+
+        // --- 2. UPDATE QTY (MODIFIED) ---
         function updateCartQty(id, change) {
             const input = document.getElementById(`qty-${id}`);
             let currentQty = parseInt(input.value);
             let newQty = currentQty + change;
 
-            if (newQty < 1) return; // Minimal 1
+            if (newQty < 1) return;
 
-            // Optimistic UI Update (Update tampilan dulu biar cepet)
-            input.value = newQty;
+            input.value = newQty; // Optimistic UI
 
-            // AJAX Request
             fetch(`/cart/${id}`, {
                     method: 'PUT',
                     headers: {
@@ -169,21 +226,47 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'success') {
-                        // Update Grand Total
-                        document.getElementById('grand-total-display').innerText = data.grand_total;
+                        // PENTING: Update Total Lokal juga setelah sukses
+                        calculateTotal();
                     } else {
-                        // Revert jika gagal (misal stok habis)
-                        input.value = currentQty; // Kembalikan nilai lama
-                        if (data.reset_qty) input.value = data.reset_qty; // Atau set ke max stok
+                        input.value = currentQty;
+                        if (data.reset_qty) input.value = data.reset_qty;
                         alert(data.message);
+                        calculateTotal();
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
                     input.value = currentQty;
-                    alert('Terjadi kesalahan koneksi.');
+                    calculateTotal();
                 });
         }
+
+        // --- 3. PROSES CHECKOUT (YANG DIPILIH SAJA) ---
+        function proceedToCheckout() {
+            const selectedIds = [];
+            document.querySelectorAll('.item-checkbox:checked').forEach(cb => {
+                // Kita butuh ID Cart dari row ID
+                const rowId = cb.closest('.cart-item-row').id.replace('cart-row-', '');
+                selectedIds.push(rowId);
+            });
+
+            if (selectedIds.length === 0) {
+                alert('Pilih minimal 1 barang untuk dibeli.');
+                return;
+            }
+
+            // Kirim ID yang dipilih ke Checkout Controller
+            // Cara paling aman: Redirect dengan query param atau POST form
+            // Kita pakai Query Param sederhana: /checkout?items=1,2,3
+            window.location.href = "{{ route('checkout.index') }}?items=" + selectedIds.join(',');
+        }
+
+        // Bind tombol beli ke fungsi baru ini
+        document.querySelector('.btn-primary.w-full').addEventListener('click', proceedToCheckout);
+
+        // Hapus href di tombol beli (jika masih <a>) agar tidak langsung pindah
+        document.querySelector('.btn-primary.w-full').removeAttribute('href');
 
         // --- 2. DELETE ITEM ---
         function deleteCartItem(id) {
@@ -217,18 +300,6 @@
                         alert('Gagal menghapus item.');
                     }
                 });
-        }
-
-        // --- 3. CHECK ALL LOGIC ---
-        // (Logic visual saja untuk saat ini, idealnya update total di JS juga)
-        const checkAll = document.getElementById('check-all');
-        if (checkAll) {
-            checkAll.addEventListener('change', function() {
-                const checkboxes = document.querySelectorAll('.item-checkbox');
-                checkboxes.forEach(cb => {
-                    if (!cb.disabled) cb.checked = this.checked;
-                });
-            });
         }
     </script>
 @endpush
