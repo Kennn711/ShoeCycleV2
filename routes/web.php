@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AddressController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
@@ -7,7 +8,6 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\HomeController;
-use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\ShoesController;
 use App\Http\Controllers\ShoesVariantController;
 use App\Http\Controllers\TransactionController;
@@ -28,6 +28,8 @@ Route::middleware(['auth', 'customer'])->group(function () {
     Route::delete('/cart/destroy/{id}', [CartController::class, 'destroy'])->name('cart.destroy');
 
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
+
+    Route::post('/address/store', [AddressController::class, 'store'])->name('address.store');
 });
 
 Route::middleware(['auth', 'admin'])->group(function () {

@@ -34,11 +34,12 @@ class CheckoutController extends Controller
 
         $adminFee = 1000;
 
-        // 2. AMBIL ALAMAT USER (UPDATED)
         $user = Auth::user();
+        // Get ALL user addresses for the "Address List" modal
+        $userAddresses = $user->addresses()->orderBy('is_primary', 'desc')->get();
 
-        // Cari alamat utama, jika tidak ada ambil alamat terakhir dibuat
-        $address = $user->primaryAddress ?? $user->addresses()->latest()->first();
+        // Get the selected address (primary or fallback)
+        $address = $user->primaryAddress ?? $userAddresses->first();
 
         // 3. Konfigurasi Toko (Tetap sama)
         $storeConfig = [
@@ -53,6 +54,7 @@ class CheckoutController extends Controller
             'subtotal',
             'adminFee',
             'address', // Ini sekarang objek model Address, bukan string/null
+            'userAddresses',
             'user',
             'storeConfig'
         ));
