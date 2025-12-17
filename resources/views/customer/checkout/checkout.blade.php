@@ -468,7 +468,7 @@
                             <input type="hidden" name="latitude" id="form-lat">
                             <input type="hidden" name="longitude" id="form-lng">
 
-                            {{-- Label Alamat (Radio Button Group) --}}
+                            {{-- Label Alamat --}}
                             <div class="form-control w-full">
                                 <label class="label pt-0 pb-2"><span class="label-text font-bold text-gray-700">Simpan Sebagai</span></label>
                                 <div class="flex flex-wrap gap-2 w-full">
@@ -481,38 +481,43 @@
                                 </div>
                             </div>
 
-                            {{-- Alamat Lengkap (Full Width & Row Limit) --}}
-                            <div class="form-control w-full">
-                                <label class="label pb-1"><span class="label-text font-bold text-gray-700">Alamat Lengkap</span></label>
-                                {{-- rows="3" membatasi tinggi sekitar 3-4 baris. w-full membuatnya lebar penuh --}}
-                                <textarea name="full_address" class="textarea textarea-bordered w-full rounded-xl focus:border-blue-500 text-base leading-relaxed" rows="3" placeholder="Nama Jalan, Nomor Rumah, RT/RW, Blok..." style="resize: none"></textarea>
+                            {{-- Alamat Lengkap --}}
+                            <div class="form-control w-full group">
+                                <label class="label pb-1"><span class="label-text font-bold text-gray-700">Alamat Lengkap <span class="text-red-500">*</span></span></label>
+                                <textarea name="full_address" class="textarea textarea-bordered w-full rounded-xl focus:border-blue-500 text-base leading-relaxed" rows="3" placeholder="Nama Jalan, Nomor Rumah, RT/RW, Blok..."></textarea>
+                                {{-- Error Message Container --}}
+                                <span class="error-text text-xs text-red-500 mt-1 hidden">Alamat wajib diisi minimal 10 karakter.</span>
                             </div>
 
-                            {{-- Penerima & Kontak (Grid 2 Kolom) --}}
+                            {{-- Penerima & Kontak --}}
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-                                <div class="form-control w-full">
-                                    <label class="label pb-1"><span class="label-text font-bold text-gray-700">Nama Penerima</span></label>
+                                <div class="form-control w-full group">
+                                    <label class="label pb-1"><span class="label-text font-bold text-gray-700">Nama Penerima <span class="text-red-500">*</span></span></label>
                                     <input type="text" name="recipient_name" class="input input-bordered w-full rounded-xl focus:border-blue-500" value="{{ Auth::user()->name }}">
+                                    <span class="error-text text-xs text-red-500 mt-1 hidden">Nama penerima wajib diisi.</span>
                                 </div>
-                                <div class="form-control w-full">
-                                    <label class="label pb-1"><span class="label-text font-bold text-gray-700">Nomor HP</span></label>
-                                    <input type="text" name="phone_number" class="input input-bordered w-full rounded-xl focus:border-blue-500" value="{{ Auth::user()->phone ?? '' }}" placeholder="Contoh: 081234567891">
+                                <div class="form-control w-full group">
+                                    <label class="label pb-1"><span class="label-text font-bold text-gray-700">Nomor HP <span class="text-red-500">*</span></span></label>
+                                    <input type="text" name="phone_number" class="input input-bordered w-full rounded-xl focus:border-blue-500" value="{{ Auth::user()->phone ?? '' }}" placeholder="08xxxxxxxxxx">
+                                    <span class="error-text text-xs text-red-500 mt-1 hidden">Format nomor HP tidak valid (10-15 angka).</span>
                                 </div>
                             </div>
 
-                            {{-- Detail Wilayah (Grid 2 Kolom) --}}
+                            {{-- Wilayah --}}
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-                                <div class="form-control w-full">
-                                    <label class="label pb-1"><span class="label-text font-bold text-gray-700">Kecamatan</span></label>
+                                <div class="form-control w-full group">
+                                    <label class="label pb-1"><span class="label-text font-bold text-gray-700">Kecamatan <span class="text-red-500">*</span></span></label>
                                     <input type="text" name="district" class="input input-bordered w-full rounded-xl focus:border-blue-500" placeholder="Contoh: Magersari">
+                                    <span class="error-text text-xs text-red-500 mt-1 hidden">Kecamatan wajib diisi.</span>
                                 </div>
-                                <div class="form-control w-full">
-                                    <label class="label pb-1"><span class="label-text font-bold text-gray-700">Desa / Kelurahan</span></label>
+                                <div class="form-control w-full group">
+                                    <label class="label pb-1"><span class="label-text font-bold text-gray-700">Desa / Kelurahan <span class="text-red-500">*</span></span></label>
                                     <input type="text" name="village" class="input input-bordered w-full rounded-xl focus:border-blue-500" placeholder="Contoh: Meri">
+                                    <span class="error-text text-xs text-red-500 mt-1 hidden">Desa wajib diisi.</span>
                                 </div>
                             </div>
 
-                            {{-- Catatan Kurir --}}
+                            {{-- Catatan --}}
                             <div class="form-control w-full">
                                 <label class="label pb-1">
                                     <span class="label-text font-bold text-gray-700">Catatan Kurir <span class="font-normal text-gray-400 text-xs ml-1">(Opsional)</span></span>
@@ -520,7 +525,7 @@
                                 <input type="text" name="courier_note" class="input input-bordered w-full rounded-xl focus:border-blue-500" placeholder="Warna pagar, titip di pos satpam, dll.">
                             </div>
 
-                            {{-- Toggle Primary --}}
+                            {{-- Primary Toggle --}}
                             <div class="form-control w-full bg-gray-50 p-3 rounded-xl border border-gray-100">
                                 <label class="label cursor-pointer justify-start gap-3 p-0">
                                     <input type="checkbox" name="is_primary" class="checkbox checkbox-primary checkbox-sm rounded" checked>
@@ -535,7 +540,8 @@
 
                     {{-- Sticky Modal Footer --}}
                     <div class="p-4 border-t border-gray-100 bg-white z-10 w-full">
-                        <button type="button" onclick="submitNewAddress()" class="btn btn-primary w-full text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 text-lg normal-case h-12">
+                        <button type="button" id="btn-save-address" onclick="submitNewAddress()" class="btn btn-primary w-full text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 text-lg normal-case h-12 
+        disabled:bg-blue-400 disabled:border-blue-400 disabled:text-white disabled:opacity-50 disabled:shadow-none transition-all duration-200" disabled>
                             Simpan Alamat & Gunakan
                         </button>
                     </div>
@@ -728,60 +734,217 @@
             };
 
 
-            // --- 6. SUBMIT ADDRESS (AJAX jQuery) ---
+            // ==========================================
+            // 1. LIVE VALIDATION LOGIC
+            // ==========================================
+
+            // Definisi Aturan Validasi
+            const validationRules = {
+                recipient_name: {
+                    required: true,
+                    min: 3,
+                    msg: "Nama minimal 3 karakter."
+                },
+                phone_number: {
+                    required: true,
+                    regex: /^[0-9]{10,15}$/,
+                    msg: "Nomor HP harus angka (10-15 digit)."
+                },
+                full_address: {
+                    required: true,
+                    min: 10,
+                    msg: "Alamat terlalu pendek (min. 10 karakter)."
+                },
+                district: {
+                    required: true,
+                    min: 3,
+                    msg: "Kecamatan wajib diisi."
+                },
+                village: {
+                    required: true,
+                    min: 3,
+                    msg: "Desa/Kelurahan wajib diisi."
+                }
+            };
+
+            // Fungsi Validasi Satu Input
+            function validateField($input) {
+                let name = $input.attr('name');
+                let val = $input.val().trim();
+                let rule = validationRules[name];
+                let isValid = true;
+                let errorMsg = "";
+
+                if (!rule) return true; // Skip jika tidak ada rule (misal: catatan/label)
+
+                // Cek Rules
+                if (rule.required && val === "") {
+                    isValid = false;
+                    errorMsg = "Wajib diisi.";
+                } else if (rule.min && val.length < rule.min) {
+                    isValid = false;
+                    errorMsg = rule.msg;
+                } else if (rule.regex && !rule.regex.test(val)) {
+                    isValid = false;
+                    errorMsg = rule.msg;
+                }
+
+                // Update UI Input
+                let $errorText = $input.siblings('.error-text');
+
+                if (!isValid) {
+                    // STATE ERROR: Merah
+                    $input.addClass('input-error').removeClass('focus:border-blue-500');
+
+                    // Buat element error message jika belum ada
+                    if ($errorText.length === 0) {
+                        $input.after('<span class="error-text text-xs text-red-500 mt-1 block"></span>');
+                        $errorText = $input.siblings('.error-text');
+                    }
+                    $errorText.text(errorMsg).removeClass('hidden');
+                } else {
+                    // STATE SUCCESS: Kembali ke Default (Tidak Hijau)
+                    $input.removeClass('input-error').addClass('focus:border-blue-500');
+                    // Sembunyikan pesan error
+                    if ($errorText.length > 0) $errorText.addClass('hidden');
+                }
+
+                return isValid;
+            }
+
+            // Fungsi Cek Seluruh Form untuk Mengaktifkan Tombol
+            function checkFormValidity() {
+                let allValid = true;
+
+                $('#add-address-form input, #add-address-form textarea').each(function() {
+                    let name = $(this).attr('name');
+                    if (validationRules[name]) {
+                        let val = $(this).val().trim();
+                        let rule = validationRules[name];
+
+                        // Cek logic saja tanpa ubah UI (agar tidak merah semua saat belum disentuh)
+                        if (rule.required && val === "") allValid = false;
+                        else if (rule.min && val.length < rule.min) allValid = false;
+                        else if (rule.regex && !rule.regex.test(val)) allValid = false;
+                    }
+                });
+
+                // Update Tombol Submit State
+                if (allValid) {
+                    $('#btn-save-address').prop('disabled', false);
+                } else {
+                    $('#btn-save-address').prop('disabled', true);
+                }
+            }
+
+            // --- Event Listeners Validasi ---
+
+            // 1. Saat mengetik (Realtime feedback)
+            $('#add-address-form input, #add-address-form textarea').on('input', function() {
+                validateField($(this));
+                checkFormValidity();
+            });
+
+            // 2. Saat pindah kolom (Blur)
+            $('#add-address-form input, #add-address-form textarea').on('blur', function() {
+                validateField($(this));
+                checkFormValidity();
+            });
+
+            // 3. Reset Form & Validasi saat modal dibuka
+            window.resetValidationForm = function() {
+                $('#add-address-form')[0].reset();
+
+                // Reset style input ke default
+                $('#add-address-form input, #add-address-form textarea')
+                    .removeClass('input-error')
+                    .addClass('focus:border-blue-500');
+
+                // Sembunyikan semua error text
+                $('.error-text').addClass('hidden');
+
+                // Matikan tombol lagi
+                $('#btn-save-address').prop('disabled', true);
+            }
+
+            // Override fungsi buka modal agar melakukan reset
+            let originalOpenModal = window.openAddAddressModal;
+            window.openAddAddressModal = function() {
+                originalOpenModal();
+                if (window.resetValidationForm) window.resetValidationForm();
+            };
+
+
+            // ==========================================
+            // 2. AJAX SUBMIT ADDRESS
+            // ==========================================
 
             window.submitNewAddress = function() {
-                // 1. Isi hidden input latitude/longitude dari variabel global
+                // 1. Set Hidden Input Koordinat
                 $('#form-lat').val(selectedLat);
                 $('#form-lng').val(selectedLng);
 
-                // 2. Ambil data form
-                // Kita gunakan FormData object untuk menghandle input
+                // 2. Siapkan Data Form
                 let formElement = $('#add-address-form')[0];
                 let formData = new FormData(formElement);
 
-                // 3. Validasi Sederhana
-                if (!formData.get('full_address') || !formData.get('recipient_name')) {
-                    alert('Mohon lengkapi alamat lengkap dan nama penerima.');
-                    return;
-                }
-
-                // 4. Loading State Button
-                let $btnSubmit = $('#add_address_modal button.btn-primary'); // Tombol simpan
+                // 3. Setup UI Button (Loading)
+                let $btnSubmit = $('#btn-save-address');
                 let originalText = $btnSubmit.text();
-                $btnSubmit.text('Menyimpan...').prop('disabled', true);
 
-                // 5. AJAX Request (Simulasi / Real)
+                $btnSubmit.prop('disabled', true).html('<span class="loading loading-spinner loading-sm"></span> Menyimpan...');
 
-                // UNCOMMENT BAGIAN INI JIKA ROUTE SUDAH SIAP:
-                /*
+                // 4. Kirim Request AJAX
                 $.ajax({
-                    url: "{{ route('address.store') }}", // Pastikan route ini ada
+                    url: "{{ route('address.store') }}",
                     type: "POST",
                     data: formData,
                     processData: false, // Wajib false untuk FormData
                     contentType: false, // Wajib false untuk FormData
                     success: function(response) {
-                        alert('Alamat berhasil disimpan!');
-                        window.location.reload(); // Reload agar alamat baru ter-load
+                        if (response.status === 'success') {
+                            // Sukses: Tutup Modal & Reload
+                            $('#add_address_modal')[0].close();
+                            // alert('Alamat berhasil disimpan!'); // Opsional
+                            window.location.reload();
+                        }
                     },
                     error: function(xhr) {
-                        let msg = 'Terjadi kesalahan sistem.';
-                        if(xhr.responseJSON && xhr.responseJSON.message) {
-                            msg = xhr.responseJSON.message;
+                        // Error: Kembalikan tombol
+                        $btnSubmit.prop('disabled', false).text(originalText);
+
+                        if (xhr.status === 422) {
+                            // Error Validasi Laravel (Server-side)
+                            let errors = xhr.responseJSON.errors;
+
+                            // Loop error dan tampilkan di bawah input masing-masing
+                            $.each(errors, function(key, value) {
+                                let $input = $(`[name="${key}"]`);
+                                if ($input.length > 0) {
+                                    $input.addClass('input-error').removeClass('focus:border-blue-500');
+
+                                    let $errText = $input.siblings('.error-text');
+                                    if ($errText.length === 0) {
+                                        $input.after('<span class="error-text text-xs text-red-500 mt-1 block"></span>');
+                                        $errText = $input.siblings('.error-text');
+                                    }
+                                    $errText.text(value[0]).removeClass('hidden');
+                                }
+                            });
+
+                            // Alert umum
+                            alert('Mohon periksa kembali inputan Anda yang berwarna merah.');
+
+                        } else {
+                            // Error Server Lain (500, dll)
+                            let msg = 'Terjadi kesalahan sistem.';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                msg = xhr.responseJSON.message;
+                            }
+                            alert(msg);
                         }
-                        alert(msg);
-                        $btnSubmit.text(originalText).prop('disabled', false);
                     }
                 });
-                */
-
-                // --- SIMULASI SAJA (HAPUS JIKA SUDAH PAKAI AJAX DI ATAS) ---
-                console.log("Data Address:", Object.fromEntries(formData));
-                setTimeout(function() {
-                    alert(`[SIMULASI] Alamat tersimpan!\nLokasi: ${selectedLat}, ${selectedLng}\nKecamatan: ${formData.get('district')}`);
-                    window.location.reload();
-                }, 1000);
             };
 
 
