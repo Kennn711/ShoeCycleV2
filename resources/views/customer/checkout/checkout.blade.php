@@ -2,7 +2,9 @@
 @section('title', 'Checkout | ShoeCycle')
 
 @push('styles')
+    {{-- Leaflet CSS --}}
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
     <style>
         #map-container {
             height: 100%;
@@ -32,48 +34,36 @@
             flex: 1;
         }
 
-        /* GARIS PENGHUBUNG (LINE) */
         .stepper-item::after {
             content: '';
             position: absolute;
             top: 15px;
-            /* Tepat di tengah vertikal circle (30px / 2) */
             left: 50%;
-            /* Mulai dari tengah item ini */
             width: 100%;
-            /* Menjangkau sampai tengah item berikutnya */
             height: 3px;
             background-color: #e5e7eb;
-            /* Gray-200 (Default) */
             z-index: 0;
-            /* Di belakang lingkaran */
             transition: all 0.3s ease;
         }
 
-        /* Hilangkan garis pada item terakhir */
         .stepper-item:last-child::after {
             content: none;
         }
 
-        /* LINGKARAN ANGKA (CIRCLE) */
         .stepper-circle {
             width: 30px;
             height: 30px;
             border-radius: 50%;
             background-color: white;
-            /* WAJIB ADA: Untuk menutupi garis di belakangnya */
             border: 2px solid #d1d5db;
-            /* Gray-300 */
             display: flex;
             justify-content: center;
             align-items: center;
             font-weight: bold;
             font-size: 14px;
             color: #9ca3af;
-            /* Gray-400 */
             position: relative;
             z-index: 10;
-            /* Di depan garis */
             transition: all 0.3s ease;
         }
 
@@ -86,48 +76,31 @@
             z-index: 10;
         }
 
-        /* --- STATE COLORS --- */
-
-        /* 1. Item Aktif (Sedang dipilih) */
         .stepper-item.active .stepper-circle {
             border-color: #3b82f6;
-            /* Blue-500 */
             background-color: #3b82f6;
             color: white;
             box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
-            /* Efek glow biru muda */
         }
 
         .stepper-item.active .stepper-title {
             color: #3b82f6;
         }
 
-        /* 2. Item Completed (Sudah lewat) */
         .stepper-item.completed .stepper-circle {
             border-color: #3b82f6;
-            /* Blue-500 */
             background-color: #3b82f6;
             color: white;
         }
 
-        .stepper-item.completed .stepper-title {
-            color: #3b82f6;
-        }
-
-        /* 3. Garis Completed (Garis setelah item yang selesai jadi biru) */
         .stepper-item.completed::after {
             background-color: #3b82f6;
-            /* Blue-500 */
         }
 
-        /* Fix: Jika item aktif tapi belum completed, garis ke depannya tetap abu-abu */
-        .stepper-item.active::after {
-            background-color: #e5e7eb;
-        }
-
-        /* Kecuali jika item aktif ITU JUGA item yang completed (kasus step 1 ke 2) - Logic CSS Override */
-        .stepper-item.completed.active::after {
-            background-color: #3b82f6;
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
         }
     </style>
 @endpush
@@ -139,72 +112,63 @@
 
             <form action="#" method="POST" id="checkout-form">
                 @csrf
+                {{-- Input Hidden Utama --}}
                 <input type="hidden" name="address_id" id="input-address-id" value="{{ $address->id ?? '' }}">
                 <input type="hidden" name="shipping_cost" id="input-shipping-cost">
 
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
                     {{-- LEFT COLUMN --}}
                     <div class="lg:col-span-8 space-y-6">
 
                         {{-- 1. ALAMAT PENGIRIMAN --}}
-                        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm" id="address-section">
                             <div class="flex justify-between items-start mb-4">
                                 <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
                                     <i class="fas fa-map-marker-alt text-blue-600"></i> Alamat Pengiriman
                                 </h2>
-                                @if ($address)
+                                @if ($userAddresses->count() > 0)
                                     <button type="button" onclick="openAddressListModal()" class="btn btn-sm btn-ghost text-blue-600 hover:bg-blue-50 normal-case font-bold">
                                         Ganti Alamat
                                     </button>
                                 @endif
                             </div>
 
-                            @if ($address)
-                                {{-- Card Alamat Terpilih (Blue Theme) --}}
+                            <div id="active-address-card" class="{{ $address ? '' : 'hidden' }}">
                                 <div class="p-5 border border-blue-200 bg-blue-50/40 rounded-xl relative hover:border-blue-300 transition-colors">
                                     <div class="flex items-center gap-2 mb-2">
-                                        <span class="badge badge-sm bg-blue-100 text-blue-700 border-none font-bold">{{ $address->label }}</span>
-                                        @if ($address->is_primary)
-                                            <span class="badge badge-xs badge-primary">Utama</span>
-                                        @endif
+                                        <span id="disp-label" class="badge badge-sm bg-blue-100 text-blue-700 border-none font-bold uppercase">{{ $address->label ?? '' }}</span>
+                                        <span id="disp-primary" class="badge badge-xs badge-primary {{ $address->is_primary ?? false ? '' : 'hidden' }}">Utama</span>
                                     </div>
                                     <div class="flex flex-col md:flex-row md:items-center gap-1 md:gap-3">
-                                        <p class="font-bold text-gray-900 text-lg">{{ $address->recipient_name }}</p>
+                                        <p class="font-bold text-gray-900 text-lg" id="disp-recipient">{{ $address->recipient_name ?? '' }}</p>
                                         <p class="text-gray-500 hidden md:block">|</p>
-                                        <p class="text-gray-600 font-medium">{{ $address->phone_number }}</p>
+                                        <p class="text-gray-600 font-medium" id="disp-phone">{{ $address->phone_number ?? '' }}</p>
                                     </div>
-                                    <p class="text-gray-600 text-sm mt-2 leading-relaxed">
-                                        {{ $address->full_address }}<br>
-                                        Kec. {{ $address->district }}, {{ $address->village }}
+                                    <p class="text-gray-600 text-sm mt-2 leading-relaxed" id="disp-full-address">
+                                        {{ $address->full_address ?? '' }}<br>
+                                        Kec. {{ $address->district ?? '' }}, {{ $address->village ?? '' }}
                                     </p>
-                                    @if ($address->courier_note)
-                                        <p class="text-xs text-orange-600 mt-1 italic flex items-center gap-1">
-                                            <i class="fas fa-sticky-note"></i> "{{ $address->courier_note }}"
-                                        </p>
-                                    @endif
 
-                                    @if ($address->latitude)
-                                        <div class="flex items-center gap-2 mt-4 text-xs text-blue-700 font-bold bg-blue-100 w-fit px-3 py-1 rounded-full">
-                                            <i class="fas fa-map-pin"></i> Pinpoint Terpasang
-                                        </div>
-                                    @else
-                                        <div class="flex items-center gap-2 mt-4 text-xs text-red-500 font-bold bg-red-50 w-fit px-3 py-1 rounded-full border border-red-100">
-                                            <i class="fas fa-exclamation-triangle"></i> Pinpoint Belum Diatur
-                                        </div>
-                                    @endif
-                                </div>
-                            @else
-                                {{-- Empty State --}}
-                                <div class="text-center py-10 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50">
-                                    <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                                        <i class="fas fa-map-marked-alt text-2xl"></i>
+                                    <div id="status-pinpoint-ok" class="flex items-center gap-2 mt-4 text-xs text-blue-700 font-bold bg-blue-100 w-fit px-3 py-1 rounded-full {{ $address && $address->latitude ? '' : 'hidden' }}">
+                                        <i class="fas fa-map-pin"></i> Pinpoint Terpasang
                                     </div>
-                                    <p class="text-gray-600 font-medium mb-4">Kamu belum mengatur alamat pengiriman.</p>
-                                    <button type="button" onclick="openAddAddressModal()" class="btn btn-primary rounded-lg text-white shadow-lg shadow-blue-500/30">
-                                        <i class="fas fa-plus mr-1"></i> Tambah Alamat Baru
-                                    </button>
+                                    <div id="status-pinpoint-fail" class="flex items-center gap-2 mt-4 text-xs text-red-500 font-bold bg-red-50 w-fit px-3 py-1 rounded-full border border-red-100 {{ $address && !$address->latitude ? '' : 'hidden' }}">
+                                        <i class="fas fa-exclamation-triangle"></i> Pinpoint Belum Diatur
+                                    </div>
                                 </div>
-                            @endif
+                            </div>
+
+                            {{-- Empty State --}}
+                            <div id="address-empty-state" class="text-center py-10 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 {{ $address ? 'hidden' : '' }}">
+                                <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <i class="fas fa-map-marked-alt text-2xl"></i>
+                                </div>
+                                <p class="text-gray-600 font-medium mb-4">Kamu belum mengatur alamat pengiriman.</p>
+                                <button type="button" onclick="openAddAddressModal()" class="btn btn-primary rounded-lg text-white shadow-lg shadow-blue-500/30">
+                                    <i class="fas fa-plus mr-1"></i> Tambah Alamat Baru
+                                </button>
+                            </div>
                         </div>
 
                         {{-- 2. DETAIL PESANAN --}}
@@ -216,31 +180,34 @@
                                     $image = $item->variant->images->first();
                                     $imageUrl = $image ? asset('storage/' . $image->image_path) : asset('assets/upload/testing/dummy.jpg');
                                 @endphp
-                                <div class="flex gap-4 mb-6 border-b border-gray-50 pb-4 last:border-0 last:pb-0 last:mb-0">
+                                <div class="flex gap-4 mb-6 border-b border-gray-50 pb-6 last:border-0 last:pb-0 last:mb-0">
                                     <div class="w-20 h-20 bg-gray-50 rounded-xl border border-gray-200 overflow-hidden flex-shrink-0">
                                         <img src="{{ $imageUrl }}" class="w-full h-full object-contain mix-blend-multiply p-1">
                                     </div>
                                     <div class="flex-1">
-                                        <h3 class="font-bold text-gray-900 text-sm md:text-base">{{ $item->variant->shoe->name }}</h3>
+                                        <div class="flex justify-between items-start">
+                                            <h3 class="font-bold text-gray-900 text-sm md:text-base">{{ $item->variant->shoe->name }}</h3>
+                                            <div class="font-bold text-gray-900 text-sm">Rp {{ number_format($item->variant->price * $item->quantity, 0, ',', '.') }}</div>
+                                        </div>
                                         <p class="text-xs text-gray-500 mt-1">
                                             <span class="bg-gray-100 px-2 py-0.5 rounded text-gray-600 font-medium">{{ $item->variant->color }}</span>
                                             <span class="bg-gray-100 px-2 py-0.5 rounded text-gray-600 font-medium ml-1">Size {{ $item->variant->size }}</span>
+                                            <span class="ml-2 font-bold">{{ $item->quantity }}x</span>
                                         </p>
-                                        <div class="flex justify-between items-end mt-2">
-                                            <div class="text-sm text-gray-500">{{ $item->quantity }} x Rp {{ number_format($item->variant->price, 0, ',', '.') }}</div>
-                                            <div class="font-bold text-blue-600">Rp {{ number_format($item->variant->price * $item->quantity, 0, ',', '.') }}</div>
+
+                                        {{-- Tokopedia Style Note Input --}}
+                                        <div class="mt-3 flex items-center gap-2 group">
+                                            <i class="fas fa-comment-dots text-gray-400 text-xs group-focus-within:text-blue-500 transition-colors"></i>
+                                            <input type="text" name="notes[{{ $item->id }}]" class="w-full text-xs border-0 border-b border-gray-100 focus:border-blue-500 focus:ring-0 placeholder:text-gray-500 py-1 transition-all" placeholder="Kasih catatan untuk barang ini (opsional)...">
                                         </div>
                                     </div>
                                 </div>
                             @endforeach
 
-                            {{-- Pilihan Pengiriman --}}
                             <div class="mt-6 pt-4 border-t border-dashed border-gray-200">
                                 <div class="flex justify-between items-center p-3 bg-blue-50/50 rounded-lg border border-blue-100">
                                     <div class="flex items-center gap-3">
-                                        <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                                            <i class="fas fa-shipping-fast"></i>
-                                        </div>
+                                        <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600"><i class="fas fa-shipping-fast"></i></div>
                                         <div>
                                             <p class="font-bold text-gray-900 text-sm">ShoeCycle Express (Lokal)</p>
                                             <p class="text-xs text-gray-500">Estimasi tiba hari ini / besok</p>
@@ -252,18 +219,16 @@
                                 </div>
                             </div>
                         </div>
-
                     </div>
 
                     {{-- RIGHT COLUMN --}}
                     <div class="lg:col-span-4">
                         <div class="sticky top-24 space-y-4">
-                            {{-- Summary --}}
                             <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-lg shadow-blue-100/50">
                                 <h3 class="font-bold text-lg text-gray-900 mb-4">Ringkasan Belanja</h3>
                                 <div class="space-y-3 mb-6 border-b border-gray-100 pb-4 text-sm">
                                     <div class="flex justify-between text-gray-600">
-                                        <span>Total Harga ({{ $cartItems->count() }} Sepatu)</span>
+                                        <span>Total Harga ({{ $cartItems->count() }} Barang)</span>
                                         <span class="font-medium">Rp {{ number_format($subtotal, 0, ',', '.') }}</span>
                                     </div>
                                     <div class="flex justify-between text-gray-600">
@@ -280,7 +245,6 @@
                                     <span class="font-bold text-xl text-blue-600" id="grand-total-display">-</span>
                                 </div>
 
-                                {{-- Midtrans Logo (Updated Big) --}}
                                 <div class="bg-blue-50 p-4 rounded-xl flex items-center gap-4 mb-6 border border-blue-100 shadow-sm">
                                     <img src="{{ asset('assets/upload/logo/midtrans.svg') }}" class="h-12 w-auto object-contain opacity-80 mix-blend-multiply">
                                     <div class="flex flex-col">
@@ -302,58 +266,53 @@
 
     {{-- MODAL 1: DAFTAR ALAMAT --}}
     <dialog id="address_list_modal" class="modal modal-bottom sm:modal-middle">
-        <div class="modal-box bg-white">
-            <div class="flex justify-between items-center mb-4 pb-2 border-b border-gray-100">
+        <div class="modal-box bg-white p-0 overflow-hidden">
+            <div class="p-4 border-b border-gray-100 flex justify-between items-center">
                 <h3 class="font-bold text-lg text-gray-900">Pilih Alamat Pengiriman</h3>
                 <form method="dialog"><button class="btn btn-sm btn-circle btn-ghost text-gray-500">✕</button></form>
             </div>
-
-            <div class="mb-4">
-                <button onclick="openAddAddressModal()" class="btn btn-outline btn-primary w-full border-dashed border-2 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-600 normal-case gap-2">
+            <div class="p-4">
+                <button onclick="openAddAddressModal()" class="btn btn-outline btn-primary w-full border-dashed border-2 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-600 normal-case gap-2 mb-4">
                     <i class="fas fa-plus"></i> Tambah Alamat Baru
                 </button>
-            </div>
+                <div class="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+                    @foreach ($userAddresses as $addr)
+                        {{-- Tambahkan id unik 'addr-item-{id}' dan class 'address-item' --}}
+                        <div id="addr-item-{{ $addr->id }}" class="address-item p-4 border rounded-xl cursor-pointer transition-all relative group {{ $addr->id == ($address->id ?? 0) ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500' : 'border-gray-200 hover:border-blue-300' }}" onclick="selectAddress({{ $addr->id }})">
 
-            <div class="space-y-3 max-h-[400px] overflow-y-auto pr-1">
-                @foreach ($userAddresses as $addr)
-                    <div class="p-4 border rounded-xl cursor-pointer transition-all relative group {{ $addr->id == ($address->id ?? 0) ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500' : 'border-gray-200 hover:border-blue-300' }}" onclick="selectAddress({{ $addr->id }})">
-
-                        <div class="flex justify-between items-start mb-1">
-                            <div class="flex items-center gap-2">
-                                <span class="text-xs font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-600">{{ $addr->label }}</span>
-                                @if ($addr->is_primary)
-                                    <span class="text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded">UTAMA</span>
-                                @endif
+                            <div class="flex justify-between items-start mb-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-600 uppercase">{{ $addr->label }}</span>
+                                    @if ($addr->is_primary)
+                                        <span class="text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded">UTAMA</span>
+                                    @endif
+                                </div>
+                                {{-- Tambahkan class 'check-icon' dan sembunyikan jika tidak aktif menggunakan 'hidden' --}}
+                                <i class="fas fa-check-circle text-blue-600 text-lg check-icon {{ $addr->id == ($address->id ?? 0) ? '' : 'hidden' }}"></i>
                             </div>
-                            @if ($addr->id == ($address->id ?? 0))
-                                <i class="fas fa-check-circle text-blue-600 text-lg"></i>
-                            @endif
-                        </div>
 
-                        <p class="font-bold text-gray-900 text-sm mt-2">{{ $addr->recipient_name }} <span class="font-normal text-gray-500">({{ $addr->phone_number }})</span></p>
-                        <p class="text-xs text-gray-500 mt-1 leading-relaxed">
-                            {{ $addr->full_address }}, {{ $addr->district }}, {{ $addr->village }}
-                        </p>
-                    </div>
-                @endforeach
+                            <p class="font-bold text-gray-900 text-sm mt-2">{{ $addr->recipient_name }} <span class="font-normal text-gray-500">({{ $addr->phone_number }})</span></p>
+                            <p class="text-xs text-gray-500 mt-1 leading-relaxed">
+                                {{ $addr->full_address }}, Kec. {{ $addr->district }}, {{ $addr->village }}
+                            </p>
+                        </div>
+                    @endforeach
+                </div>
             </div>
         </div>
-        <form method="dialog" class="modal-backdrop"><button>close</button></form>
+        <form method="dialog" class="modal-backdrop bg-gray-900/50"><button>close</button></form>
     </dialog>
 
-    {{-- MODAL 2: WIZARD TAMBAH ALAMAT (BLUE THEME) --}}
+    {{-- MODAL 2: TAMBAH ALAMAT WIZARD --}}
     <dialog id="add_address_modal" class="modal modal-bottom sm:modal-middle">
         <div class="modal-box w-11/12 max-w-4xl bg-white p-0 h-[650px] flex flex-col rounded-2xl overflow-hidden">
-
-            {{-- Header & Stepper --}}
+            {{-- Header --}}
             <div class="bg-white px-6 pt-6 pb-2 border-b border-gray-100 z-20 shadow-sm">
                 <div class="flex justify-between items-center mb-6">
                     <button onclick="prevStep()" id="btn-back-step" class="btn btn-sm btn-circle btn-ghost text-gray-500 invisible hover:bg-gray-100"><i class="fas fa-arrow-left"></i></button>
                     <h3 class="font-bold text-lg text-gray-800">Tambah Alamat Baru</h3>
                     <form method="dialog"><button class="btn btn-sm btn-circle btn-ghost text-gray-500 hover:bg-gray-100">✕</button></form>
                 </div>
-
-                {{-- NEW BLUE STEPPER --}}
                 <div class="stepper-wrapper px-4 md:px-12">
                     <div class="stepper-item active" id="step-indicator-1">
                         <div class="stepper-circle">1</div>
@@ -370,110 +329,75 @@
                 </div>
             </div>
 
-            {{-- Content Area --}}
             <div class="flex-1 overflow-y-auto relative bg-white">
-
-                {{-- STEP 1: SEARCH LOCATION --}}
+                {{-- STEP 1: LOKASI --}}
                 <div id="step-content-1" class="p-6 h-full flex flex-col justify-center items-center">
                     <div class="w-full max-w-md text-center">
                         <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
                             <i class="fas fa-map-search text-2xl"></i>
                         </div>
                         <h4 class="font-bold text-xl text-gray-900 mb-4">Tentukan Lokasi Pengiriman</h4>
-
                         <div class="space-y-3">
-                            <button onclick="useCurrentLocation()" class="btn btn-ghost w-full justify-start gap-3 text-gray-700 normal-case border border-gray-200 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 rounded-xl">
-                                <i class="fa-solid fa-location-crosshairs text-blue-500 text-[1rem]"></i> Gunakan Lokasi Saat Ini
+                            <button onclick="useCurrentLocation()" class="btn btn-ghost w-full justify-start gap-3 text-gray-700 normal-case border border-gray-200 hover:border-blue-500 hover:bg-blue-50 rounded-xl transition-all">
+                                <i class="fa-solid fa-location-crosshairs text-blue-500"></i> Gunakan Lokasi Saat Ini
                             </button>
                             <div class="divider text-xs text-gray-400">Atau</div>
-                            <button onclick="goToStep(2)" class="btn btn-primary btn-outline w-full rounded-xl normal-case">
-                                Set Pinpoint Manual di Peta
-                            </button>
+                            <button onclick="goToStep(2)" class="btn btn-primary btn-outline w-full rounded-xl normal-case">Set Pinpoint Manual di Peta</button>
                         </div>
                     </div>
                 </div>
 
-                {{-- STEP 2: PINPOINT MAP --}}
+                {{-- STEP 2: PINPOINT --}}
                 <div id="step-content-2" class="hidden h-full relative flex flex-col">
                     <div class="absolute top-4 left-12 right-4 z-[400] px-2">
                         <div class="bg-white/90 backdrop-blur shadow-md rounded-lg p-3 flex items-center gap-3 border border-gray-200">
                             <i class="fas fa-info-circle text-blue-600 flex-shrink-0"></i>
-                            <p class="text-xs text-gray-700 leading-tight">
-                                Geser peta hingga ujung bawah pin <span class="text-red-500 font-bold"><i class="fas fa-map-marker-alt"></i> MERAH</span> berada tepat di lokasi tujuan.
-                            </p>
+                            <p class="text-xs text-gray-700 leading-tight">Geser peta hingga ujung pin <span class="text-red-500 font-bold">MERAH</span> tepat di lokasi tujuan.</p>
                         </div>
                     </div>
-
                     <div id="map-container" class="flex-1"></div>
 
                     <div class="absolute top-1/2 left-1/2 z-[300] pointer-events-none">
-
-                        {{-- Ikon Pin (Digeser ke atas 100% tingginya) --}}
-                        <div class="absolute -translate-x-1/2 -translate-y-full pb-1">
-                            {{-- pb-1 memberikan sedikit jarak agar ujung tajam tidak tertutup shadow --}}
-                            <i class="fas fa-map-marker-alt text-red-500 text-4xl drop-shadow-md"></i>
-                        </div>
-
-                        {{-- Bayangan Pin (Tetap di titik tengah / ground) --}}
+                        <div class="absolute -translate-x-1/2 -translate-y-full pb-1"><i class="fas fa-map-marker-alt text-red-500 text-4xl drop-shadow-md"></i></div>
                         <div class="absolute -translate-x-1/2 -translate-y-1/2">
                             <div class="w-4 h-1 bg-black/20 rounded-[100%] blur-[2px]"></div>
                         </div>
-
                     </div>
 
-                    {{-- Bottom Sheet (Tetap sama, tapi pastikan layout flex nya benar) --}}
                     <div class="bg-white p-4 border-t border-gray-100 shadow-[0_-5px_20px_rgba(0,0,0,0.05)] z-[400]">
                         <div class="flex items-center justify-between gap-4">
-
-                            {{-- BAGIAN KIRI: Info Koordinat --}}
                             <div class="flex-1 min-w-0">
-                                <p class="text-sm text-gray-500 font-bold uppercase tracking-wide mb-0.5">
-                                    <i class="fas fa-crosshairs mr-1"></i> Koordinat Terpilih
-                                </p>
-                                <p class="text-xs text-gray-400 font-mono mt-0.5" id="map-coords-preview">
-                                    Geser pin di peta
-                                </p>
+                                <p class="text-sm text-gray-500 font-bold uppercase tracking-wide mb-0.5"><i class="fas fa-crosshairs mr-1"></i> Koordinat</p>
+                                <p class="text-xs text-gray-400 font-mono mt-0.5" id="map-coords-preview">-</p>
                             </div>
-
-                            {{-- BAGIAN KANAN: Tombol --}}
-                            <button onclick="goToStep(3)" class="btn btn-primary text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 normal-case px-6 shrink-0">
+                            <button onclick="goToStep(3)" class="btn btn-primary text-white font-bold rounded-xl shadow-lg normal-case px-6 shrink-0">
                                 Pilih Lokasi Ini <i class="fas fa-arrow-right ml-1"></i>
                             </button>
-
                         </div>
                     </div>
                 </div>
 
-                {{-- STEP 3: FORM DETAILS --}}
+                {{-- STEP 3: DETAIL FORM --}}
                 <div id="step-content-3" class="hidden h-full flex flex-col">
-
-                    {{-- Scrollable Content --}}
                     <div class="flex-1 overflow-y-auto p-6 md:px-8">
-
-                        {{-- Success Badge --}}
                         <div class="flex items-center gap-3 mb-6 bg-blue-50 p-4 rounded-xl border border-blue-100">
-                            <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-blue-600 shadow-sm flex-shrink-0">
-                                <i class="fas fa-check"></i>
-                            </div>
+                            <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-blue-600 shadow-sm flex-shrink-0"><i class="fas fa-check"></i></div>
                             <div class="flex-1">
                                 <h4 class="font-bold text-gray-900 text-sm">Pinpoint Berhasil!</h4>
-                                <p class="text-xs text-gray-600 mt-0.5">Silakan lengkapi detail alamat di bawah ini.</p>
+                                <p class="text-xs text-gray-600 mt-0.5">Sekarang lengkapi detail alamat agar kurir tidak nyasar.</p>
                             </div>
-                            <button type="button" onclick="goToStep(2)" class="btn btn-xs btn-ghost text-blue-600 font-bold hover:bg-blue-100">
-                                Ubah Pinpoint
-                            </button>
+                            <button type="button" onclick="goToStep(2)" class="btn btn-xs btn-ghost text-blue-600 font-bold hover:bg-blue-100">Ubah Pin</button>
                         </div>
 
                         <form id="add-address-form" class="space-y-5">
                             <input type="hidden" name="latitude" id="form-lat">
                             <input type="hidden" name="longitude" id="form-lng">
 
-                            {{-- Label Alamat --}}
                             <div class="form-control w-full">
                                 <label class="label pt-0 pb-2"><span class="label-text font-bold text-gray-700">Simpan Sebagai</span></label>
                                 <div class="flex flex-wrap gap-2 w-full">
                                     @foreach (['Home' => 'Rumah', 'Office' => 'Kantor', 'Apartment' => 'Apartemen', 'Boarding House' => 'Kos', 'Other' => 'Lainnya'] as $val => $label)
-                                        <label class="cursor-pointer border border-gray-200 rounded-lg px-4 py-2 hover:border-blue-500 has-[:checked]:bg-blue-50 has-[:checked]:border-blue-500 has-[:checked]:text-blue-700 transition-all flex items-center gap-2 flex-grow sm:flex-grow-0 justify-center">
+                                        <label class="cursor-pointer border border-gray-200 rounded-lg px-4 py-2 hover:border-blue-500 has-[:checked]:bg-blue-50 has-[:checked]:border-blue-500 has-[:checked]:text-blue-700 flex items-center gap-2 flex-grow sm:flex-grow-0 justify-center transition-all">
                                             <input type="radio" name="label" value="{{ $val }}" class="radio radio-primary radio-xs" {{ $val == 'Home' ? 'checked' : '' }}>
                                             <span class="text-sm font-medium">{{ $label }}</span>
                                         </label>
@@ -481,77 +405,60 @@
                                 </div>
                             </div>
 
-                            {{-- Alamat Lengkap --}}
                             <div class="form-control w-full group">
                                 <label class="label pb-1"><span class="label-text font-bold text-gray-700">Alamat Lengkap <span class="text-red-500">*</span></span></label>
-                                <textarea name="full_address" class="textarea textarea-bordered w-full rounded-xl focus:border-blue-500 text-base leading-relaxed" rows="3" placeholder="Nama Jalan, Nomor Rumah, RT/RW, Blok..."></textarea>
-                                {{-- Error Message Container --}}
-                                <span class="error-text text-xs text-red-500 mt-1 hidden">Alamat wajib diisi minimal 10 karakter.</span>
+                                <textarea name="full_address" class="textarea textarea-bordered w-full rounded-xl focus:border-blue-500 text-base leading-relaxed" rows="4" style="resize: none" placeholder="Nama Jalan, Nomor Rumah, RT/RW, Blok..."></textarea>
+                                <span class="error-text text-xs text-red-500 mt-1 hidden"></span>
                             </div>
 
-                            {{-- Penerima & Kontak --}}
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-                                <div class="form-control w-full group">
-                                    <label class="label pb-1"><span class="label-text font-bold text-gray-700">Nama Penerima <span class="text-red-500">*</span></span></label>
-                                    <input type="text" name="recipient_name" class="input input-bordered w-full rounded-xl focus:border-blue-500" value="{{ Auth::user()->name }}">
-                                    <span class="error-text text-xs text-red-500 mt-1 hidden">Nama penerima wajib diisi.</span>
-                                </div>
-                                <div class="form-control w-full group">
-                                    <label class="label pb-1"><span class="label-text font-bold text-gray-700">Nomor HP <span class="text-red-500">*</span></span></label>
-                                    <input type="text" name="phone_number" class="input input-bordered w-full rounded-xl focus:border-blue-500" value="{{ Auth::user()->phone ?? '' }}" placeholder="08xxxxxxxxxx">
-                                    <span class="error-text text-xs text-red-500 mt-1 hidden">Format nomor HP tidak valid (10-15 angka).</span>
-                                </div>
-                            </div>
-
-                            {{-- Wilayah --}}
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-                                <div class="form-control w-full group">
+                                <div class="form-control group">
                                     <label class="label pb-1"><span class="label-text font-bold text-gray-700">Kecamatan <span class="text-red-500">*</span></span></label>
-                                    <input type="text" name="district" class="input input-bordered w-full rounded-xl focus:border-blue-500" placeholder="Contoh: Magersari">
-                                    <span class="error-text text-xs text-red-500 mt-1 hidden">Kecamatan wajib diisi.</span>
+                                    <input type="text" name="district" class="input input-bordered rounded-xl focus:border-blue-500" placeholder="Magersari">
+                                    <span class="error-text text-xs text-red-500 mt-1 hidden"></span>
                                 </div>
-                                <div class="form-control w-full group">
+                                <div class="form-control group">
                                     <label class="label pb-1"><span class="label-text font-bold text-gray-700">Desa / Kelurahan <span class="text-red-500">*</span></span></label>
-                                    <input type="text" name="village" class="input input-bordered w-full rounded-xl focus:border-blue-500" placeholder="Contoh: Meri">
-                                    <span class="error-text text-xs text-red-500 mt-1 hidden">Desa wajib diisi.</span>
+                                    <input type="text" name="village" class="input input-bordered rounded-xl focus:border-blue-500" placeholder="Meri">
+                                    <span class="error-text text-xs text-red-500 mt-1 hidden"></span>
                                 </div>
                             </div>
 
-                            {{-- Catatan --}}
-                            <div class="form-control w-full">
-                                <label class="label pb-1">
-                                    <span class="label-text font-bold text-gray-700">Catatan Kurir <span class="font-normal text-gray-400 text-xs ml-1">(Opsional)</span></span>
-                                </label>
-                                <input type="text" name="courier_note" class="input input-bordered w-full rounded-xl focus:border-blue-500" placeholder="Warna pagar, titip di pos satpam, dll.">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                                <div class="form-control group">
+                                    <label class="label pb-1"><span class="label-text font-bold text-gray-700">Nama Penerima <span class="text-red-500">*</span></span></label>
+                                    <input type="text" name="recipient_name" class="input input-bordered rounded-xl focus:border-blue-500" value="{{ Auth::user()->name }}">
+                                    <span class="error-text text-xs text-red-500 mt-1 hidden"></span>
+                                </div>
+                                <div class="form-control group">
+                                    <label class="label pb-1"><span class="label-text font-bold text-gray-700">Nomor HP <span class="text-red-500">*</span></span></label>
+                                    <input type="text" name="phone_number" class="input input-bordered rounded-xl focus:border-blue-500" value="{{ Auth::user()->phone ?? '' }}" placeholder="08xxxxxxxx">
+                                    <span class="error-text text-xs text-red-500 mt-1 hidden"></span>
+                                </div>
                             </div>
 
-                            {{-- Primary Toggle --}}
-                            <div class="form-control w-full bg-gray-50 p-3 rounded-xl border border-gray-100">
+                            <div class="form-control w-full">
+                                <label class="label pb-1"><span class="label-text font-bold text-gray-700">Catatan Kurir (Opsional)</span></label>
+                                <input type="text" name="courier_note" class="input input-bordered rounded-xl focus:border-blue-500" placeholder="Warna pagar, patokan, titip satpam, dll.">
+                            </div>
+
+                            <div class="form-control bg-gray-50 p-3 rounded-xl border border-gray-100">
                                 <label class="label cursor-pointer justify-start gap-3 p-0">
                                     <input type="checkbox" name="is_primary" class="checkbox checkbox-primary checkbox-sm rounded" checked>
                                     <span class="label-text text-gray-700 font-medium">Jadikan Alamat Utama</span>
                                 </label>
                             </div>
                         </form>
-
-                        {{-- Spacer agar form tidak tertutup footer --}}
-                        <div class="h-4"></div>
                     </div>
 
-                    {{-- Sticky Modal Footer --}}
                     <div class="p-4 border-t border-gray-100 bg-white z-10 w-full">
-                        <button type="button" id="btn-save-address" onclick="submitNewAddress()" class="btn btn-primary w-full text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 text-lg normal-case h-12 
-        disabled:bg-blue-400 disabled:border-blue-400 disabled:text-white disabled:opacity-50 disabled:shadow-none transition-all duration-200" disabled>
-                            Simpan Alamat & Gunakan
-                        </button>
+                        <button type="button" id="btn-save-address" onclick="submitNewAddress()" class="btn btn-primary w-full text-white font-bold rounded-xl shadow-lg text-lg h-12 disabled:bg-blue-400 disabled:border-blue-400 disabled:text-white disabled:opacity-50 transition-all" disabled>Simpan & Gunakan</button>
                     </div>
-
                 </div>
             </div>
         </div>
         <form method="dialog" class="modal-backdrop bg-gray-900/50"><button>close</button></form>
     </dialog>
-
 @endsection
 
 @push('scripts')
@@ -559,456 +466,242 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
     <script>
+        // 1. DATA GLOBAL (Pastikan variabel ini ada untuk ganti alamat)
+        const userAddresses = @json($userAddresses);
+        const STORE_LAT = {{ $storeConfig['lat'] }};
+        const STORE_LNG = {{ $storeConfig['lng'] }};
+        const BASE_COST = {{ $storeConfig['base_shipping_cost'] }};
+        const COST_KM = {{ $storeConfig['cost_per_km'] }};
+        const SUBTOTAL = {{ $subtotal }};
+        const ADMIN_FEE = {{ $adminFee }};
+
+        let map = null,
+            marker = null,
+            selectedLat = STORE_LAT,
+            selectedLng = STORE_LNG,
+            currentStep = 1;
+
+        // 2. FUNGSI GLOBAL (Agar bisa dipanggil onclick)
+
+        window.openAddressListModal = function() {
+            $('#address_list_modal')[0].showModal();
+        };
+
+        window.openAddAddressModal = function() {
+            if ($('#address_list_modal').length) $('#address_list_modal')[0].close();
+            $('#add_address_modal')[0].showModal();
+            window.goToStep(1);
+        };
+
+        window.goToStep = function(step) {
+            currentStep = step;
+            $('[id^="step-content-"]').addClass('hidden');
+            $('#step-content-' + step).removeClass('hidden');
+
+            // Update Stepper UI
+            for (let i = 1; i <= 3; i++) {
+                let $el = $('#step-indicator-' + i);
+                $el.removeClass('active completed');
+                if (i < step) $el.addClass('completed');
+                else if (i === step) $el.addClass('active');
+            }
+
+            if (step === 2) setTimeout(() => window.initMap(), 300);
+            if (step > 1) $('#btn-back-step').removeClass('invisible');
+            else $('#btn-back-step').addClass('invisible');
+        };
+
+        window.prevStep = function() {
+            if (currentStep > 1) window.goToStep(currentStep - 1);
+        };
+
+        window.initMap = function() {
+            if (map) {
+                map.invalidateSize();
+                return;
+            }
+            map = L.map('map-container').setView([selectedLat, selectedLng], 14);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+            map.on('move', function() {
+                let center = map.getCenter();
+                selectedLat = center.lat;
+                selectedLng = center.lng;
+                $('#map-coords-preview').text(selectedLat.toFixed(6) + ', ' + selectedLng.toFixed(6));
+            });
+        };
+
+        window.useCurrentLocation = function() {
+            if (!navigator.geolocation) return alert('Browser tidak mendukung lokasi.');
+            let $btn = $(event.currentTarget),
+                originalText = $btn.html();
+            $btn.html('<span class="loading loading-spinner loading-xs"></span> Mencari...').prop('disabled', true);
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    selectedLat = pos.coords.latitude;
+                    selectedLng = pos.coords.longitude;
+                    $btn.html(originalText).prop('disabled', false);
+                    window.goToStep(2);
+                    setTimeout(() => {
+                        if (map) map.setView([selectedLat, selectedLng], 16);
+                    }, 500);
+                },
+                (err) => {
+                    alert('Gagal: ' + err.message);
+                    $btn.html(originalText).prop('disabled', false);
+                }
+            );
+        };
+
+        window.calculateShipping = function(lat, lng) {
+            const R = 6371;
+            const dLat = (lat - STORE_LAT) * Math.PI / 180;
+            const dLon = (lng - STORE_LNG) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(STORE_LAT * Math.PI / 180) * Math.cos(lat * Math.PI / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            const distanceKm = R * c;
+
+            let cost = BASE_COST;
+            if (distanceKm > 1) cost += Math.ceil(distanceKm) * COST_KM;
+            cost = Math.ceil(cost / 500) * 500;
+
+            $('#shipping-cost-label').text(window.formatRupiah(cost));
+            $('#summary-shipping-cost').text(window.formatRupiah(cost));
+            $('#grand-total-display').text(window.formatRupiah(SUBTOTAL + ADMIN_FEE + cost));
+            $('#input-shipping-cost').val(cost);
+            $('#btn-pay').prop('disabled', false);
+        };
+
+        window.selectAddress = function(id) {
+            const addr = userAddresses.find(a => a.id == id);
+            if (!addr) return;
+            // 1. Reset semua item ke desain "Tidak Aktif"
+            $('.address-item').removeClass('border-blue-500 bg-blue-50 ring-1 ring-blue-500')
+                .addClass('border-gray-200');
+
+            // 2. Sembunyikan semua ikon centang
+            $('.address-item .check-icon').addClass('hidden');
+
+            // 3. Set item yang diklik ke desain "Aktif"
+            const $selectedItem = $(`#addr-item-${id}`);
+            $selectedItem.addClass('border-blue-500 bg-blue-50 ring-1 ring-blue-500')
+                .removeClass('border-gray-200');
+
+            // 4. Tampilkan ikon centang pada item yang dipilih
+            $selectedItem.find('.check-icon').removeClass('hidden');
+
+
+            // --- LOGIKA UPDATE HALAMAN CHECKOUT (TETAP SAMA) ---
+            $('#disp-label').text(addr.label);
+            $('#disp-recipient').text(addr.recipient_name);
+            $('#disp-phone').text(addr.phone_number);
+            $('#disp-full-address').html(`${addr.full_address}<br>Kec. ${addr.district}, ${addr.village}`);
+
+            if (addr.is_primary) $('#disp-primary').removeClass('hidden');
+            else $('#disp-primary').addClass('hidden');
+
+            $('#input-address-id').val(addr.id);
+
+            if (addr.latitude && addr.longitude) {
+                $('#status-pinpoint-ok').removeClass('hidden');
+                $('#status-pinpoint-fail').addClass('hidden');
+                window.calculateShipping(addr.latitude, addr.longitude);
+            } else {
+                $('#status-pinpoint-ok').addClass('hidden');
+                $('#status-pinpoint-fail').removeClass('hidden');
+                window.resetShippingUI(); // Pastikan fungsi ini ada untuk mereset harga jika koordinat kosong
+                alert('Alamat ini belum memiliki titik koordinat. Pilih lokasi dulu.');
+            }
+
+            $('#active-address-card').removeClass('hidden');
+            $('#address-empty-state').addClass('hidden');
+
+            // Tutup Modal
+            $('#address_list_modal')[0].close();
+        };
+
+        window.formatRupiah = function(num) {
+            return 'Rp ' + new Intl.NumberFormat('id-ID').format(num);
+        };
+
+        window.submitNewAddress = function() {
+            $('#form-lat').val(selectedLat);
+            $('#form-lng').val(selectedLng);
+            let formData = new FormData($('#add-address-form')[0]);
+            let $btn = $('#btn-save-address');
+            $btn.prop('disabled', true).html('<span class="loading loading-spinner loading-sm"></span>');
+
+            $.ajax({
+                url: "{{ route('address.store') }}",
+                type: "POST",
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function() {
+                    window.location.reload();
+                },
+                error: function() {
+                    alert('Gagal menyimpan.');
+                    $btn.prop('disabled', false).text('Simpan Alamat');
+                }
+            });
+        };
+
+        // 3. LOGIKA VALIDATION & EVENT (Di dalam ready)
         $(document).ready(function() {
-
-            // --- 1. KONFIGURASI & VARIABEL GLOBAL ---
-            const STORE_LAT = {{ $storeConfig['lat'] }};
-            const STORE_LNG = {{ $storeConfig['lng'] }};
-            const BASE_COST = {{ $storeConfig['base_shipping_cost'] }};
-            const COST_KM = {{ $storeConfig['cost_per_km'] }};
-            const SUBTOTAL = {{ $subtotal }};
-            const ADMIN_FEE = {{ $adminFee }};
-
-            // State Variables
-            let map = null;
-            let marker = null;
-            let selectedLat = STORE_LAT;
-            let selectedLng = STORE_LNG;
-            let currentStep = 1;
-
-            // Setup CSRF Token untuk AJAX jQuery
             $.ajaxSetup({
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 }
             });
 
-            // --- 2. INIT HALAMAN ---
-            // Cek apakah user sudah punya alamat dengan koordinat saat halaman dimuat
-            @if ($address && $address->latitude)
-                calculateShipping({{ $address->latitude }}, {{ $address->longitude }});
-            @endif
-
-            // --- 3. MODAL HANDLERS (jQuery) ---
-
-            // Fungsi Buka Modal List Alamat
-            window.openAddressListModal = function() {
-                // DaisyUI menggunakan native <dialog>, kita akses elemen native via [0]
-                $('#address_list_modal')[0].showModal();
-            };
-
-            // Fungsi Buka Modal Tambah Alamat (Wizard)
-            window.openAddAddressModal = function() {
-                $('#address_list_modal')[0].close();
-                $('#add_address_modal')[0].showModal();
-                goToStep(1); // Reset ke langkah 1
-            };
-
-            // Tombol Close Modal (Standard DaisyUI pattern, handled by form method="dialog")
-            // Kita tambahkan listener extra jika butuh reset form saat close
-            $('#add_address_modal').on('close', function() {
-                // Optional: Reset form jika ditutup
-                // $('#add-address-form')[0].reset();
-            });
-
-
-            // --- 4. STEPPER LOGIC (jQuery) ---
-
-            window.goToStep = function(step) {
-                currentStep = step;
-
-                // 1. Toggle Content Visibility
-                // Sembunyikan semua id yang berawalan step-content-
-                $('[id^="step-content-"]').addClass('hidden');
-                // Tampilkan step yang aktif
-                $('#step-content-' + step).removeClass('hidden');
-
-                // 2. Update Stepper Indicator UI
-                updateStepperUI(step);
-
-                // 3. Logic Khusus per Step
-                if (step === 2) {
-                    // Beri jeda sedikit agar modal render penuh dulu sebelum init map
-                    setTimeout(function() {
-                        initMap();
-                    }, 300);
-                }
-
-                // 4. Atur tombol Back
-                if (step > 1) {
-                    $('#btn-back-step').removeClass('invisible');
-                } else {
-                    $('#btn-back-step').addClass('invisible');
-                }
-            };
-
-            window.prevStep = function() {
-                if (currentStep > 1) {
-                    goToStep(currentStep - 1);
-                }
-            };
-
-            function updateStepperUI(step) {
-                // Loop 1 sampai 3
-                for (let i = 1; i <= 3; i++) {
-                    let $el = $('#step-indicator-' + i);
-
-                    // Reset class
-                    $el.removeClass('active completed');
-
-                    if (i < step) {
-                        $el.addClass('completed'); // Step sebelumnya sudah selesai
-                    } else if (i === step) {
-                        $el.addClass('active'); // Step saat ini
-                    }
-                }
-            }
-
-
-            // --- 5. MAP LOGIC (Leaflet + jQuery) ---
-
-            function initMap() {
-                if (map) {
-                    map.invalidateSize(); // Fix jika peta abu-abu sebagian
-                    return;
-                }
-
-                // Init Leaflet
-                map = L.map('map-container').setView([selectedLat, selectedLng], 14);
-
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '&copy; OpenStreetMap'
-                }).addTo(map);
-
-                // Buat Custom Icon (Agar marker diam di tengah layar)
-                // Disini kita pakai pendekatan event 'move' map daripada draggable marker
-                // agar UX nya seperti aplikasi ojek online (Pin diam, Peta gerak)
-
-                // Event: Saat peta digeser
-                map.on('move', function() {
-                    let center = map.getCenter();
-                    selectedLat = center.lat;
-                    selectedLng = center.lng;
-
-                    // Update UI Teks Koordinat via jQuery
-                    $('#map-coords-preview').text(selectedLat.toFixed(5) + ', ' + selectedLng.toFixed(5));
-                });
-            }
-
-            // Fungsi Gunakan Lokasi Saat Ini (Geolocation API)
-            window.useCurrentLocation = function() {
-                if (navigator.geolocation) {
-                    // Ubah tombol jadi loading state
-                    let $btn = $(event.currentTarget); // Ambil tombol yang diklik
-                    let originalText = $btn.html();
-                    $btn.html('<span class="loading loading-spinner loading-xs"></span> Mencari Lokasi...').prop('disabled', true);
-
-                    navigator.geolocation.getCurrentPosition(
-                        (pos) => {
-                            selectedLat = pos.coords.latitude;
-                            selectedLng = pos.coords.longitude;
-
-                            // Kembalikan tombol
-                            $btn.html(originalText).prop('disabled', false);
-
-                            // Pindah ke Step 2
-                            goToStep(2);
-
-                            // Set peta ke lokasi baru (delay dikit nunggu modal)
-                            setTimeout(() => {
-                                if (map) {
-                                    map.setView([selectedLat, selectedLng], 16);
-                                }
-                            }, 500);
-                        },
-                        (err) => {
-                            alert('Gagal mengambil lokasi: ' + err.message);
-                            $btn.html(originalText).prop('disabled', false);
-                        }, {
-                            enableHighAccuracy: true
-                        } // Opsi akurasi tinggi
-                    );
-                } else {
-                    alert('Browser anda tidak mendukung Geolocation.');
-                }
-            };
-
-
-            // ==========================================
-            // 1. LIVE VALIDATION LOGIC
-            // ==========================================
-
-            // Definisi Aturan Validasi
-            const validationRules = {
+            const rules = {
                 recipient_name: {
                     required: true,
-                    min: 3,
-                    msg: "Nama minimal 3 karakter."
+                    min: 3
                 },
                 phone_number: {
                     required: true,
-                    regex: /^[0-9]{10,15}$/,
-                    msg: "Nomor HP harus angka (10-15 digit)."
+                    regex: /^[0-9]{10,15}$/
                 },
                 full_address: {
                     required: true,
-                    min: 10,
-                    msg: "Alamat terlalu pendek (min. 10 karakter)."
+                    min: 10
                 },
                 district: {
-                    required: true,
-                    min: 3,
-                    msg: "Kecamatan wajib diisi."
+                    required: true
                 },
                 village: {
-                    required: true,
-                    min: 3,
-                    msg: "Desa/Kelurahan wajib diisi."
+                    required: true
                 }
             };
 
-            // Fungsi Validasi Satu Input
-            function validateField($input) {
-                let name = $input.attr('name');
-                let val = $input.val().trim();
-                let rule = validationRules[name];
-                let isValid = true;
-                let errorMsg = "";
-
-                if (!rule) return true; // Skip jika tidak ada rule (misal: catatan/label)
-
-                // Cek Rules
-                if (rule.required && val === "") {
-                    isValid = false;
-                    errorMsg = "Wajib diisi.";
-                } else if (rule.min && val.length < rule.min) {
-                    isValid = false;
-                    errorMsg = rule.msg;
-                } else if (rule.regex && !rule.regex.test(val)) {
-                    isValid = false;
-                    errorMsg = rule.msg;
-                }
-
-                // Update UI Input
-                let $errorText = $input.siblings('.error-text');
-
-                if (!isValid) {
-                    // STATE ERROR: Merah
-                    $input.addClass('input-error').removeClass('focus:border-blue-500');
-
-                    // Buat element error message jika belum ada
-                    if ($errorText.length === 0) {
-                        $input.after('<span class="error-text text-xs text-red-500 mt-1 block"></span>');
-                        $errorText = $input.siblings('.error-text');
-                    }
-                    $errorText.text(errorMsg).removeClass('hidden');
-                } else {
-                    // STATE SUCCESS: Kembali ke Default (Tidak Hijau)
-                    $input.removeClass('input-error').addClass('focus:border-blue-500');
-                    // Sembunyikan pesan error
-                    if ($errorText.length > 0) $errorText.addClass('hidden');
-                }
-
-                return isValid;
-            }
-
-            // Fungsi Cek Seluruh Form untuk Mengaktifkan Tombol
-            function checkFormValidity() {
-                let allValid = true;
-
+            function validate() {
+                let valid = true;
                 $('#add-address-form input, #add-address-form textarea').each(function() {
-                    let name = $(this).attr('name');
-                    if (validationRules[name]) {
-                        let val = $(this).val().trim();
-                        let rule = validationRules[name];
+                    let name = $(this).attr('name'),
+                        rule = rules[name],
+                        val = $(this).val().trim();
+                    if (rule) {
+                        let ok = true;
+                        if (rule.required && !val) ok = false;
+                        if (rule.min && val.length < rule.min) ok = false;
+                        if (rule.regex && !rule.regex.test(val)) ok = false;
 
-                        // Cek logic saja tanpa ubah UI (agar tidak merah semua saat belum disentuh)
-                        if (rule.required && val === "") allValid = false;
-                        else if (rule.min && val.length < rule.min) allValid = false;
-                        else if (rule.regex && !rule.regex.test(val)) allValid = false;
+                        if (!ok) valid = false;
+                        // UI feedback
+                        if (!ok && val !== "") $(this).addClass('input-error');
+                        else $(this).removeClass('input-error');
                     }
                 });
-
-                // Update Tombol Submit State
-                if (allValid) {
-                    $('#btn-save-address').prop('disabled', false);
-                } else {
-                    $('#btn-save-address').prop('disabled', true);
-                }
+                $('#btn-save-address').prop('disabled', !valid);
             }
 
-            // --- Event Listeners Validasi ---
+            $('#add-address-form input, #add-address-form textarea').on('input blur', validate);
 
-            // 1. Saat mengetik (Realtime feedback)
-            $('#add-address-form input, #add-address-form textarea').on('input', function() {
-                validateField($(this));
-                checkFormValidity();
-            });
-
-            // 2. Saat pindah kolom (Blur)
-            $('#add-address-form input, #add-address-form textarea').on('blur', function() {
-                validateField($(this));
-                checkFormValidity();
-            });
-
-            // 3. Reset Form & Validasi saat modal dibuka
-            window.resetValidationForm = function() {
-                $('#add-address-form')[0].reset();
-
-                // Reset style input ke default
-                $('#add-address-form input, #add-address-form textarea')
-                    .removeClass('input-error')
-                    .addClass('focus:border-blue-500');
-
-                // Sembunyikan semua error text
-                $('.error-text').addClass('hidden');
-
-                // Matikan tombol lagi
-                $('#btn-save-address').prop('disabled', true);
-            }
-
-            // Override fungsi buka modal agar melakukan reset
-            let originalOpenModal = window.openAddAddressModal;
-            window.openAddAddressModal = function() {
-                originalOpenModal();
-                if (window.resetValidationForm) window.resetValidationForm();
-            };
-
-
-            // ==========================================
-            // 2. AJAX SUBMIT ADDRESS
-            // ==========================================
-
-            window.submitNewAddress = function() {
-                // 1. Set Hidden Input Koordinat
-                $('#form-lat').val(selectedLat);
-                $('#form-lng').val(selectedLng);
-
-                // 2. Siapkan Data Form
-                let formElement = $('#add-address-form')[0];
-                let formData = new FormData(formElement);
-
-                // 3. Setup UI Button (Loading)
-                let $btnSubmit = $('#btn-save-address');
-                let originalText = $btnSubmit.text();
-
-                $btnSubmit.prop('disabled', true).html('<span class="loading loading-spinner loading-sm"></span> Menyimpan...');
-
-                // 4. Kirim Request AJAX
-                $.ajax({
-                    url: "{{ route('address.store') }}",
-                    type: "POST",
-                    data: formData,
-                    processData: false, // Wajib false untuk FormData
-                    contentType: false, // Wajib false untuk FormData
-                    success: function(response) {
-                        if (response.status === 'success') {
-                            // Sukses: Tutup Modal & Reload
-                            $('#add_address_modal')[0].close();
-                            // alert('Alamat berhasil disimpan!'); // Opsional
-                            window.location.reload();
-                        }
-                    },
-                    error: function(xhr) {
-                        // Error: Kembalikan tombol
-                        $btnSubmit.prop('disabled', false).text(originalText);
-
-                        if (xhr.status === 422) {
-                            // Error Validasi Laravel (Server-side)
-                            let errors = xhr.responseJSON.errors;
-
-                            // Loop error dan tampilkan di bawah input masing-masing
-                            $.each(errors, function(key, value) {
-                                let $input = $(`[name="${key}"]`);
-                                if ($input.length > 0) {
-                                    $input.addClass('input-error').removeClass('focus:border-blue-500');
-
-                                    let $errText = $input.siblings('.error-text');
-                                    if ($errText.length === 0) {
-                                        $input.after('<span class="error-text text-xs text-red-500 mt-1 block"></span>');
-                                        $errText = $input.siblings('.error-text');
-                                    }
-                                    $errText.text(value[0]).removeClass('hidden');
-                                }
-                            });
-
-                            // Alert umum
-                            alert('Mohon periksa kembali inputan Anda yang berwarna merah.');
-
-                        } else {
-                            // Error Server Lain (500, dll)
-                            let msg = 'Terjadi kesalahan sistem.';
-                            if (xhr.responseJSON && xhr.responseJSON.message) {
-                                msg = xhr.responseJSON.message;
-                            }
-                            alert(msg);
-                        }
-                    }
-                });
-            };
-
-
-            // --- 7. KALKULASI ONGKIR & TOTAL ---
-
-            window.calculateShipping = function(lat, lng) {
-                // Haversine Formula (Logic Matematika Murni)
-                const R = 6371;
-                const dLat = (lat - STORE_LAT) * Math.PI / 180;
-                const dLon = (lng - STORE_LNG) * Math.PI / 180;
-                const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                    Math.cos(STORE_LAT * Math.PI / 180) * Math.cos(lat * Math.PI / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-                const distanceKm = R * c;
-
-                // Logic Biaya (Bisa disesuaikan)
-                // Contoh: Base 5000 + (2500 per km jika > 1km)
-                let cost = BASE_COST;
-                if (distanceKm > 1) {
-                    cost += Math.ceil(distanceKm) * COST_KM;
-                }
-
-                // Pembulatan ke atas kelipatan 500 (Biar rapi uangnya)
-                cost = Math.ceil(cost / 500) * 500;
-
-                // Update UI dengan jQuery
-                $('#shipping-cost-label').text(formatRupiah(cost));
-                $('#summary-shipping-cost').text(formatRupiah(cost));
-                $('#grand-total-display').text(formatRupiah(SUBTOTAL + ADMIN_FEE + cost));
-
-                // Update Input Hidden untuk Form Checkout
-                $('#input-shipping-cost').val(cost);
-
-                // Aktifkan Tombol Bayar
-                $('#btn-pay').prop('disabled', false);
-            };
-
-            // Helper Format Rupiah
-            function formatRupiah(num) {
-                return 'Rp ' + new Intl.NumberFormat('id-ID').format(num);
-            }
-
-            // Fungsi Pilih Alamat (dari List)
-            window.selectAddress = function(id) {
-                // Disini kita bisa buat AJAX untuk set 'is_primary' lalu reload
-                // Atau cukup reload page dengan query param ?address_id=ID
-
-                // Simulasi:
-                // window.location.href = "{{ route('checkout.index') }}?address_id=" + id;
-                alert('Memilih alamat ID: ' + id + ' (Fitur ganti alamat perlu implementasi Backend)');
-            };
-
-            // --- 8. PROSES PEMBAYARAN (CHECKOUT SUBMIT) ---
-            $('#btn-pay').on('click', function() {
-                let $btn = $(this);
-                $btn.prop('disabled', true).text('Memproses Pembayaran...');
-
-                // Submit Form Checkout (Create Transaction)
-                // $('#checkout-form').submit(); // Uncomment untuk submit normal form
-
-                // Atau AJAX:
-                alert('Redirect ke Midtrans Snap...');
-            });
-
-        }); // End Document Ready
+            @if ($address && $address->latitude)
+                window.calculateShipping({{ $address->latitude }}, {{ $address->longitude }});
+            @endif
+        });
     </script>
 @endpush
