@@ -2,61 +2,178 @@
 
 namespace App\Http\Controllers;
 
+use Midtrans\Notification;
 use App\Models\Cart;
+use App\Models\Transaction;
+use App\Models\TransactionDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Midtrans\Config;
+use Midtrans\Snap;
 
 class CheckoutController extends Controller
 {
     public function index(Request $request)
     {
-        // 1. Ambil ID items dari URL (?items=1,2,3)
+        $user = Auth::user();
+
+        // 1. Cek apakah ada transaksi pending yang belum dibayar
+        $pendingTransaction = Transaction::where('customer_id', $user->id)
+            ->where('payment_status', 'pending')
+            ->latest()
+            ->first();
+
+        // 2. Ambil data keranjang
         $selectedItemIds = $request->query('items');
+        $query = Cart::with(['variant.shoe', 'variant.images'])->where('user_id', $user->id);
 
-        $query = Cart::with(['variant.shoe', 'variant.images'])
-            ->where('user_id', Auth::id());
-
-        // Jika ada filter item tertentu (dari checkbox cart), filter query-nya
         if ($selectedItemIds) {
             $idsArray = explode(',', $selectedItemIds);
             $query->whereIn('id', $idsArray);
         }
-
         $cartItems = $query->get();
 
-        if ($cartItems->isEmpty()) {
-            return redirect()->route('cart.index')->with('error', 'Tidak ada barang yang dipilih.');
+        // 3. JIKA keranjang kosong DAN TIDAK ADA transaksi pending, baru redirect ke cart
+        // Ini mencegah halaman "Not Found" atau hilang saat refresh setelah konfirmasi
+        if ($cartItems->isEmpty() && !$pendingTransaction) {
+            return redirect()->route('cart.index')->with('error', 'Keranjang belanja kosong.');
         }
 
-        $subtotal = $cartItems->sum(function ($item) {
-            return $item->quantity * $item->variant->price;
-        });
-
+        $subtotal = $cartItems->sum(fn($item) => $item->quantity * $item->variant->price);
         $adminFee = 1000;
-
-        $user = Auth::user();
-        // Get ALL user addresses for the "Address List" modal
         $userAddresses = $user->addresses()->orderBy('is_primary', 'desc')->get();
-
-        // Get the selected address (primary or fallback)
         $address = $user->primaryAddress ?? $userAddresses->first();
-
-        // 3. Konfigurasi Toko (Tetap sama)
-        $storeConfig = [
-            'lat' => -7.472613,
-            'lng' => 112.433912,
-            'base_shipping_cost' => 5000,
-            'cost_per_km' => 2500,
-        ];
+        $storeConfig = ['lat' => -7.472613, 'lng' => 112.433912, 'base_shipping_cost' => 5000, 'cost_per_km' => 2500];
 
         return view('customer.checkout.checkout', compact(
             'cartItems',
             'subtotal',
             'adminFee',
-            'address', // Ini sekarang objek model Address, bukan string/null
+            'address',
             'userAddresses',
             'user',
-            'storeConfig'
+            'storeConfig',
+            'pendingTransaction'
         ));
+    }
+
+    public function store(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $user = Auth::user();
+            // Ambil item keranjang beserta relasi variannya
+            $cartItems = Cart::with('variant')->where('user_id', $user->id)->get();
+
+            if ($cartItems->isEmpty()) {
+                return response()->json(['message' => 'Keranjang Anda kosong.'], 422);
+            }
+
+            // 1. Buat Header Transaksi
+            $invoice = 'INV-' . strtoupper(bin2hex(random_bytes(3))) . '-' . time();
+
+            $transaction = Transaction::create([
+                'customer_id'        => $user->id,
+                'address_id'         => $request->address_id,
+                'invoice'            => $invoice,
+                'subtotal'           => $request->subtotal,
+                'shipping_cost'      => $request->shipping_cost,
+                'admin_fee'          => $request->admin_fee,
+                'total_price'        => $request->total_price,
+                'payment_status'     => 'pending',
+                'transaction_status' => 'pending',
+            ]);
+
+            // 2. Simpan Detail & Catatan
+            foreach ($cartItems as $item) {
+                TransactionDetail::create([
+                    'transaction_id' => $transaction->id,
+                    'variant_id'     => $item->variant_id ?? $item->shoes_variant_id,
+                    'qty'            => $item->quantity,
+                    'price'          => $item->variant->price,
+                    'notes'          => $request->notes[$item->id] ?? null,
+                ]);
+            }
+
+            // 3. Konfigurasi Midtrans
+            Config::$serverKey = config('midtrans.server_key');
+            Config::$isProduction = config('midtrans.is_production');
+            Config::$isSanitized = true;
+            Config::$is3ds = true;
+
+            $params = [
+                'transaction_details' => [
+                    'order_id'     => $invoice,
+                    'gross_amount' => (int) $request->total_price,
+                ],
+                'customer_details' => [
+                    'first_name' => $user->name,
+                    'email'      => $user->email,
+                    'phone'      => $user->phone ?? '',
+                ],
+                'expiry' => [
+                    'unit'     => 'hours',
+                    'duration' => 24
+                ]
+            ];
+
+            $snapToken = Snap::getSnapToken($params);
+            $transaction->update(['snap_token' => $snapToken]);
+
+            // 4. Hapus Keranjang
+            Cart::where('user_id', $user->id)->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'status'     => 'success',
+                'snap_token' => $snapToken,
+                'expiry'     => date('c', strtotime('+24 hours'))
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            // Kembalikan pesan error asli agar mudah didebug
+            return response()->json(['message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function callback(Request $request)
+    {
+        Config::$serverKey = config('midtrans.server_key');
+        Config::$isProduction = config('midtrans.is_production');
+
+        try {
+            $notif = new Notification();
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Invalid Notification'], 400);
+        }
+
+        $transaction_status = $notif->transaction_status;
+        $payment_type = $notif->payment_type;
+        $order_id = $notif->order_id; // Ini adalah nomor Invoice kita
+        $fraud_status = $notif->fraud_status;
+
+        // Cari transaksi di database berdasarkan Invoice
+        $transaction = Transaction::where('invoice', $order_id)->first();
+
+        if (!$transaction) {
+            return response()->json(['message' => 'Transaction not found'], 404);
+        }
+
+        // Update Status Berdasarkan Logic Midtrans
+        if ($transaction_status == 'settlement') {
+            $transaction->update([
+                'payment_status' => 'settlement',
+                'payment_type' => $payment_type,
+                'transaction_status' => 'processing' // Langsung masuk ke status diproses
+            ]);
+        } else if ($transaction_status == 'pending') {
+            $transaction->update(['payment_status' => 'pending']);
+        } else if ($transaction_status == 'deny' || $transaction_status == 'expire' || $transaction_status == 'cancel') {
+            $transaction->update(['payment_status' => $transaction_status]);
+        }
+
+        return response()->json(['message' => 'Callback Success']);
     }
 }

@@ -248,14 +248,34 @@
                                 <div class="bg-blue-50 p-4 rounded-xl flex items-center gap-4 mb-6 border border-blue-100 shadow-sm">
                                     <img src="{{ asset('assets/upload/logo/midtrans.svg') }}" class="h-12 w-auto object-contain opacity-80 mix-blend-multiply">
                                     <div class="flex flex-col">
-                                        <span class="font-bold text-blue-900 text-xs uppercase tracking-wide">Secure Payment</span>
-                                        <span class="text-[10px] text-blue-700">Powered by Midtrans Gateway</span>
+                                        <span class="font-bold text-blue-900 text-xs uppercase tracking-wide">Pembayaran Aman & Terpercaya</span>
+                                        <span class="text-[10px] text-blue-700">Didukung oleh Midtrans Gateway</span>
                                     </div>
                                 </div>
 
-                                <button type="button" id="btn-pay" class="btn btn-primary w-full text-white rounded-xl font-bold shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition-all hover:-translate-y-1" disabled>
-                                    Bayar Sekarang
-                                </button>
+                                <div id="payment-actions">
+                                    {{-- Tombol konfirmasi yang akan di-hidden --}}
+                                    <button type="button" id="btn-confirm" onclick="confirmOrder()" class="btn btn-primary w-full text-white font-bold rounded-xl h-12">
+                                        Konfirmasi Pesanan
+                                    </button>
+
+                                    {{-- Container Timer & Bayar (Hidden di awal) --}}
+                                    <div id="pay-now-container" class="hidden space-y-3">
+                                        <div class="bg-orange-50 border border-orange-100 p-3 rounded-xl text-center">
+                                            <p class="text-[10px] text-orange-600 font-bold uppercase">Batas Waktu Pembayaran</p>
+                                            <div id="countdown-timer" class="text-xl font-mono font-bold text-orange-700">23:59:59</div>
+                                        </div>
+
+                                        <div class="flex gap-2">
+                                            <button type="button" onclick="window.location.reload()" class="btn btn-ghost border-gray-200 flex-1 rounded-xl text-red-500 font-bold">
+                                                Batal
+                                            </button>
+                                            <button type="button" id="btn-pay-snap" class="btn btn-success flex-[2] text-white font-bold rounded-xl shadow-lg">
+                                                Bayar Sekarang
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -465,8 +485,10 @@
     {{-- Leaflet JS --}}
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
+    <script type="text/javascript" src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.client_key') }}"></script>
+
     <script>
-        // 1. DATA GLOBAL (Pastikan variabel ini ada untuk ganti alamat)
+        // 1. DATA GLOBAL
         const userAddresses = @json($userAddresses);
         const STORE_LAT = {{ $storeConfig['lat'] }};
         const STORE_LNG = {{ $storeConfig['lng'] }};
@@ -481,8 +503,7 @@
             selectedLng = STORE_LNG,
             currentStep = 1;
 
-        // 2. FUNGSI GLOBAL (Agar bisa dipanggil onclick)
-
+        // 2. FUNGSI GLOBAL (UI & Navigasi)
         window.openAddressListModal = function() {
             $('#address_list_modal')[0].showModal();
         };
@@ -498,7 +519,6 @@
             $('[id^="step-content-"]').addClass('hidden');
             $('#step-content-' + step).removeClass('hidden');
 
-            // Update Stepper UI
             for (let i = 1; i <= 3; i++) {
                 let $el = $('#step-indicator-' + i);
                 $el.removeClass('active completed');
@@ -552,6 +572,7 @@
             );
         };
 
+        // 3. LOGIKA HARGA & ONGKIR
         window.calculateShipping = function(lat, lng) {
             const R = 6371;
             const dLat = (lat - STORE_LAT) * Math.PI / 180;
@@ -565,33 +586,39 @@
             if (distanceKm > 1) cost += Math.ceil(distanceKm) * COST_KM;
             cost = Math.ceil(cost / 500) * 500;
 
+            // Gunakan jQuery .text() yang lebih aman daripada innerText manual
             $('#shipping-cost-label').text(window.formatRupiah(cost));
             $('#summary-shipping-cost').text(window.formatRupiah(cost));
             $('#grand-total-display').text(window.formatRupiah(SUBTOTAL + ADMIN_FEE + cost));
+
             $('#input-shipping-cost').val(cost);
             $('#btn-pay').prop('disabled', false);
         };
 
+        // Fungsi Reset UI jika Alamat tidak valid (PENTING untuk mencegah error null)
+        window.resetShippingUI = function() {
+            $('#shipping-cost-label').text('Rp -');
+            $('#summary-shipping-cost').text('Rp -');
+            $('#grand-total-display').text('-');
+            $('#btn-pay').prop('disabled', true);
+        };
+
+        window.formatRupiah = function(num) {
+            return 'Rp ' + new Intl.NumberFormat('id-ID').format(num);
+        };
+
+        // 4. LOGIKA ALAMAT
         window.selectAddress = function(id) {
             const addr = userAddresses.find(a => a.id == id);
             if (!addr) return;
-            // 1. Reset semua item ke desain "Tidak Aktif"
-            $('.address-item').removeClass('border-blue-500 bg-blue-50 ring-1 ring-blue-500')
-                .addClass('border-gray-200');
 
-            // 2. Sembunyikan semua ikon centang
+            $('.address-item').removeClass('border-blue-500 bg-blue-50 ring-1 ring-blue-500').addClass('border-gray-200');
             $('.address-item .check-icon').addClass('hidden');
 
-            // 3. Set item yang diklik ke desain "Aktif"
             const $selectedItem = $(`#addr-item-${id}`);
-            $selectedItem.addClass('border-blue-500 bg-blue-50 ring-1 ring-blue-500')
-                .removeClass('border-gray-200');
-
-            // 4. Tampilkan ikon centang pada item yang dipilih
+            $selectedItem.addClass('border-blue-500 bg-blue-50 ring-1 ring-blue-500').removeClass('border-gray-200');
             $selectedItem.find('.check-icon').removeClass('hidden');
 
-
-            // --- LOGIKA UPDATE HALAMAN CHECKOUT (TETAP SAMA) ---
             $('#disp-label').text(addr.label);
             $('#disp-recipient').text(addr.recipient_name);
             $('#disp-phone').text(addr.phone_number);
@@ -609,19 +636,138 @@
             } else {
                 $('#status-pinpoint-ok').addClass('hidden');
                 $('#status-pinpoint-fail').removeClass('hidden');
-                window.resetShippingUI(); // Pastikan fungsi ini ada untuk mereset harga jika koordinat kosong
-                alert('Alamat ini belum memiliki titik koordinat. Pilih lokasi dulu.');
+                window.resetShippingUI();
+                alert('Alamat ini belum memiliki titik koordinat.');
             }
 
             $('#active-address-card').removeClass('hidden');
             $('#address-empty-state').addClass('hidden');
-
-            // Tutup Modal
             $('#address_list_modal')[0].close();
         };
 
-        window.formatRupiah = function(num) {
-            return 'Rp ' + new Intl.NumberFormat('id-ID').format(num);
+        // 5. KONFIRMASI & PEMBAYARAN (SNAP POP-UP)
+        window.confirmOrder = function() {
+            let $btn = $('#btn-confirm');
+            let address_id = $('#input-address-id').val();
+
+            if (!address_id || address_id === "") {
+                alert('Silakan pilih alamat pengiriman terlebih dahulu.');
+                return;
+            }
+
+            // Ambil semua notes per item cart
+            let notes = {};
+            $('input[name^="notes"]').each(function() {
+                let match = $(this).attr('name').match(/\d+/);
+                if (match) notes[match[0]] = $(this).val();
+            });
+
+            let shipping = parseInt($('#input-shipping-cost').val()) || 0;
+
+            // Loading State
+            $btn.prop('disabled', true).html('<span class="loading loading-spinner loading-xs"></span> Memproses...');
+
+            $.ajax({
+                url: "{{ route('checkout.store') }}",
+                type: "POST",
+                data: {
+                    address_id: address_id,
+                    subtotal: SUBTOTAL,
+                    shipping_cost: shipping,
+                    admin_fee: ADMIN_FEE,
+                    total_price: SUBTOTAL + ADMIN_FEE + shipping,
+                    notes: notes
+                },
+                success: function(res) {
+                    // 1. Ganti UI: Sembunyikan konfirmasi, tampilkan area pembayaran & timer
+                    $btn.addClass('hidden');
+                    if ($('#pay-now-container').length) {
+                        $('#pay-now-container').removeClass('hidden').fadeIn();
+                    }
+
+                    // 2. Jalankan Timer Berdasarkan Waktu ISO dari Server (Anti-Loncat)
+                    window.startTimer(res.expiry);
+
+                    // 3. LOGIKA POP-UP SNAP
+                    // Fungsi untuk memicu pop-up Midtrans
+                    const triggerSnap = function() {
+                        window.snap.pay(res.snap_token, {
+                            onPending: function(result) {
+                                /* Terpanggil saat user mendapatkan instruksi bayar (misal: Virtual Account) */
+                                window.location.href = "/orders/status?order_id=" + result.order_id;
+                            },
+                            onError: function(result) {
+                                /* Terpanggil saat terjadi kesalahan teknis */
+                                alert("Pembayaran gagal! Silakan coba lagi.");
+                                console.error(result);
+                            },
+                            onClose: function() {
+                                /* Terpanggil saat user menutup modal tanpa bayar */
+                                alert('Jangan lupa selesaikan pembayaranmu sebelum waktu habis!');
+                            }
+                        });
+                    };
+
+                    // Picu pop-up pertama kali secara otomatis (Opsional)
+                    triggerSnap();
+
+                    // Pasang logika yang sama ke tombol "Bayar Sekarang" jika user menutup pop-up secara tidak sengaja
+                    $('#btn-pay-snap').off('click').on('click', function() {
+                        triggerSnap();
+                    });
+                },
+                error: function(xhr) {
+                    $btn.prop('disabled', false).text('Konfirmasi Pesanan');
+                    let errorMsg = xhr.responseJSON ? xhr.responseJSON.message : 'Terjadi kesalahan sistem.';
+                    alert('Gagal membuat pesanan: ' + errorMsg);
+                }
+            });
+        };
+
+        window.startTimer = function(expiryTime) {
+            if (!expiryTime) return;
+
+            // Menghitung target waktu berdasarkan string ISO dari server
+            let countDownDate = new Date(expiryTime).getTime();
+
+            // Hapus interval lama jika ada (mencegah timer ganda)
+            if (window.timerInterval) clearInterval(window.timerInterval);
+
+            window.timerInterval = setInterval(function() {
+                // Ambil waktu sekarang (berdasarkan timezone browser user)
+                let now = new Date().getTime();
+
+                // Jarak antara waktu sekarang dan waktu kadaluarsa
+                let distance = countDownDate - now;
+
+                // Logika kalkulasi jam, menit, detik
+                let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                let seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                let timerText = (hours < 10 ? "0" + hours : hours) + ":" +
+                    (minutes < 10 ? "0" + minutes : minutes) + ":" +
+                    (seconds < 10 ? "0" + seconds : seconds);
+
+                let timerEl = $('#countdown-timer');
+                if (timerEl.length) {
+                    timerEl.text(timerText);
+                }
+
+                // Jika waktu habis
+                if (distance < 0) {
+                    clearInterval(window.timerInterval);
+                    if (timerEl.length) timerEl.text("EXPIRED");
+                    alert('Waktu pembayaran telah habis.');
+                    window.location.reload();
+                }
+            }, 1000);
+        };
+
+        window.cancelOrder = function() {
+            if (confirm('Batalkan pesanan ini?')) {
+                window.location.href = "{{ route('landing-page') }}";
+            }
         };
 
         window.submitNewAddress = function() {
@@ -647,13 +793,42 @@
             });
         };
 
-        // 3. LOGIKA VALIDATION & EVENT (Di dalam ready)
         $(document).ready(function() {
             $.ajaxSetup({
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 }
             });
+
+            // --- LOGIKA RECOVERY SAAT REFRESH ---
+            @if (isset($pendingTransaction) && $pendingTransaction->payment_status == 'pending')
+                // 1. Sembunyikan tombol konfirmasi, tampilkan area bayar
+                $('#btn-confirm').addClass('hidden');
+                $('#pay-now-container').removeClass('hidden').show();
+
+                // 2. Hitung sisa waktu (Created_at + 24 Jam)
+                @php
+                    $expiryTime = $pendingTransaction->created_at->addHours(24)->toIso8601String();
+                @endphp
+
+                // 3. Jalankan timer otomatis
+                window.startTimer("{{ $expiryTime }}");
+
+                // 4. Pasang fungsi Snap ke tombol bayar menggunakan token lama
+                $('#btn-pay-snap').off('click').on('click', function() {
+                    window.snap.pay("{{ $pendingTransaction->snap_token }}", {
+                        onSuccess: function(result) {
+                            window.location.href = "/orders/status";
+                        },
+                        onPending: function(result) {
+                            window.location.reload();
+                        },
+                        onClose: function() {
+                            alert('Segera selesaikan pembayaran Anda!');
+                        }
+                    });
+                });
+            @endif
 
             const rules = {
                 recipient_name: {
@@ -687,9 +862,7 @@
                         if (rule.required && !val) ok = false;
                         if (rule.min && val.length < rule.min) ok = false;
                         if (rule.regex && !rule.regex.test(val)) ok = false;
-
                         if (!ok) valid = false;
-                        // UI feedback
                         if (!ok && val !== "") $(this).addClass('input-error');
                         else $(this).removeClass('input-error');
                     }

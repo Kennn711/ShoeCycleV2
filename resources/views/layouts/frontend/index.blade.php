@@ -126,7 +126,7 @@
                         <a href="#new-arrivals" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
                             Koleksi
                         </a>
-                        <a href="#" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
+                        <a href="{{ route('my-order.index') }}" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
                             Pesanan Saya
                         </a>
                     </div>

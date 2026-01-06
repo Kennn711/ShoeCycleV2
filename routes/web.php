@@ -28,7 +28,9 @@ Route::middleware(['auth', 'customer'])->group(function () {
     Route::delete('/cart/destroy/{id}', [CartController::class, 'destroy'])->name('cart.destroy');
 
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
+    Route::post('/checkout/store', [CheckoutController::class, 'store'])->name('checkout.store');
 
+    Route::get('my-orders', [TransactionController::class, 'indexCustomer'])->name('my-order.index');
     Route::post('/address/store', [AddressController::class, 'store'])->name('address.store');
 });
 
