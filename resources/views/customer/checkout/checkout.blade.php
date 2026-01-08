@@ -137,7 +137,23 @@
                             <div id="active-address-card" class="{{ $address ? '' : 'hidden' }}">
                                 <div class="p-5 border border-blue-200 bg-blue-50/40 rounded-xl relative hover:border-blue-300 transition-colors">
                                     <div class="flex items-center gap-2 mb-2">
-                                        <span id="disp-label" class="badge badge-sm bg-blue-100 text-blue-700 border-none font-bold uppercase">{{ $address->label ?? '' }}</span>
+                                        <span id="disp-label" class="badge badge-sm bg-blue-100 text-blue-700 border-none font-bold uppercase">
+                                            @if ($address->label == 'Home')
+                                                Rumah
+                                            @endif
+                                            @if ($address->label == 'Office')
+                                                Kantor
+                                            @endif
+                                            @if ($address->label == 'Apartment')
+                                                Apartemen
+                                            @endif
+                                            @if ($address->label == 'Boarding House')
+                                                Tempat Kos
+                                            @endif
+                                            @if ($address->label == 'Other')
+                                                Lainnya
+                                            @endif
+                                        </span>
                                         <span id="disp-primary" class="badge badge-xs badge-primary {{ $address->is_primary ?? false ? '' : 'hidden' }}">Utama</span>
                                     </div>
                                     <div class="flex flex-col md:flex-row md:items-center gap-1 md:gap-3">

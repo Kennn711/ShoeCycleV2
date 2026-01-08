@@ -31,7 +31,8 @@ return new class extends Migration
             // Integrasi Midtrans
             $table->string('snap_token')->nullable(); // Token untuk pop-up Snap
             $table->string('payment_type')->nullable(); // bank_transfer, gopay, qris, dll
-            $table->string('pdf_url')->nullable();      // Link instruksi bayar VA (PENTING!)
+            $table->string('pdf_url')->nullable();
+            $table->string('proof_of_delivery')->nullable();
             $table->enum('payment_status', ['pending', 'settlement', 'expire', 'cancel', 'deny'])
                 ->default('pending');
 

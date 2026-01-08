@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Pest\Support\Str;
 
 class DeliveryController extends Controller
 {
@@ -12,7 +13,7 @@ class DeliveryController extends Controller
     {
         $transactions = Transaction::with(['customer', 'address', 'details.variant.shoe'])
             ->where('courier_id', Auth::id()) // Pastikan hanya milik kurir ini
-            ->whereIn('transaction_status', ['processing', 'shipping']) // Hanya ambil yang aktif
+            ->whereIn('transaction_status', ['processing', 'shipping', 'delivered']) // Hanya ambil yang aktif
             ->orderBy('transaction_status', 'desc') // Biarkan 'shipping' di atas
             ->latest()
             ->get();
@@ -25,31 +26,33 @@ class DeliveryController extends Controller
         try {
             $transaction = Transaction::findOrFail($id);
 
-            // Security Check: Pastikan driver tidak mengubah pesanan orang lain
             if ($transaction->courier_id != Auth::id()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Akses ditolak. Ini bukan tugas Anda.'
-                ], 403);
+                return response()->json(['success' => false, 'message' => 'Akses ditolak!'], 403);
             }
 
-            // Update status
-            $transaction->update([
-                'transaction_status' => $request->transaction_status
-            ]);
+            // Update Status
+            $transaction->transaction_status = $request->transaction_status;
 
-            $message = $request->transaction_status == 'shipping'
-                ? 'Pesanan mulai dikirim!'
-                : 'Pesanan telah selesai dikirim!';
+            // Jika ada upload gambar (status delivered)
+            if ($request->hasFile('proof_of_delivery')) {
+                $image = $request->file('proof_of_delivery');
 
-            return response()->json([
-                'success' => true,
-                'message' => $message
-            ]);
+                // Logika Penamaan File Anda
+                $extension = $image->getClientOriginalExtension();
+                $filename = 'proof_' . time() . '_' . Str::random(10) . '.' . $extension;
+
+                $path = $image->storeAs('delivery-proofs', $filename, 'public');
+
+                $transaction->proof_of_delivery = $path;
+            }
+
+            $transaction->save();
+
+            return response()->json(['success' => true]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+                'message' => 'Error: ' . $e->getMessage()
             ], 500);
         }
     }

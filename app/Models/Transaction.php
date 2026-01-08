@@ -18,6 +18,7 @@ class Transaction extends Model
         'snap_token',
         'payment_type',
         'pdf_url',
+        'proof_of_delivery',
         'payment_status',
         'transaction_status',
     ];

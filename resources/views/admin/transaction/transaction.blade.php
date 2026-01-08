@@ -68,6 +68,7 @@
                             <th>Pelanggan</th>
                             <th>Total Tagihan</th>
                             <th>Detail Pesanan</th>
+                            <th>Bukti Pengiriman</th>
                             <th class="text-center">Status Bayar</th>
                             <th class="text-center">Status Transaksi</th>
                             <th>Aksi</th>
@@ -92,8 +93,14 @@
                                 </td>
 
                                 <td class="font-bold text-gray-900">
-                                    <button class="btn btn-sm bg-blue-400 text-blue-100 border-none hover:bg-blue-500 tooltip" data-tip="Detail Pesanan" onclick="showTrxDetail({{ $trx->id }})">
+                                    <button class="btn btn-sm bg-blue-400 text-blue-100 border-none hover:bg-blue-500 tooltip" data-tip="Lihat Detail Pesanan" onclick="showTrxDetail({{ $trx->id }})">
                                         <i class="fa-solid fa-eye text-sm"></i>
+                                    </button>
+                                </td>
+
+                                <td class="font-bold text-gray-900">
+                                    <button class="btn btn-sm bg-blue-400 text-blue-100 border-none hover:bg-blue-500 tooltip" data-tip="Lihat Bukti Pengiriman">
+                                        <i class="fa-solid fa-image text-sm"></i>
                                     </button>
                                 </td>
 
