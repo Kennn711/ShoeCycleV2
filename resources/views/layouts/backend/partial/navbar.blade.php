@@ -25,8 +25,8 @@
                         </svg>
                     </div>
                     <div class="text-left hidden md:block">
-                        <p class="text-sm font-medium text-gray-900">Admin</p>
-                        <p class="text-xs text-gray-500">admin@shoecycle.com</p>
+                        <p class="text-sm font-medium text-gray-900">{{ Auth::user()->name }}</p>
+                        <p class="text-xs text-gray-500">{{ Auth::user()->email }}</p>
                     </div>
                 </button>
 

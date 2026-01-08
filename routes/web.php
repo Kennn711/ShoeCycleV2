@@ -6,6 +6,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DeliveryController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ShoesController;
@@ -48,8 +49,14 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
     // Transaction
     Route::get('/transaction', [TransactionController::class, 'index'])->name('transaction.index');
+    Route::get('/transaction/show/{id}', [TransactionController::class, 'show'])->name('transaction.show');
+    Route::get('/transaction/get-courier', [TransactionController::class, 'getCouriers'])->name('transaction.get-courier');
+    Route::post('/transaction/update-status/{id}', [TransactionController::class, 'updateStatus'])->name('transaction.update');
 });
 
 Route::middleware(['auth', 'driver'])->group(function () {
     Route::get('/dashboard-driver', [DashboardController::class, 'driver'])->name('dashboard-driver');
+
+    Route::get('/delivery', [DeliveryController::class, 'index'])->name('delivery.index');
+    Route::post('/delivery/update-status/{id}', [DeliveryController::class, 'updateStatus'])->name('delivery.update-status');
 });

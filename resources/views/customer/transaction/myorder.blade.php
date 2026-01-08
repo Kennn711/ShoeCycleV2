@@ -74,7 +74,15 @@
                                     {{ strtoupper($transaction->payment_status == 'settlement' ? 'Lunas' : $transaction->payment_status) }}
                                 </span>
                                 <span class="badge badge-sm font-bold border-none {{ $shipClasses[$transaction->transaction_status] ?? 'bg-gray-100' }}">
-                                    {{ ucfirst($transaction->transaction_status) }}
+                                    @if ($transaction->transaction_status == 'processing')
+                                        Diproses
+                                    @endif
+                                    @if ($transaction->transaction_status == 'shipping')
+                                        Dikirim
+                                    @endif
+                                    @if ($transaction->transaction_status == 'delivered')
+                                        Selesai
+                                    @endif
                                 </span>
                             </div>
                         </div>
@@ -134,7 +142,10 @@
                                     </button>
                                 @endif
 
-                                <a href="#" class="btn btn-sm btn-ghost text-gray-500 text-xs normal-case font-bold">Lihat Detail</a>
+                                {{-- Ganti tag <a> "Lihat Detail" dengan ini --}}
+                                <button type="button" onclick="showOrderDetail({{ json_encode($transaction->load(['details.variant.shoe', 'address'])) }})" class="btn btn-sm btn-primary text-white text-xs normal-case font-bold">
+                                    Lihat Detail
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -152,6 +163,83 @@
             </div>
         </div>
     </section>
+
+    {{-- MODAL DETAIL PESANAN --}}
+    <dialog id="order_detail_modal" class="modal modal-bottom sm:modal-middle">
+        <div class="modal-box bg-white p-0 max-w-2xl overflow-hidden">
+            {{-- Header --}}
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-slate-50">
+                <div>
+                    <h3 class="font-bold text-lg text-gray-900" id="mdl-invoice">-</h3>
+                    <p class="text-xs text-gray-500" id="mdl-date">-</p>
+                </div>
+                <form method="dialog">
+                    <button class="btn btn-sm btn-circle btn-ghost">✕</button>
+                </form>
+            </div>
+
+            <div class="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+                {{-- Info Pengiriman & Status --}}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Info Pengiriman</h4>
+                        <p class="text-sm font-bold text-gray-900" id="mdl-recipient">-</p>
+                        <p class="text-xs text-gray-600 mt-1" id="mdl-phone">-</p>
+                        <p class="text-xs text-gray-500 mt-1 leading-relaxed" id="mdl-address">-</p>
+                    </div>
+                    <div>
+                        <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Status Pesanan</h4>
+                        <div id="mdl-status-badges" class="flex flex-col gap-2 items-start">
+                            {{-- Badges akan muncul di sini --}}
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="border-gray-100">
+
+                {{-- Tabel Barang --}}
+                <div>
+                    <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Daftar Barang</h4>
+                    <div class="overflow-x-auto border border-gray-100 rounded-xl">
+                        <table class="table w-full">
+                            <thead class="bg-slate-50">
+                                <tr class="text-gray-600 border-b border-gray-100">
+                                    <th>Produk</th>
+                                    <th class="text-center">Qty</th>
+                                    <th class="text-right">Harga</th>
+                                    <th class="text-right">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody id="mdl-items-body">
+                                {{-- Baris barang akan diisi via JS --}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                {{-- Rincian Pembayaran --}}
+                <div class="bg-slate-50 p-4 rounded-xl space-y-2">
+                    <div class="flex justify-between text-xs text-gray-600">
+                        <span>Subtotal Produk</span>
+                        <span id="mdl-subtotal">-</span>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-600">
+                        <span>Ongkos Kirim</span>
+                        <span id="mdl-shipping">-</span>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-600">
+                        <span>Biaya Admin</span>
+                        <span id="mdl-admin">-</span>
+                    </div>
+                    <div class="flex justify-between text-sm font-bold text-gray-900 pt-2 border-t border-gray-200">
+                        <span>Total Bayar</span>
+                        <span class="text-blue-600" id="mdl-total">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop bg-gray-900/50"><button>close</button></form>
+    </dialog>
 @endsection
 
 @push('scripts')
@@ -159,11 +247,78 @@
     <script type="text/javascript" src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.client_key') }}"></script>
 
     <script>
-        // Logika Tab Switch (Simple)
-        $(document).on('click', '.btn-sm', function() {
-            $('.btn-sm').removeClass('bg-blue-600 text-white shadow-md shadow-blue-200').addClass('bg-white text-gray-600 shadow-sm');
+        // 1. Fungsi Format Rupiah
+        window.formatRupiah = function(num) {
+            return 'Rp ' + new Intl.NumberFormat('id-ID').format(num);
+        };
+
+        // 2. Logika Tab Filter (Client-side)
+        $(document).on('click', '.tab-filter', function() {
+            // Animasi tombol aktif
+            $('.tab-filter').removeClass('bg-blue-600 text-white shadow-md shadow-blue-200').addClass('bg-white text-gray-600 shadow-sm');
             $(this).removeClass('bg-white text-gray-600 shadow-sm').addClass('bg-blue-600 text-white shadow-md shadow-blue-200');
-            // Catatan: Disini Anda bisa tambahkan filter AJAX atau menyembunyikan card berdasarkan status.
+
+            const filter = $(this).data('filter');
+
+            if (filter === 'all') {
+                $('.order-card').fadeIn().removeClass('hidden');
+            } else {
+                $('.order-card').hide().addClass('hidden');
+                // Mencari card yang memiliki status sesuai data-filter
+                $(`.order-card[data-status="${filter}"]`).fadeIn().removeClass('hidden');
+            }
         });
+
+        // 3. Fungsi Tampil Detail Modal
+        window.showOrderDetail = function(data) {
+            const modal = $('#order_detail_modal')[0];
+
+            // Header Info
+            $('#mdl-invoice').text(data.invoice);
+            $('#mdl-date').text('Dipesan pada ' + new Date(data.created_at).toLocaleDateString('id-ID', {
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric'
+            }));
+
+            // Pengiriman
+            const addr = data.address;
+            $('#mdl-recipient').text(addr.recipient_name);
+            $('#mdl-phone').text(addr.phone_number);
+            $('#mdl-address').html(`${addr.full_address}<br>Kec. ${addr.district}, ${addr.village}`);
+
+            // Badges Status
+            let statusHtml = `
+                <span class="badge badge-outline font-bold text-[10px]">${data.payment_type ? data.payment_type.toUpperCase() : 'BELUM DIBAYAR'}</span>
+                <span class="badge badge-info text-white font-bold text-[10px]">${data.transaction_status.toUpperCase()}</span>
+            `;
+            $('#mdl-status-badges').html(statusHtml);
+
+            // Daftar Barang (Table)
+            let tableHtml = '';
+            data.details.forEach(item => {
+                const subtotal = item.price * item.qty;
+                tableHtml += `
+                    <tr class="border-b border-gray-50 text-xs">
+                        <td>
+                            <div class="font-bold text-gray-900">${item.variant.shoe.name}</div>
+                            <div class="text-[10px] text-gray-400 uppercase">Size: ${item.variant.size} | ${item.variant.color}</div>
+                        </td>
+                        <td class="text-center">${item.qty}</td>
+                        <td class="text-right">${window.formatRupiah(item.price)}</td>
+                        <td class="text-right font-bold text-gray-900">${window.formatRupiah(subtotal)}</td>
+                    </tr>
+                `;
+            });
+            $('#mdl-items-body').html(tableHtml);
+
+            // Rincian Harga
+            $('#mdl-subtotal').text(window.formatRupiah(data.subtotal));
+            $('#mdl-shipping').text(window.formatRupiah(data.shipping_cost));
+            $('#mdl-admin').text(window.formatRupiah(data.admin_fee));
+            $('#mdl-total').text(window.formatRupiah(data.total_price));
+
+            modal.showModal();
+        };
     </script>
 @endpush
