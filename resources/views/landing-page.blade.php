@@ -105,7 +105,7 @@
     {{-- ========================================================= --}}
     {{-- 3. CATEGORY SECTION - Interactive Cards                  --}}
     {{-- ========================================================= --}}
-    <section id="categories" class="py-20 bg-slate-50">
+    <section id="categories" class="py-20 bg-slate-100">
         <div class="container mx-auto px-4">
             <div class="text-center mb-16" data-aos="fade-up">
                 <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">

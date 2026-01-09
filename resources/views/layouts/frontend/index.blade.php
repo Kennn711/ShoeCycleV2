@@ -112,22 +112,11 @@
                         <a href="{{ route('landing-page') }}" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
                             Beranda
                         </a>
-                        <div class="dropdown dropdown-hover">
-                            <div tabindex="0" role="button" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all flex items-center gap-1">
-                                Belanja <i class="fas fa-chevron-down text-xs"></i>
-                            </div>
-                            <ul tabindex="0" class="dropdown-content menu p-2 shadow-xl bg-white rounded-xl w-56 border border-gray-100 mt-1">
-                                <li><a href="#" class="text-sm">Semua Produk</a></li>
-                                <li><a href="#" class="text-sm">Pria</a></li>
-                                <li><a href="#" class="text-sm">Wanita</a></li>
-                                <li><a href="#" class="text-sm">Anak-anak</a></li>
-                            </ul>
-                        </div>
                         <a href="#new-arrivals" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
                             Koleksi
                         </a>
-                        <a href="{{ route('my-order.index') }}" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
-                            Pesanan Saya
+                        <a href="{{ route('all-category.index') }}" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
+                            Kategori
                         </a>
                     </div>
                 </div>
@@ -174,7 +163,8 @@
                                 <li class="menu-title px-4 py-2">
                                     <span class="text-xs text-gray-500">Hai, {{ Auth::user()->name }}</span>
                                 </li>
-                                <li><a href="#" class="text-sm"><i class="fas fa-user mr-2 w-4"></i> Profil Saya</a></li>
+                                <li><a href="#" class="text-sm"><i class="fa-solid fa-gear mr-2 w-4"></i> Pengaturan</a></li>
+                                <li><a href="{{ route('my-order.index') }}" class="text-sm"><i class="fa-solid fa-square-poll-horizontal mr-2 w-4"></i> Pesanan Saya</a></li>
                                 <li class="border-t border-gray-100 mt-1 pt-1">
                                     <form method="POST" action="{{ route('logout') }}">
                                         @csrf

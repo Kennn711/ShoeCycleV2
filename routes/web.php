@@ -15,6 +15,8 @@ use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/shoecycle', [HomeController::class, 'index'])->name('landing-page');
+Route::get('/shoecycle/shoes-collection', [HomeController::class, 'shoesCollection'])->name('shoes-collection.index');
+Route::get('/shoecycle/all-category', [HomeController::class, 'allCategory'])->name('all-category.index');
 Route::get('/shoecycle/{slug}', [HomeController::class, 'detailShoes'])->name('detail-shoes');
 
 // Authentication routes

@@ -109,4 +109,19 @@ class HomeController extends Controller
             'defaultImages'
         ));
     }
+
+    public function allCategory()
+    {
+        // Eager loading untuk performa agar tidak lambat (N+1 query)
+        $categories = Category::with(['shoes' => function ($query) {
+            $query->where('is_active', true);
+        }, 'shoes', 'shoes.variants.images'])->get();
+
+        return view('customer.category', compact('categories'));
+    }
+
+    public function shoesCollection()
+    {
+        // 
+    }
 }
