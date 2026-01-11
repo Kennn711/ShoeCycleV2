@@ -102,6 +102,19 @@
             -webkit-appearance: none;
             margin: 0;
         }
+
+        .btn-primary:disabled,
+        .btn-primary[disabled] {
+            background-color: #2563eb !important;
+            /* Biru Solid */
+            color: #ffffff !important;
+            opacity: 0.8;
+            border: none;
+        }
+
+        .loading-spinner {
+            color: white !important;
+        }
     </style>
 @endpush
 
@@ -112,8 +125,8 @@
 
             <form action="#" method="POST" id="checkout-form">
                 @csrf
-                {{-- Input Hidden Utama --}}
-                <input type="hidden" name="address_id" id="input-address-id" value="{{ $address->id ?? '' }}">
+                {{-- Input Hidden Utama (Menggunakan Null Safe Operator) --}}
+                <input type="hidden" name="address_id" id="input-address-id" value="{{ $address?->id }}">
                 <input type="hidden" name="shipping_cost" id="input-shipping-cost">
 
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -134,36 +147,38 @@
                                 @endif
                             </div>
 
+                            {{-- Area Kartu Alamat Aktif --}}
                             <div id="active-address-card" class="{{ $address ? '' : 'hidden' }}">
                                 <div class="p-5 border border-blue-200 bg-blue-50/40 rounded-xl relative hover:border-blue-300 transition-colors">
                                     <div class="flex items-center gap-2 mb-2">
                                         <span id="disp-label" class="badge badge-sm bg-blue-100 text-blue-700 border-none font-bold uppercase">
-                                            @if ($address->label == 'Home')
+                                            @php $label = $address?->label; @endphp
+                                            @if ($label == 'Home')
                                                 Rumah
-                                            @endif
-                                            @if ($address->label == 'Office')
+                                            @elseif ($label == 'Office')
                                                 Kantor
-                                            @endif
-                                            @if ($address->label == 'Apartment')
+                                            @elseif ($label == 'Apartment')
                                                 Apartemen
-                                            @endif
-                                            @if ($address->label == 'Boarding House')
+                                            @elseif ($label == 'Boarding House')
                                                 Tempat Kos
-                                            @endif
-                                            @if ($address->label == 'Other')
+                                            @elseif ($label == 'Other')
                                                 Lainnya
+                                            @else
+                                                Alamat
                                             @endif
                                         </span>
-                                        <span id="disp-primary" class="badge badge-xs badge-primary {{ $address->is_primary ?? false ? '' : 'hidden' }}">Utama</span>
+                                        <span id="disp-primary" class="badge badge-xs badge-primary {{ $address?->is_primary ? '' : 'hidden' }}">Utama</span>
                                     </div>
                                     <div class="flex flex-col md:flex-row md:items-center gap-1 md:gap-3">
-                                        <p class="font-bold text-gray-900 text-lg" id="disp-recipient">{{ $address->recipient_name ?? '' }}</p>
+                                        <p class="font-bold text-gray-900 text-lg" id="disp-recipient">{{ $address?->recipient_name }}</p>
                                         <p class="text-gray-500 hidden md:block">|</p>
-                                        <p class="text-gray-600 font-medium" id="disp-phone">{{ $address->phone_number ?? '' }}</p>
+                                        <p class="text-gray-600 font-medium" id="disp-phone">{{ $address?->phone_number }}</p>
                                     </div>
                                     <p class="text-gray-600 text-sm mt-2 leading-relaxed" id="disp-full-address">
-                                        {{ $address->full_address ?? '' }}<br>
-                                        Kec. {{ $address->district ?? '' }}, {{ $address->village ?? '' }}
+                                        {{ $address?->full_address }}<br>
+                                        @if ($address)
+                                            Kec. {{ $address->district }}, {{ $address->village }}
+                                        @endif
                                     </p>
 
                                     <div id="status-pinpoint-ok" class="flex items-center gap-2 mt-4 text-xs text-blue-700 font-bold bg-blue-100 w-fit px-3 py-1 rounded-full {{ $address && $address->latitude ? '' : 'hidden' }}">
@@ -175,7 +190,7 @@
                                 </div>
                             </div>
 
-                            {{-- Empty State --}}
+                            {{-- Empty State (Muncul jika $address null) --}}
                             <div id="address-empty-state" class="text-center py-10 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 {{ $address ? 'hidden' : '' }}">
                                 <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
                                     <i class="fas fa-map-marked-alt text-2xl"></i>
@@ -211,7 +226,6 @@
                                             <span class="ml-2 font-bold">{{ $item->quantity }}x</span>
                                         </p>
 
-                                        {{-- Tokopedia Style Note Input --}}
                                         <div class="mt-3 flex items-center gap-2 group">
                                             <i class="fas fa-comment-dots text-gray-400 text-xs group-focus-within:text-blue-500 transition-colors"></i>
                                             <input type="text" name="notes[{{ $item->id }}]" class="w-full text-xs border-0 border-b border-gray-100 focus:border-blue-500 focus:ring-0 placeholder:text-gray-500 py-1 transition-all" placeholder="Kasih catatan untuk barang ini (opsional)...">
@@ -264,31 +278,29 @@
                                 <div class="bg-blue-50 p-4 rounded-xl flex items-center gap-4 mb-6 border border-blue-100 shadow-sm">
                                     <img src="{{ asset('assets/upload/logo/midtrans.svg') }}" class="h-12 w-auto object-contain opacity-80 mix-blend-multiply">
                                     <div class="flex flex-col">
-                                        <span class="font-bold text-blue-900 text-xs uppercase tracking-wide">Pembayaran Aman & Terpercaya</span>
-                                        <span class="text-[10px] text-blue-700">Didukung oleh Midtrans Gateway</span>
+                                        <span class="font-bold text-blue-900 text-xs uppercase tracking-wide">Pembayaran Aman</span>
+                                        <span class="text-[10px] text-blue-700">Midtrans Payment Gateway</span>
                                     </div>
                                 </div>
 
                                 <div id="payment-actions">
-                                    {{-- Tombol konfirmasi yang akan di-hidden --}}
-                                    <button type="button" id="btn-confirm" onclick="confirmOrder()" class="btn btn-primary w-full text-white font-bold rounded-xl h-12">
-                                        Konfirmasi Pesanan
+                                    <button type="button" id="btn-confirm" onclick="confirmOrder()" @if (!$address) disabled @endif class="btn w-full text-white font-bold rounded-xl h-12 transition-all 
+        {{ !$address ? 'bg-blue-400 border-blue-400 cursor-not-allowed hover:bg-blue-400' : 'btn-primary' }}">
+                                        @if (!$address)
+                                            <i class="fas fa-exclamation-circle mr-2"></i> Pilih Alamat Dahulu
+                                        @else
+                                            Konfirmasi Pesanan
+                                        @endif
                                     </button>
 
-                                    {{-- Container Timer & Bayar (Hidden di awal) --}}
                                     <div id="pay-now-container" class="hidden space-y-3">
                                         <div class="bg-orange-50 border border-orange-100 p-3 rounded-xl text-center">
                                             <p class="text-[10px] text-orange-600 font-bold uppercase">Batas Waktu Pembayaran</p>
                                             <div id="countdown-timer" class="text-xl font-mono font-bold text-orange-700">23:59:59</div>
                                         </div>
-
                                         <div class="flex gap-2">
-                                            <button type="button" onclick="window.location.reload()" class="btn btn-ghost border-gray-200 flex-1 rounded-xl text-red-500 font-bold">
-                                                Batal
-                                            </button>
-                                            <button type="button" id="btn-pay-snap" class="btn btn-success flex-[2] text-white font-bold rounded-xl shadow-lg">
-                                                Bayar Sekarang
-                                            </button>
+                                            <button type="button" onclick="window.location.reload()" class="btn btn-ghost border-gray-200 flex-1 rounded-xl text-red-500 font-bold">Batal</button>
+                                            <button type="button" id="btn-pay-snap" class="btn btn-success flex-[2] text-white font-bold rounded-xl shadow-lg">Bayar Sekarang</button>
                                         </div>
                                     </div>
                                 </div>
@@ -475,7 +487,7 @@
 
                             <div class="form-control w-full">
                                 <label class="label pb-1"><span class="label-text font-bold text-gray-700">Catatan Kurir (Opsional)</span></label>
-                                <input type="text" name="courier_note" class="input input-bordered rounded-xl focus:border-blue-500" placeholder="Warna pagar, patokan, titip satpam, dll.">
+                                <textarea name="courier_note" class="textarea textarea-bordered w-full resize-none rounded-xl focus:border-blue-500" placeholder="Warna pagar, patokan, titip satpam, dll."></textarea>
                             </div>
 
                             <div class="form-control bg-gray-50 p-3 rounded-xl border border-gray-100">
@@ -500,7 +512,7 @@
 @push('scripts')
     {{-- Leaflet JS --}}
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    ' {{-- Midtrans Snap JS --}}'
+    {{-- Midtrans Snap JS --}}
     <script type="text/javascript" src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.client_key') }}"></script>
 
     <script>
@@ -542,7 +554,14 @@
                 else if (i === step) $el.addClass('active');
             }
 
-            if (step === 2) setTimeout(() => window.initMap(), 300);
+            if (step === 2) {
+                setTimeout(() => {
+                    window.initMap();
+                    if (map) {
+                        map.invalidateSize();
+                    }
+                }, 400);
+            }
             if (step > 1) $('#btn-back-step').removeClass('invisible');
             else $('#btn-back-step').addClass('invisible');
         };
@@ -590,6 +609,8 @@
 
         // 3. LOGIKA HARGA & ONGKIR
         window.calculateShipping = function(lat, lng) {
+            if (!lat || !lng) return window.resetShippingUI();
+
             const R = 6371;
             const dLat = (lat - STORE_LAT) * Math.PI / 180;
             const dLon = (lng - STORE_LNG) * Math.PI / 180;
@@ -608,7 +629,7 @@
             $('#grand-total-display').text(window.formatRupiah(SUBTOTAL + ADMIN_FEE + cost));
 
             $('#input-shipping-cost').val(cost);
-            $('#btn-pay').prop('disabled', false);
+            $('#btn-pay').prop('disabled', false).removeClass('bg-blue-400').addClass('btn-primary');
         };
 
         // Fungsi Reset UI jika Alamat tidak valid (PENTING untuk mencegah error null)

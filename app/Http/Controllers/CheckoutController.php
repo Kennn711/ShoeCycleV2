@@ -107,6 +107,9 @@ class CheckoutController extends Controller
                     'order_id'     => $invoice,
                     'gross_amount' => (int) $request->total_price,
                 ],
+                'callbacks' => [
+                    'finish' => route('my-order.index'),
+                ],
                 'customer_details' => [
                     'first_name' => $user->name,
                     'email'      => $user->email,

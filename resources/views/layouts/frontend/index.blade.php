@@ -112,7 +112,7 @@
                         <a href="{{ route('landing-page') }}" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
                             Beranda
                         </a>
-                        <a href="#new-arrivals" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
+                        <a href="{{ route('shoes-collection.index') }}" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
                             Koleksi
                         </a>
                         <a href="{{ route('all-category.index') }}" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
@@ -544,6 +544,7 @@
 
     <script src="{{ asset('assets/vendor/fontawesome/js/all.min.js') }}"></script>
     <script src="{{ asset('assets/vendor/jquery/jquery.min.js') }}"></script>
+    <script src="{{ asset('assets/vendor/sweetalert2/sweetalert.js') }}"></script>
     <script src="{{ asset('assets/vendor/aos/aos.js') }}"></script>
     <script>
         // Init AOS

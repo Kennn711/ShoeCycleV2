@@ -14,6 +14,7 @@ use App\Http\Controllers\ShoesVariantController;
 use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 
+// Without login routes
 Route::get('/shoecycle', [HomeController::class, 'index'])->name('landing-page');
 Route::get('/shoecycle/shoes-collection', [HomeController::class, 'shoesCollection'])->name('shoes-collection.index');
 Route::get('/shoecycle/all-category', [HomeController::class, 'allCategory'])->name('all-category.index');

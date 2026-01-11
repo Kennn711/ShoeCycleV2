@@ -120,8 +120,30 @@ class HomeController extends Controller
         return view('customer.category', compact('categories'));
     }
 
-    public function shoesCollection()
+    public function shoesCollection(Request $request)
     {
-        // 
+        // 1. Query dasar: hanya sepatu aktif dengan eager loading
+        $query = Shoes::with(['category', 'variants.images'])->where('is_active', true);
+
+        // 2. Logika Search (Nama Sepatu atau Brand)
+        if ($request->has('q') && $request->q != '') {
+            $query->where(function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->q . '%')
+                    ->orWhere('brand_name', 'like', '%' . $request->q . '%');
+            });
+        }
+
+        // 3. Logika Filter Kategori
+        if ($request->has('category') && $request->category != '') {
+            $query->where('category_id', $request->category);
+        }
+
+        // 4. Ambil data dengan Pagination (misal: 12 produk per halaman)
+        $shoes = $query->latest()->paginate(12);
+
+        // 5. Ambil semua kategori untuk ditampilkan di sidebar filter
+        $categories = Category::all();
+
+        return view('customer.shoes-collection', compact('shoes', 'categories'));
     }
 }
