@@ -98,10 +98,16 @@
                                     </button>
                                 </td>
 
-                                <td class="font-bold text-gray-900">
-                                    <button class="btn btn-sm bg-blue-400 text-blue-100 border-none hover:bg-blue-500 tooltip" data-tip="Lihat Bukti Pengiriman">
-                                        <i class="fa-solid fa-image text-sm"></i>
-                                    </button>
+                                <td class="text-center">
+                                    @if ($trx->proof_of_delivery)
+                                        <button class="btn btn-sm bg-blue-400 text-white border-none hover:bg-blue-500 tooltip" data-tip="Lihat Bukti" onclick="showProofModal('{{ $trx->proof_of_delivery }}', '{{ $trx->invoice }}')">
+                                            <i class="fa-solid fa-image"></i>
+                                        </button>
+                                    @else
+                                        <button class="btn btn-sm bg-gray-100 text-gray-400 border-none cursor-not-allowed" disabled>
+                                            <i class="fa-solid fa-image"></i>
+                                        </button>
+                                    @endif
                                 </td>
 
                                 <td class="text-center">
@@ -145,23 +151,42 @@
 
                                 <td>
                                     @if (empty($trx->courier_id))
-                                        <button class="btn btn-sm bg-yellow-400 ..." onclick="openStatusModal({{ $trx->id }}, '{{ $trx->invoice }}', '{{ $trx->transaction_status }}')">
+                                        <button class="btn btn-sm bg-yellow-400 tooltip" data-tip="Tugaskan Kurir" onclick="openStatusModal({{ $trx->id }}, '{{ $trx->invoice }}', '{{ $trx->transaction_status }}')" ...>
                                             <i class="fa-solid fa-truck-fast text-sm text-gray-100"></i>
                                         </button>
                                     @endif
 
-                                    @if (!empty($trx->courier_id))
+                                    @if ($trx->transaction_status == 'processing' && !empty($trx->courier_id))
                                         <button class="btn btn-sm bg-gray-400" disabled>
                                             <i class="fa-solid fa-user-clock text-sm text-white"></i>
+                                        </button>
+                                    @endif
+
+                                    @if (!empty($trx->courier_id && $trx->transaction_status == 'shipping'))
+                                        <button class="btn btn-sm bg-gray-400" disabled>
+                                            <i class="fa-solid fa-user-clock text-sm text-white"></i>
+                                        </button>
+                                    @endif
+
+                                    @if (!empty($trx->courier_id && $trx->transaction_status == 'delivered'))
+                                        <button class="btn btn-sm bg-green-100 tooltip" data-tip="Selesai" disabled>
+                                            <i class="fa-solid fa-square-check text-sm text-green-700"></i>
                                         </button>
                                     @endif
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center py-10 text-gray-500 italic">
-                                    <i class="fa-solid fa-inbox text-3xl mb-2 block text-gray-300"></i>
-                                    Tidak ada data transaksi yang ditemukan.
+                                <td colspan="9" class="py-20">
+                                    <div class="flex flex-col items-center justify-center">
+                                        <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                                            <i class="fa-solid fa-inbox text-5xl text-gray-200"></i>
+                                        </div>
+                                        <p class="text-gray-500 font-medium italic">
+                                            Tidak ada data transaksi yang ditemukan.
+                                        </p>
+                                        <p class="text-xs text-gray-400 mt-1">Coba sesuaikan filter atau kata kunci pencarian Anda.</p>
+                                    </div>
                                 </td>
                             </tr>
                         @endforelse
@@ -235,6 +260,31 @@
             </form>
         </div>
     </dialog>
+
+    {{-- MODAL LIHAT BUKTI PENGIRIMAN --}}
+    <dialog id="modal_proof_view" class="modal">
+        <div class="modal-box bg-white p-0 overflow-hidden max-w-lg">
+            {{-- Header dengan Invoice --}}
+            <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <div>
+                    <h3 class="font-bold text-gray-900 leading-none">Bukti Pengiriman</h3>
+                    {{-- ID BARU: proof-invoice-display --}}
+                    <p id="proof-invoice-display" class="text-[11px] text-blue-600 font-mono font-bold mt-1 uppercase tracking-wider"></p>
+                </div>
+                <button class="btn btn-sm btn-circle btn-ghost" onclick="document.getElementById('modal_proof_view').close()">✕</button>
+            </div>
+
+            <div class="p-4 flex flex-col items-center">
+                <img id="proof-img-display" src="" class="w-full rounded-xl shadow-sm border border-gray-200 object-contain max-h-[70vh]">
+                <div class="mt-4 w-full">
+                    <a id="btn-download-proof" href="" download class="btn btn-sm btn-block bg-blue-500 hover:bg-blue-600 text-white border-none">
+                        <i class="fas fa-download mr-2"></i> Simpan Gambar
+                    </a>
+                </div>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button>close</button></form>
+    </dialog>
 @endsection
 
 @push('styles')
@@ -286,12 +336,10 @@
             const modal = document.getElementById('modal_trx_detail');
             const container = document.getElementById('trx-detail-content');
 
-            // Tampilkan loading spinner saat fetch data
             container.innerHTML = '<div class="flex justify-center py-10"><span class="loading loading-spinner loading-lg text-blue-500"></span></div>';
             modal.showModal();
 
-            // Fetch data dari server
-            fetch(`/transaction/show/${id}`) // Sesuaikan dengan route show anda
+            fetch(`/transaction/show/${id}`)
                 .then(response => response.json())
                 .then(data => {
                     let itemsHtml = '';
@@ -301,95 +349,146 @@
                             '/assets/images/dummy-shoe.jpg';
 
                         itemsHtml += `
-                        <tr class="text-xs border-b border-gray-100">
-                            <td>
-                                <div class="flex items-center gap-3">
-                                    <div class="w-12 h-12 bg-gray-50 rounded-lg overflow-hidden border border-gray-100 shrink-0">
-                                        <img src="${img}" class="w-full h-full object-contain p-1">
-                                    </div>
-                                    <div>
-                                        <div class="font-bold text-gray-900">${item.variant.shoe.name}</div>
-                                        <div class="text-[10px] text-gray-400 uppercase">Warna: ${item.variant.color} | Size: ${item.variant.size}</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="text-center">${item.qty}</td>
-                            <td class="text-right">${formatRupiah(item.price)}</td>
-                            <td class="text-right font-bold text-gray-900">${formatRupiah(item.price * item.qty)}</td>
-                        </tr>
-                    `;
+                <tr class="text-xs border-b border-gray-100">
+                    <td>
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 bg-gray-50 rounded-lg overflow-hidden border border-gray-100 shrink-0">
+                                <img src="${img}" class="w-full h-full object-contain p-1">
+                            </div>
+                            <div>
+                                <div class="font-bold text-gray-900">${item.variant.shoe.name}</div>
+                                <div class="text-[10px] text-gray-400 uppercase">Warna: ${item.variant.color} | Size: ${item.variant.size}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="text-center">${item.qty}</td>
+                    <td class="text-right">${formatRupiah(item.price)}</td>
+                    <td class="text-right font-bold text-gray-900">${formatRupiah(item.price * item.qty)}</td>
+                </tr>`;
                     });
 
-                    container.innerHTML = `
-                    <div class="space-y-8">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div>
-                                <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Pelanggan</h4>
-                                <p class="text-sm font-bold text-gray-900">${data.customer.name}</p>
-                                <p class="text-xs text-gray-500">${data.customer.email}</p>
-                                <p class="text-xs text-gray-500">${data.customer.phone || '-'}</p>
-                            </div>
-                            <div>
-                                <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Alamat Pengiriman</h4>
-                                <p class="text-xs font-bold text-gray-800">${data.address.recipient_name}</p>
-                                <p class="text-xs text-gray-600 leading-relaxed mt-1">
-                                    ${data.address.full_address}, <br>
-                                    Kec. ${data.address.district}, ${data.address.village}
-                                </p>
-                            </div>
-                            <div>
-                                <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Metode Pembayaran</h4>
-                                <span class="badge badge-outline font-bold text-[10px] uppercase">${data.payment_type || 'Belum Memilih'}</span>
-                                <p class="text-[10px] text-gray-400 mt-2">ID Transaksi Midtrans:</p>
-                                <p class="text-[10px] font-mono text-gray-600 truncate">${data.snap_token || '-'}</p>
+                    // Logika Tampilan Driver
+                    let driverHtml = '';
+                    if (data.courier) {
+                        driverHtml = `
+                    <div class="flex items-center gap-3 bg-blue-50 p-3 rounded-xl border border-blue-100">
+                        <div class="avatar">
+                            <div class="w-10 rounded-full ring ring-blue-200 ring-offset-base-100 ring-offset-2">
+                                <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(data.courier.name)}&background=0D8ABC&color=fff" />
                             </div>
                         </div>
-
                         <div>
-                            <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Item Pesanan</h4>
-                            <div class="overflow-x-auto border border-gray-100 rounded-xl">
-                                <table class="table w-full">
-                                    <thead class="bg-gray-50">
-                                        <tr class="text-gray-500 text-[10px] uppercase tracking-wider border-b border-gray-100">
-                                            <th>Produk</th>
-                                            <th class="text-center">Qty</th>
-                                            <th class="text-right">Harga</th>
-                                            <th class="text-right">Subtotal</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${itemsHtml}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <div class="flex justify-end">
-                            <div class="w-full md:w-64 space-y-2 pt-4">
-                                <div class="flex justify-between text-xs text-gray-500">
-                                    <span>Subtotal</span>
-                                    <span>${formatRupiah(data.subtotal)}</span>
-                                </div>
-                                <div class="flex justify-between text-xs text-gray-500">
-                                    <span>Ongkos Kirim</span>
-                                    <span>${formatRupiah(data.shipping_cost)}</span>
-                                </div>
-                                <div class="flex justify-between text-xs text-gray-500">
-                                    <span>Biaya Admin</span>
-                                    <span>${formatRupiah(data.admin_fee)}</span>
-                                </div>
-                                <div class="flex justify-between text-sm font-bold text-gray-900 border-t border-gray-200 pt-2">
-                                    <span>Total Tagihan</span>
-                                    <span class="text-blue-600">${formatRupiah(data.total_price)}</span>
-                                </div>
-                            </div>
+                            <p class="text-[10px] font-bold text-blue-600 uppercase leading-none mb-1">Kurir</p>
+                            <p class="text-sm font-bold text-gray-900">${data.courier.name}</p>
                         </div>
                     </div>
                 `;
+                    } else {
+                        driverHtml = `
+                    <div class="flex items-center gap-3 bg-gray-50 p-3 rounded-xl border border-gray-200 opacity-60">
+                        <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-400">
+                            <i class="fas fa-user-slash"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-gray-500 uppercase leading-none mb-1">Driver</p>
+                            <p class="text-xs italic text-gray-400">Belum ditugaskan</p>
+                        </div>
+                    </div>
+                `;
+                    }
+
+                    container.innerHTML = `
+            <div class="space-y-8">
+                {{-- Grid Informasi Atas --}}
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div>
+                        <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Pelanggan</h4>
+                        <p class="text-sm font-bold text-gray-900">${data.customer.name}</p>
+                        <p class="text-xs text-gray-500">${data.customer.email}</p>
+                        <p class="text-xs text-gray-500">${data.customer.phone || '-'}</p>
+                    </div>
+                    <div>
+                        <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Alamat Pengiriman</h4>
+                        <p class="text-xs font-bold text-gray-800">${data.address.recipient_name}</p>
+                        <p class="text-xs text-gray-600 leading-relaxed mt-1">
+                            ${data.address.full_address}, <br>
+                            Kec. ${data.address.district}, ${data.address.village}
+                        </p>
+                    </div>
+                    <div>
+                        <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Pembayaran</h4>
+                        <span class="badge badge-outline font-bold text-[10px] uppercase mb-2">${data.payment_type || 'Belum Memilih'}</span>
+                        <p class="text-[10px] text-gray-400">Status Bayar:</p>
+                        <p class="text-[10px] font-bold text-blue-600 uppercase">${data.payment_status}</p>
+                    </div>
+                    <div>
+                        <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Informasi Kurir</h4>
+                        ${driverHtml}
+                    </div>
+                </div>
+
+                {{-- Tabel Item --}}
+                <div>
+                    <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Item Pesanan</h4>
+                    <div class="overflow-x-auto border border-gray-100 rounded-xl">
+                        <table class="table w-full">
+                            <thead class="bg-gray-50">
+                                <tr class="text-gray-500 text-[10px] uppercase tracking-wider border-b border-gray-100">
+                                    <th>Produk</th>
+                                    <th class="text-center">Qty</th>
+                                    <th class="text-right">Harga</th>
+                                    <th class="text-right">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${itemsHtml}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                {{-- Rincian Biaya --}}
+                <div class="flex justify-end">
+                    <div class="w-full md:w-64 space-y-2 pt-4">
+                        <div class="flex justify-between text-xs text-gray-500">
+                            <span>Subtotal</span>
+                            <span>${formatRupiah(data.subtotal)}</span>
+                        </div>
+                        <div class="flex justify-between text-xs text-gray-500">
+                            <span>Ongkos Kirim</span>
+                            <span>${formatRupiah(data.shipping_cost)}</span>
+                        </div>
+                        <div class="flex justify-between text-xs text-gray-500">
+                            <span>Biaya Admin</span>
+                            <span>${formatRupiah(data.admin_fee)}</span>
+                        </div>
+                        <div class="flex justify-between text-sm font-bold text-gray-900 border-t border-gray-200 pt-2">
+                            <span>Total Tagihan</span>
+                            <span class="text-blue-600">${formatRupiah(data.total_price)}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
                 })
                 .catch(error => {
                     container.innerHTML = `<div class="text-center py-10 text-red-500">Gagal mengambil data: ${error.message}</div>`;
                 });
+        }
+
+        function showProofModal(path, invoice) { // Tambahkan parameter invoice
+            const modal = document.getElementById('modal_proof_view');
+            const img = document.getElementById('proof-img-display');
+            const invoiceLabel = document.getElementById('proof-invoice-display'); // Ambil elemen invoice
+            const btnDownload = document.getElementById('btn-download-proof');
+
+            const fullPath = `/storage/${path}`;
+
+            // Set Data
+            img.src = fullPath;
+            btnDownload.href = fullPath;
+            invoiceLabel.innerText = invoice; // Masukkan teks invoice ke label
+
+            modal.showModal();
         }
 
         // 1. Fungsi Membuka Modal Status dengan Invoice Dinamis

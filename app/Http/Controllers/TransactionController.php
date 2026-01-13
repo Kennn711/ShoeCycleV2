@@ -51,7 +51,7 @@ class TransactionController extends Controller
     public function show($id)
     {
         // Load semua relasi yang diperlukan
-        $transaction = Transaction::with(['customer', 'address', 'details.variant.shoe', 'details.variant.images'])
+        $transaction = Transaction::with(['customer', 'address', 'details.variant.shoe', 'details.variant.images', 'courier'])
             ->findOrFail($id);
 
         return response()->json($transaction);

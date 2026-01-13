@@ -143,7 +143,7 @@
                                 @endif
 
                                 {{-- Ganti tag <a> "Lihat Detail" dengan ini --}}
-                                <button type="button" onclick="showOrderDetail({{ json_encode($transaction->load(['details.variant.shoe', 'address'])) }})" class="btn btn-sm btn-primary text-white text-xs normal-case font-bold">
+                                <button type="button" onclick="showOrderDetail({{ json_encode($transaction->load(['details.variant.shoe', 'address', 'courier'])) }})" class="btn btn-sm btn-primary text-white text-xs normal-case font-bold">
                                     Lihat Detail
                                 </button>
                             </div>
@@ -164,7 +164,7 @@
         </div>
     </section>
 
-    {{-- MODAL DETAIL PESANAN --}}
+    {{-- MODAL 1: DETAIL PESANAN --}}
     <dialog id="order_detail_modal" class="modal modal-bottom sm:modal-middle">
         <div class="modal-box bg-white p-0 max-w-2xl overflow-hidden">
             {{-- Header --}}
@@ -173,166 +173,126 @@
                     <h3 class="font-bold text-lg text-gray-900" id="mdl-invoice">-</h3>
                     <p class="text-xs text-gray-500" id="mdl-date">-</p>
                 </div>
-                <form method="dialog">
-                    <button class="btn btn-sm btn-circle btn-ghost">✕</button>
-                </form>
+                <form method="dialog"><button class="btn btn-sm btn-circle btn-ghost">✕</button></form>
             </div>
 
-            <div class="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
-                {{-- Info Pengiriman & Status --}}
+            <div class="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {{-- Alamat --}}
                     <div>
                         <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Info Pengiriman</h4>
                         <p class="text-sm font-bold text-gray-900" id="mdl-recipient">-</p>
                         <p class="text-xs text-gray-600 mt-1" id="mdl-phone">-</p>
                         <p class="text-xs text-gray-500 mt-1 leading-relaxed" id="mdl-address">-</p>
                     </div>
+                    {{-- Status --}}
                     <div>
-                        <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Status Pesanan</h4>
-                        <div id="mdl-status-badges" class="flex flex-col gap-2 items-start">
-                            {{-- Badges akan muncul di sini --}}
+                        <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Status & Pembayaran</h4>
+                        <div id="mdl-status-badges" class="flex flex-wrap gap-2 items-start"></div>
+                    </div>
+                </div>
+
+                {{-- INFO KURIR & BUKTI (Akan muncul jika sudah ada Driver) --}}
+                <div id="mdl-delivery-info" class="hidden pt-4 border-t border-gray-100">
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <div class="flex-1">
+                            <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Kurir Pengirim</h4>
+                            <div class="flex items-center gap-3 bg-blue-50 p-3 rounded-xl border border-blue-100">
+                                <img id="mdl-courier-avatar" src="" class="w-10 h-10 rounded-full">
+                                <div>
+                                    <p class="text-sm font-bold text-gray-900" id="mdl-courier-name">-</p>
+                                    <p class="text-[10px] text-blue-600 font-bold uppercase">Driver Lokal</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="mdl-proof-section" class="flex-1 hidden">
+                            <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Bukti Sampai</h4>
+                            <div class="relative group cursor-pointer" onclick="openProofViewer(this.querySelector('img').src)">
+                                <img id="mdl-proof-img" src="" class="w-full h-16 object-cover rounded-xl border border-gray-200">
+                                <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/20 rounded-xl transition-all">
+                                    <i class="fas fa-expand text-white text-xs"></i>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <hr class="border-gray-100">
-
                 {{-- Tabel Barang --}}
-                <div>
-                    <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Daftar Barang</h4>
+                <div class="pt-4 border-t border-gray-100">
+                    <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Daftar Barang</h4>
                     <div class="overflow-x-auto border border-gray-100 rounded-xl">
                         <table class="table w-full">
                             <thead class="bg-slate-50">
-                                <tr class="text-gray-600 border-b border-gray-100">
+                                <tr class="text-gray-600 text-[10px] uppercase">
                                     <th>Produk</th>
                                     <th class="text-center">Qty</th>
-                                    <th class="text-right">Harga</th>
                                     <th class="text-right">Subtotal</th>
                                 </tr>
                             </thead>
-                            <tbody id="mdl-items-body">
-                                {{-- Baris barang akan diisi via JS --}}
-                            </tbody>
+                            <tbody id="mdl-items-body"></tbody>
                         </table>
                     </div>
                 </div>
 
-                {{-- Rincian Pembayaran --}}
+                {{-- Rincian Biaya --}}
                 <div class="bg-slate-50 p-4 rounded-xl space-y-2">
-                    <div class="flex justify-between text-xs text-gray-600">
-                        <span>Subtotal Produk</span>
-                        <span id="mdl-subtotal">-</span>
-                    </div>
-                    <div class="flex justify-between text-xs text-gray-600">
-                        <span>Ongkos Kirim</span>
-                        <span id="mdl-shipping">-</span>
-                    </div>
-                    <div class="flex justify-between text-xs text-gray-600">
-                        <span>Biaya Admin</span>
-                        <span id="mdl-admin">-</span>
-                    </div>
-                    <div class="flex justify-between text-sm font-bold text-gray-900 pt-2 border-t border-gray-200">
-                        <span>Total Bayar</span>
-                        <span class="text-blue-600" id="mdl-total">-</span>
-                    </div>
+                    <div class="flex justify-between text-xs text-gray-600"><span>Subtotal Produk</span><span id="mdl-subtotal">-</span></div>
+                    <div class="flex justify-between text-xs text-gray-600"><span>Ongkos Kirim</span><span id="mdl-shipping">-</span></div>
+                    <div class="flex justify-between text-xs text-gray-600"><span>Biaya Admin</span><span id="mdl-admin">-</span></div>
+                    <div class="flex justify-between text-sm font-bold text-gray-900 pt-2 border-t border-gray-200"><span>Total</span><span class="text-blue-600" id="mdl-total">-</span></div>
                 </div>
             </div>
         </div>
         <form method="dialog" class="modal-backdrop bg-gray-900/50"><button>close</button></form>
     </dialog>
+
+    {{-- MODAL 2: IMAGE VIEWER (Lightbox) --}}
+    <dialog id="proof_image_viewer" class="modal bg-black/80 backdrop-blur-sm z-[100]">
+        <div class="modal-box p-0 max-w-3xl bg-transparent shadow-none relative">
+            <form method="dialog"><button class="btn btn-sm btn-circle absolute right-4 top-4 bg-white/20 text-white border-none">✕</button></form>
+            <img id="mdl-proof-full-img" src="" class="w-full h-auto rounded-2xl shadow-2xl object-contain max-h-[85vh]">
+        </div>
+        <form method="dialog" class="modal-backdrop"><button>close</button></form>
+    </dialog>
 @endsection
 
 @push('scripts')
-    {{-- Midtrans Snap JS --}}
     <script type="text/javascript" src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.client_key') }}"></script>
-
     <script>
-        // Global Variables untuk Filter
         let activeFilter = 'all';
         let searchTimeout;
 
-        /**
-         * 1. Fungsi Format Rupiah
-         */
-        window.formatRupiah = function(num) {
-            return 'Rp ' + new Intl.NumberFormat('id-ID').format(num);
-        };
+        window.formatRupiah = (num) => 'Rp ' + new Intl.NumberFormat('id-ID').format(num);
 
         /**
-         * 2. Fungsi Utama Filtering (Menangani Tab & Search sekaligus)
+         * FUNGSI FILTER & SEARCH REAL-TIME
          */
         function applyFilters() {
             const searchQuery = $('#search-invoice').val().toLowerCase();
-
             $('.order-card').each(function() {
-                const cardStatus = $(this).data('status'); // Diambil dari data-status="{{ $transaction->transaction_status }}"
-                const cardInvoice = $(this).data('invoice').toLowerCase(); // Diambil dari data-invoice="{{ $transaction->invoice }}"
+                const status = $(this).data('status');
+                const invoice = $(this).data('invoice').toLowerCase();
+                const matchTab = (activeFilter === 'all' || status === activeFilter);
+                const matchSearch = invoice.includes(searchQuery);
 
-                // Logika: Harus cocok dengan status TAB DAN mengandung kata kunci SEARCH
-                const matchTab = (activeFilter === 'all' || cardStatus === activeFilter);
-                const matchSearch = cardInvoice.includes(searchQuery);
-
-                if (matchTab && matchSearch) {
-                    $(this).fadeIn(200);
-                } else {
-                    $(this).hide();
-                }
+                if (matchTab && matchSearch) $(this).fadeIn(200);
+                else $(this).hide();
             });
         }
 
-        $(document).ready(function() {
-            /**
-             * 3. Logika Notifikasi Pembayaran (SweetAlert)
-             * Mengecek parameter dari Midtrans Redirect
-             */
-            const urlParams = new URLSearchParams(window.location.search);
-            const statusCode = urlParams.get('status_code');
-            const transactionStatus = urlParams.get('transaction_status');
-
-            if (statusCode === '200' || transactionStatus === 'settlement') {
-                Swal.fire({
-                    title: 'Pembayaran Berhasil!',
-                    text: 'Pesanan ShoeCycle Anda segera dikirim.',
-                    icon: 'success',
-                    confirmButtonText: 'Oke',
-                    confirmButtonColor: '#3b82f6',
-                    borderRadius: '1rem'
-                });
-                // Bersihkan URL agar notifikasi tidak muncul lagi saat refresh
-                window.history.pushState({}, document.title, window.location.pathname);
-            }
-
-            /**
-             * 4. Event: Klik Tab Filter
-             */
-            $(document).on('click', '.tab-filter', function() {
-                // Update Style Tombol
-                $('.tab-filter').removeClass('bg-blue-600 text-white shadow-md shadow-blue-200').addClass('bg-white text-gray-600 shadow-sm');
-                $(this).removeClass('bg-white text-gray-600 shadow-sm').addClass('bg-blue-600 text-white shadow-md shadow-blue-200');
-
-                activeFilter = $(this).data('filter');
-                applyFilters();
-            });
-
-            /**
-             * 5. Event: Pencarian Invoice (Dengan Debounce 300ms)
-             */
-            $('#search-invoice').on('keyup', function() {
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(function() {
-                    applyFilters();
-                }, 300);
-            });
-        });
+        /**
+         * DOUBLE MODAL: PENAMPIL GAMBAR
+         */
+        window.openProofViewer = function(src) {
+            document.getElementById('mdl-proof-full-img').src = src;
+            document.getElementById('proof_image_viewer').showModal();
+        };
 
         /**
-         * 6. Fungsi Tampil Detail Modal
-         * Memasukkan data JSON transaksi ke dalam elemen modal
+         * MODAL DETAIL PESANAN
          */
         window.showOrderDetail = function(data) {
             const modal = $('#order_detail_modal')[0];
-
-            // Header Modal
             $('#mdl-invoice').text(data.invoice);
             $('#mdl-date').text('Dipesan pada ' + new Date(data.created_at).toLocaleDateString('id-ID', {
                 day: '2-digit',
@@ -340,49 +300,82 @@
                 year: 'numeric'
             }));
 
-            // Info Alamat Pengiriman
+            // Alamat
             const addr = data.address;
             $('#mdl-recipient').text(addr.recipient_name);
             $('#mdl-phone').text(addr.phone_number);
             $('#mdl-address').html(`${addr.full_address}<br>Kec. ${addr.district}, ${addr.village}`);
 
-            // Badges Status (Payment & Shipping)
-            let statusHtml = `
-                <span class="badge badge-outline font-bold text-[10px] uppercase">
-                    ${data.payment_type ? data.payment_type.replace(/_/g, ' ') : 'BELUM DIBAYAR'}
-                </span>
-                <span class="badge badge-info text-white font-bold text-[10px] uppercase">
-                    ${data.transaction_status}
-                </span>
-            `;
-            $('#mdl-status-badges').html(statusHtml);
+            // Status Badges
+            $('#mdl-status-badges').html(`
+            <span class="badge badge-outline font-bold text-[10px] uppercase">${data.payment_type ? data.payment_type.replace(/_/g, ' ') : 'PENDING'}</span>
+            <span class="badge badge-info text-white font-bold text-[10px] uppercase">${data.transaction_status}</span>
+        `);
 
-            // Tabel Daftar Barang
+            // LOGIKA DRIVER & BUKTI FOTO
+            if (data.courier) {
+                $('#mdl-delivery-info').removeClass('hidden');
+                $('#mdl-courier-name').text(data.courier.name);
+                $('#mdl-courier-avatar').attr('src', `https://ui-avatars.com/api/?name=${encodeURIComponent(data.courier.name)}&background=0D8ABC&color=fff`);
+
+                const proof = data.proof_of_delivery || data.proof_of_payment;
+                if (proof) {
+                    $('#mdl-proof-section').removeClass('hidden');
+                    $('#mdl-proof-img').attr('src', `/storage/${proof}`);
+                } else {
+                    $('#mdl-proof-section').addClass('hidden');
+                }
+            } else {
+                $('#mdl-delivery-info').addClass('hidden');
+            }
+
+            // Tabel Barang
             let tableHtml = '';
             data.details.forEach(item => {
-                const subtotalItem = item.price * item.qty;
                 tableHtml += `
-                    <tr class="border-b border-gray-50 text-xs text-gray-800">
-                        <td>
-                            <div class="font-bold text-gray-900">${item.variant.shoe.name}</div>
-                            <div class="text-[10px] text-gray-400 uppercase">Size: ${item.variant.size} | ${item.variant.color}</div>
-                        </td>
-                        <td class="text-center font-medium">${item.qty}</td>
-                        <td class="text-right">${window.formatRupiah(item.price)}</td>
-                        <td class="text-right font-bold text-blue-600">${window.formatRupiah(subtotalItem)}</td>
-                    </tr>
-                `;
+                <tr class="border-b border-gray-50 text-xs">
+                    <td><div class="font-bold text-gray-900">${item.variant.shoe.name}</div><div class="text-[10px] text-gray-400 uppercase">Size: ${item.variant.size} | ${item.variant.color}</div></td>
+                    <td class="text-center">${item.qty}</td>
+                    <td class="text-right font-bold">${window.formatRupiah(item.price * item.qty)}</td>
+                </tr>`;
             });
             $('#mdl-items-body').html(tableHtml);
 
-            // Rincian Biaya Bawah
+            // Biaya
             $('#mdl-subtotal').text(window.formatRupiah(data.subtotal));
             $('#mdl-shipping').text(window.formatRupiah(data.shipping_cost));
             $('#mdl-admin').text(window.formatRupiah(data.admin_fee));
             $('#mdl-total').text(window.formatRupiah(data.total_price));
 
-            // Munculkan Modal DaisyUI
             modal.showModal();
         };
+
+        $(document).ready(function() {
+            // Tab Filter Click
+            $(document).on('click', '.tab-filter', function() {
+                $('.tab-filter').removeClass('bg-blue-600 text-white shadow-md shadow-blue-200').addClass('bg-white text-gray-600 shadow-sm');
+                $(this).removeClass('bg-white text-gray-600 shadow-sm').addClass('bg-blue-600 text-white shadow-md shadow-blue-200');
+                activeFilter = $(this).data('filter');
+                applyFilters();
+            });
+
+            // Search Input Keyup
+            $('#search-invoice').on('keyup', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => applyFilters(), 300);
+            });
+
+            // Midtrans Redirect Check
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('status_code') === '200') {
+                Swal.fire({
+                    title: 'Pembayaran Berhasil!',
+                    text: 'Pesanan segera dikirim.',
+                    icon: 'success',
+                    confirmButtonColor: '#3b82f6'
+                });
+                window.history.pushState({}, document.title, window.location.pathname);
+            }
+        });
     </script>
 @endpush

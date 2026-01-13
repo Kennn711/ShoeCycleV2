@@ -58,6 +58,8 @@
 
     <script src="{{ asset('assets/vendor/fontawesome/js/all.min.js') }}"></script>
     <script src="{{ asset('assets/vendor/jquery/jquery.min.js') }}"></script>
+    <script src="{{ asset('assets/vendor/sweetalert2/sweetalert.js') }}"></script>
+
 
     @stack('scripts')
 

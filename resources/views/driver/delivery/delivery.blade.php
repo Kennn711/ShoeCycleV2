@@ -35,41 +35,29 @@
         {{-- DAFTAR PESANAN --}}
         <div class="space-y-4" id="delivery-container">
             @forelse ($transactions as $trx)
-                {{-- Tambahkan class 'delivery-card' dan atribut 'data-status' --}}
                 <div class="delivery-card bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden" data-status="{{ $trx->transaction_status }}">
 
-                    {{-- Status Bar Logic --}}
                     @php
-                        $statusBg = 'bg-gray-50';
-                        $badgeClass = 'bg-gray-100 text-gray-600';
-                        $statusLabel = 'Menunggu Pickup';
-
-                        if ($trx->transaction_status == 'shipping') {
-                            $statusBg = 'bg-blue-50';
-                            $badgeClass = 'bg-blue-100 text-blue-700';
-                            $statusLabel = 'Sedang Dikirim';
-                        } elseif ($trx->transaction_status == 'delivered') {
-                            $statusBg = 'bg-green-50';
-                            $badgeClass = 'bg-green-100 text-green-700';
-                            $statusLabel = 'Selesai Terkirim';
-                        }
+                        $statusInfo = [
+                            'processing' => ['bg' => 'bg-gray-50', 'badge' => 'bg-gray-100 text-gray-600', 'label' => 'Siap Pickup'],
+                            'shipping' => ['bg' => 'bg-blue-50', 'badge' => 'bg-blue-100 text-blue-700', 'label' => 'Sedang Dikirim'],
+                            'delivered' => ['bg' => 'bg-green-50', 'badge' => 'bg-green-100 text-green-700', 'label' => 'Selesai'],
+                        ];
+                        $curr = $statusInfo[$trx->transaction_status] ?? $statusInfo['processing'];
                     @endphp
 
-                    <div class="px-4 py-2 border-b border-gray-50 flex justify-between items-center {{ $statusBg }}">
+                    <div class="px-4 py-2 border-b border-gray-50 flex justify-between items-center {{ $curr['bg'] }}">
                         <span class="text-[10px] font-bold font-mono text-gray-500">{{ $trx->invoice }}</span>
-                        <span class="badge badge-sm font-bold border-none {{ $badgeClass }}">
-                            {{ $statusLabel }}
+                        <span class="badge badge-sm font-bold border-none {{ $curr['badge'] }}">
+                            {{ $curr['label'] }}
                         </span>
                     </div>
 
                     <div class="p-4 space-y-4">
-                        {{-- Info Penerima --}}
                         <div class="flex items-start gap-3">
-                            <div class="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 shrink-0">
-                                <i class="fas fa-user"></i>
-                            </div>
+                            <div class="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 shrink-0"><i class="fas fa-user"></i></div>
                             <div class="min-w-0 flex-1">
-                                <p class="text-xs text-gray-400 uppercase font-bold tracking-tighter leading-none mb-1">Penerima</p>
+                                <p class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter leading-none mb-1">Penerima</p>
                                 <h4 class="font-bold text-gray-900 truncate">{{ $trx->address->recipient_name }}</h4>
                                 <p class="text-sm font-bold text-blue-600">{{ $trx->address->phone_number }}</p>
                             </div>
@@ -78,32 +66,45 @@
                             </a>
                         </div>
 
-                        {{-- Info Alamat --}}
                         <div class="flex items-start gap-3">
-                            <div class="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center text-red-500 shrink-0">
-                                <i class="fas fa-map-marker-alt"></i>
-                            </div>
+                            <div class="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center text-red-500 shrink-0"><i class="fas fa-map-marker-alt text-sm"></i></div>
                             <div class="flex-1">
-                                <p class="text-xs text-gray-400 uppercase font-bold tracking-tighter leading-none mb-1">Alamat</p>
+                                <p class="text-[10px] text-gray-400 uppercase font-bold leading-none mb-1">Alamat</p>
                                 <p class="text-xs text-gray-600 leading-relaxed">{{ $trx->address->full_address }}</p>
                             </div>
                         </div>
 
-                        {{-- Aksi Driver --}}
+                        <div class="flex items-start gap-3 pt-3 border-t border-dashed border-gray-100">
+                            <div class="w-10 h-10 bg-amber-50 rounded-full flex items-center justify-center text-amber-500 shrink-0"><i class="fas fa-box text-sm"></i></div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider leading-none mb-2">Isi Paket ({{ $trx->details->sum('qty') }} Item)</p>
+                                <div class="space-y-2">
+                                    @foreach ($trx->details as $detail)
+                                        <div class="flex justify-between items-center gap-2 bg-slate-50 p-2 rounded-xl border border-gray-100">
+                                            <div class="min-w-0">
+                                                <p class="text-xs font-bold text-gray-800 truncate">{{ $detail->variant->shoe->name }}</p>
+                                                <p class="text-[10px] text-gray-500">Size {{ $detail->variant->size }} | {{ $detail->variant->color }}</p>
+                                            </div>
+                                            <div class="bg-white border border-gray-200 px-2 py-1 rounded-lg text-[10px] font-black text-blue-600">{{ $detail->qty }}x</div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="pt-2">
                             @if ($trx->transaction_status == 'processing')
-                                <button onclick="updateStatus({{ $trx->id }}, 'shipping')" class="btn btn-block bg-blue-500 hover:bg-blue-600 text-white border-none rounded-xl h-12 shadow-lg shadow-blue-100">
-                                    <i class="fas fa-motorcycle mr-2"></i> Mulai Kirim Sekarang
+                                <button onclick="openActionModal(@js($trx->load('details.variant.shoe', 'address')), 'pickup')" class="btn btn-block bg-blue-500 hover:bg-blue-600 text-white border-none rounded-xl h-12 shadow-lg">
+                                    <i class="fas fa-motorcycle mr-2 text-sm"></i> Kirim Paket
                                 </button>
                             @elseif($trx->transaction_status == 'shipping')
-                                <button onclick="updateStatus({{ $trx->id }}, 'delivered', '{{ $trx->invoice }}', '{{ $trx->address->recipient_name }}')" class="btn btn-block bg-green-500 hover:bg-green-600 text-white border-none rounded-xl h-12 shadow-lg shadow-green-100">
-                                    <i class="fas fa-check-circle text-sm mr-2"></i> Selesaikan Pengiriman
+                                <button onclick="openActionModal(@js($trx->load('details.variant.shoe', 'address')), 'deliver')" class="btn btn-block bg-blue-400 hover:bg-blue-500 text-white border-none rounded-xl h-12 shadow-lg">
+                                    Selesaikan Pengiriman
                                 </button>
                             @else
-                                {{-- Jika Selesai, tampilkan Bukti Pengiriman (Opsional) --}}
-                                <div class="bg-green-50 p-3 rounded-xl border border-green-100 flex items-center gap-3">
+                                <div class="bg-green-200 p-3 rounded-xl border border-green-100 flex items-center justify-center gap-3">
                                     <i class="fas fa-check-double text-green-600"></i>
-                                    <span class="text-xs text-green-700 font-bold uppercase">Pesanan Telah Sampai</span>
+                                    <span class="text-xs text-green-700 font-extrabold uppercase">Terkirim</span>
                                 </div>
                             @endif
                         </div>
@@ -112,192 +113,189 @@
             @empty
                 <div class="text-center py-20 opacity-40">
                     <i class="fas fa-box-open text-6xl mb-3"></i>
-                    <p class="font-bold">Belum ada daftar pengiriman.</p>
+                    <p class="font-bold">Belum ada pengiriman</p>
                 </div>
             @endforelse
         </div>
     </div>
 
-    {{-- MODAL UPLOAD BUKTI PENGIRIMAN --}}
-    <dialog id="modal_proof" class="modal modal-bottom sm:modal-middle">
+    {{-- DAISYUI DYNAMIC ACTION MODAL --}}
+    <dialog id="modal_delivery_action" class="modal modal-bottom sm:modal-middle">
         <div class="modal-box bg-white p-0 overflow-hidden max-w-md">
-            <div class="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-start">
+            <div class="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-start">
                 <div>
-                    <h3 class="font-bold text-gray-900">Selesaikan Pengiriman</h3>
+                    <h3 class="font-bold text-gray-900" id="mdl-title">Konfirmasi</h3>
                     <div class="flex flex-col mt-0.5">
-                        <span id="display-invoice-proof" class="text-[10px] font-mono font-bold text-blue-600 uppercase tracking-wider">INV-XXXXXXXX</span>
-                        <span id="display-customer-proof" class="text-xs text-gray-500 font-medium italic">Nama Pelanggan</span>
+                        <span id="mdl-invoice" class="text-[10px] font-mono font-bold text-blue-600 uppercase tracking-wider"></span>
+                        <span id="mdl-customer" class="text-xs text-gray-500 font-medium italic leading-none mt-1"></span>
                     </div>
                 </div>
-                <button class="btn btn-sm btn-circle btn-ghost" onclick="closeProofModal()">✕</button>
+                <button class="btn btn-sm btn-circle btn-ghost" onclick="document.getElementById('modal_delivery_action').close()">✕</button>
             </div>
 
-            <form id="form-proof" class="p-6 space-y-4">
-                <input type="hidden" id="proof-trx-id">
+            <form id="form-delivery-action">
+                @csrf
+                <input type="hidden" id="mdl-trx-id">
+                <input type="hidden" id="mdl-next-status">
 
-                <div class="space-y-2">
-                    <label class="label"><span class="label-text font-bold">Foto Bukti Penerimaan</span></label>
+                <div class="p-6 space-y-5 max-h-[65vh] overflow-y-auto no-scrollbar">
+                    <div>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Isi Paket & Spesifikasi</p>
+                        <div id="mdl-items-list" class="space-y-2"></div>
+                    </div>
 
-                    {{-- Dropzone / Camera Trigger --}}
-                    <div class="relative group">
-                        <input type="file" id="proof-image" accept="image/*" capture="environment" class="hidden" onchange="previewImage(this)">
-                        <div onclick="document.getElementById('proof-image').click()" class="border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center hover:border-blue-400 transition-colors cursor-pointer bg-gray-50 overflow-hidden min-h-[200px] flex flex-col items-center justify-center">
+                    <div class="bg-slate-50 p-4 rounded-xl border border-gray-100">
+                        <p class="text-[10px] font-extrabold text-blue-600 uppercase tracking-widest mb-1">Tujuan Pengiriman</p>
+                        <p id="mdl-address" class="text-xs text-gray-600 leading-relaxed"></p>
+                    </div>
 
-                            <div id="placeholder-upload">
-                                <i class="fas fa-camera text-4xl text-gray-400 mb-2"></i>
-                                <p class="text-xs text-gray-500 font-medium">Klik untuk Ambil Foto / Pilih File</p>
+                    <div id="mdl-proof-section" class="hidden space-y-2">
+                        <label class="label p-0"><span class="label-text font-bold text-gray-700">Foto Bukti Penerimaan</span></label>
+                        <div class="relative w-full">
+                            <input type="file" id="mdl-proof-image" accept="image/*" capture="environment" class="hidden" onchange="previewActionImage(this)">
+                            <div id="mdl-placeholder" onclick="document.getElementById('mdl-proof-image').click()" class="border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center bg-gray-50 cursor-pointer hover:border-blue-400 transition-all flex flex-col items-center justify-center min-h-[160px]">
+                                <i class="fas fa-camera text-xl text-blue-500 mb-2"></i>
+                                <p class="text-xs text-gray-500 font-bold uppercase">Ambil Foto Bukti</p>
                             </div>
-
-                            <img id="preview-img" class="absolute inset-0 w-full h-full object-cover hidden">
+                            <div id="mdl-preview-container" class="hidden relative rounded-2xl overflow-hidden border border-gray-200">
+                                <img id="mdl-preview-img" src="" class="w-full h-auto block mx-auto max-h-[450px] object-contain">
+                                <button type="button" onclick="removePreviewImage()" class="absolute top-3 right-3 btn btn-circle btn-xs bg-red-500 text-white border-none shadow-lg"><i class="fas fa-times"></i></button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="pt-4 flex gap-2">
-                    <button type="submit" id="btn-submit-proof" class="btn bg-blue-500 flex-1 text-white shadow-lg shadow-blue-100" disabled>
-                        Simpan & Selesai
-                    </button>
+                <div class="p-4 border-t border-gray-100 bg-gray-50">
+                    <button type="submit" id="mdl-btn-submit" class="btn bg-blue-500 btn-block text-white shadow-lg rounded-xl">Konfirmasi</button>
                 </div>
             </form>
         </div>
     </dialog>
 @endsection
+
 @push('scripts')
     <script>
-        /**
-         * 1. Tombol Utama (Buka Modal atau Langsung Update)
-         */
-        function updateStatus(id, newStatus, invoice = '', customerName = '') {
-            if (newStatus === 'delivered') {
-                document.getElementById('proof-trx-id').value = id;
-                document.getElementById('display-invoice-proof').innerText = invoice;
-                document.getElementById('display-customer-proof').innerText = "Penerima: " + customerName;
+        function openActionModal(trx, type) {
+            const modal = document.getElementById('modal_delivery_action');
+            document.getElementById('mdl-trx-id').value = trx.id;
+            document.getElementById('mdl-invoice').innerText = trx.invoice;
+            document.getElementById('mdl-customer').innerText = "Penerima: " + trx.address.recipient_name;
+            document.getElementById('mdl-address').innerText = trx.address.full_address;
 
-                // Tampilkan modal
-                document.getElementById('modal_proof').showModal();
+            let itemsHtml = '';
+            trx.details.forEach(item => {
+                itemsHtml += `
+                    <div class="flex items-center justify-between bg-white border border-gray-100 p-3 rounded-xl shadow-sm">
+                        <div class="min-w-0 pr-2">
+                            <p class="text-xs font-bold text-gray-800 truncate">${item.variant.shoe.name}</p>
+                            <p class="text-[10px] text-gray-500 uppercase">Size ${item.variant.size} | ${item.variant.color}</p>
+                        </div>
+                        <div class="bg-blue-100 text-blue-700 px-2.5 py-1 rounded-lg text-xs font-black">${item.qty}x</div>
+                    </div>`;
+            });
+            document.getElementById('mdl-items-list').innerHTML = itemsHtml;
+
+            removePreviewImage();
+
+            const proofSection = document.getElementById('mdl-proof-section');
+            const submitBtn = document.getElementById('mdl-btn-submit');
+            const statusInput = document.getElementById('mdl-next-status');
+
+            if (type === 'pickup') {
+                document.getElementById('mdl-title').innerText = "Konfirmasi Pickup";
+                proofSection.classList.add('hidden');
+                submitBtn.innerText = "Mulai Pengiriman";
+                submitBtn.disabled = false;
+                statusInput.value = 'shipping';
             } else {
-                // Untuk status 'shipping' (Mulai Kirim), langsung proses tanpa modal
-                if (confirm('Mulai kirim pesanan ini?')) {
-                    processUpdate(id, newStatus);
-                }
+                document.getElementById('mdl-title').innerText = "Selesaikan Pengiriman";
+                proofSection.classList.remove('hidden');
+                submitBtn.innerText = "Simpan & Selesai";
+                submitBtn.disabled = true;
+                statusInput.value = 'delivered';
             }
+            modal.showModal();
         }
 
-        function filterStatus(status) {
-            // Animasi tombol filter
-            const btns = document.querySelectorAll('.filter-btn');
-            btns.forEach(btn => {
-                if (btn.getAttribute('data-filter') === status) {
-                    btn.classList.add('bg-blue-600', 'text-white', 'shadow-md');
-                    btn.classList.remove('bg-white', 'text-gray-600');
-                } else {
-                    btn.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
-                    btn.classList.add('bg-white', 'text-gray-600');
-                }
-            });
-
-            // Sembunyikan/Tampilkan Card
-            const cards = document.querySelectorAll('.delivery-card');
-            cards.forEach(card => {
-                if (status === 'all' || card.getAttribute('data-status') === status) {
-                    card.style.display = 'block';
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-        }
-
-        function processUpdate(id, newStatus) {
-            fetch(`/delivery/update-status/${id}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({
-                        transaction_status: newStatus
-                    })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        window.location.reload();
-                    } else {
-                        alert('Gagal: ' + data.message);
-                    }
-                })
-                .catch(err => alert('Terjadi kesalahan koneksi ke server.'));
-        }
-
-        document.getElementById('form-proof').addEventListener('submit', function(e) {
+        document.getElementById('form-delivery-action').addEventListener('submit', function(e) {
             e.preventDefault();
+            const btn = document.getElementById('mdl-btn-submit');
+            const id = document.getElementById('mdl-trx-id').value;
+            const nextStatus = document.getElementById('mdl-next-status').value;
+            const fileInput = document.getElementById('mdl-proof-image');
 
-            const id = document.getElementById('proof-trx-id').value;
-            const fileInput = document.getElementById('proof-image');
-            const btn = document.getElementById('btn-submit-proof');
-
-            // Kita gunakan FormData karena mengirimkan File/Gambar
             const formData = new FormData();
-            formData.append('transaction_status', 'delivered');
-            formData.append('proof_of_delivery', fileInput.files[0]);
+            formData.append('transaction_status', nextStatus);
+            if (nextStatus === 'delivered') formData.append('proof_of_delivery', fileInput.files[0]);
 
-            // Efek loading pada tombol
+            // Native Loading State
             btn.disabled = true;
-            btn.innerHTML = '<span class="loading loading-spinner loading-xs"></span> Menyimpan...';
+            btn.innerHTML = '<span class="loading loading-spinner loading-sm"></span> Memproses...';
 
             fetch(`/delivery/update-status/${id}`, {
                     method: 'POST',
                     headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}' // Jangan set Content-Type manual jika pakai FormData
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
                     body: formData
                 })
                 .then(res => res.json())
                 .then(data => {
-                    if (data.success) {
-                        window.location.reload();
-                    } else {
-                        alert('Gagal: ' + data.message);
+                    if (data.success) window.location.reload();
+                    else {
+                        alert(data.message);
                         btn.disabled = false;
-                        btn.innerHTML = 'Simpan & Selesai';
+                        btn.innerText = 'Konfirmasi';
                     }
                 })
-                .catch(err => {
+                .catch(() => {
                     alert('Kesalahan jaringan.');
                     btn.disabled = false;
-                    btn.innerHTML = 'Simpan & Selesai';
+                    btn.innerText = 'Konfirmasi';
                 });
         });
 
-        /**
-         * 4. Fungsi Preview Gambar
-         */
-        function previewImage(input) {
-            const preview = document.getElementById('preview-img');
-            const placeholder = document.getElementById('placeholder-upload');
-            const btnSubmit = document.getElementById('btn-submit-proof');
+        function previewActionImage(input) {
+            const container = document.getElementById('mdl-preview-container');
+            const preview = document.getElementById('mdl-preview-img');
+            const placeholder = document.getElementById('mdl-placeholder');
+            const btn = document.getElementById('mdl-btn-submit');
 
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = (e) => {
                     preview.src = e.target.result;
-                    preview.classList.remove('hidden');
+                    container.classList.remove('hidden');
                     placeholder.classList.add('hidden');
-                    btnSubmit.disabled = false;
+                    btn.disabled = false;
                 }
                 reader.readAsDataURL(input.files[0]);
             }
         }
 
-        /**
-         * 5. Tutup Modal & Reset
-         */
-        function closeProofModal() {
-            document.getElementById('modal_proof').close();
-            document.getElementById('form-proof').reset();
-            document.getElementById('preview-img').classList.add('hidden');
-            document.getElementById('placeholder-upload').classList.remove('hidden');
-            document.getElementById('btn-submit-proof').disabled = true;
+        function removePreviewImage() {
+            document.getElementById('mdl-proof-image').value = "";
+            document.getElementById('mdl-preview-img').src = "";
+            document.getElementById('mdl-preview-container').classList.add('hidden');
+            document.getElementById('mdl-placeholder').classList.remove('hidden');
+            if (document.getElementById('mdl-next-status').value === 'delivered') {
+                document.getElementById('mdl-btn-submit').disabled = true;
+            }
+        }
+
+        function filterStatus(status) {
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                if (btn.getAttribute('data-filter') === status) {
+                    btn.classList.add('bg-blue-600', 'text-white');
+                    btn.classList.remove('bg-white', 'text-gray-600');
+                } else {
+                    btn.classList.remove('bg-blue-600', 'text-white');
+                    btn.classList.add('bg-white', 'text-gray-600');
+                }
+            });
+            document.querySelectorAll('.delivery-card').forEach(card => {
+                card.style.display = (status === 'all' || card.getAttribute('data-status') === status) ? 'block' : 'none';
+            });
         }
     </script>
 @endpush

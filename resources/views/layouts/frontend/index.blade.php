@@ -85,6 +85,15 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
+
+        .btn-primary:disabled,
+        .btn-primary[disabled] {
+            background-color: #2563eb !important;
+            /* Biru Solid */
+            color: #ffffff !important;
+            opacity: 0.8;
+            border: none;
+        }
     </style>
     @stack('styles')
 </head>
