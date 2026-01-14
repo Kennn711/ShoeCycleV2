@@ -62,6 +62,10 @@
                                 $image = $firstVariant ? $firstVariant->images->where('is_primary', true)->first() : null;
                                 $imageUrl = $image ? asset('storage/' . $image->image_path) : asset('assets/upload/testing/dummy.jpg');
 
+                                // Logic Stok: Hitung total stok dari semua varian
+                                $totalStock = $shoe->variants->sum('stock');
+                                $isOutOfStock = $totalStock <= 0;
+
                                 // Logic Card sesuai Landing Page
                                 $soldCount = rand(50, 500);
                                 $rating = 4.8;
@@ -69,10 +73,21 @@
 
                             {{-- Product Card --}}
                             <div class="group bg-white rounded-3xl border border-gray-100 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-50 transition-all duration-300 overflow-hidden h-full flex flex-col relative" data-aos="fade-up" data-aos-delay="{{ $index * 50 }}">
+                                {{-- Stok Habis Badge --}}
+                                @if ($isOutOfStock)
+                                    <div class="absolute top-4 left-4 z-20">
+                                        <span class="bg-red-500 text-white text-[10px] font-black uppercase px-3 py-1.5 rounded-xl shadow-md shadow-red-200 flex items-center gap-1.5">
+                                            <i class="fas fa-exclamation-circle text-xs"></i> Stok Habis
+                                        </span>
+                                    </div>
+                                @endif
 
                                 {{-- Image Container --}}
                                 <div class="relative bg-gray-50 flex items-center justify-center overflow-hidden">
                                     <img src="{{ $imageUrl }}" alt="{{ $shoe->name }}" class="w-full h-full rounded-[4rem] object-contain p-4 mix-blend-multiply" />
+                                    @if ($isOutOfStock)
+                                        <div class="absolute inset-0 bg-gray-900/5 transition-opacity"></div>
+                                    @endif
                                 </div>
 
                                 {{-- Content --}}
@@ -108,7 +123,7 @@
                                     {{-- Footer: Price --}}
                                     <div class="mt-auto pt-4 border-t border-gray-100">
                                         <p class="text-[10px] text-gray-400 uppercase font-semibold mb-0.5">Harga</p>
-                                        <div class="text-lg font-bold text-gray-900 leading-none">
+                                        <div class="text-lg font-bold {{ $isOutOfStock ? 'text-gray-400 line-through opacity-70' : 'text-gray-900' }} leading-none">
                                             {{ $shoe->price_range }}
                                         </div>
                                     </div>

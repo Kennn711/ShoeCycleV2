@@ -39,7 +39,7 @@
 
                     @php
                         $statusInfo = [
-                            'processing' => ['bg' => 'bg-gray-50', 'badge' => 'bg-gray-100 text-gray-600', 'label' => 'Siap Pickup'],
+                            'processing' => ['bg' => 'bg-gray-100', 'badge' => 'bg-gray-100 text-gray-600', 'label' => 'Siap Pickup'],
                             'shipping' => ['bg' => 'bg-blue-50', 'badge' => 'bg-blue-100 text-blue-700', 'label' => 'Sedang Dikirim'],
                             'delivered' => ['bg' => 'bg-green-50', 'badge' => 'bg-green-100 text-green-700', 'label' => 'Selesai'],
                         ];
@@ -67,11 +67,21 @@
                         </div>
 
                         <div class="flex items-start gap-3">
-                            <div class="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center text-red-500 shrink-0"><i class="fas fa-map-marker-alt text-sm"></i></div>
-                            <div class="flex-1">
-                                <p class="text-[10px] text-gray-400 uppercase font-bold leading-none mb-1">Alamat</p>
+                            {{-- Ikon Alamat --}}
+                            <div class="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center text-red-500 shrink-0">
+                                <i class="fas fa-map-marker-alt text-sm"></i>
+                            </div>
+
+                            {{-- Teks Alamat --}}
+                            <div class="flex-1 min-w-0">
+                                <p class="text-[10px] text-gray-400 uppercase font-bold leading-none mb-1">Alamat Pengiriman</p>
                                 <p class="text-xs text-gray-600 leading-relaxed">{{ $trx->address->full_address }}</p>
                             </div>
+
+                            {{-- Tombol Navigasi Google Maps (Pojok Kanan Atas Alamat) --}}
+                            <a href="https://www.google.com/maps/dir/?api=1&destination={{ $trx->address->latitude }},{{ $trx->address->longitude }}" target="_blank" class="btn btn-circle btn-sm bg-blue-500 border-none text-white hover:bg-blue-600 shadow-sm shrink-0">
+                                <i class="fa-solid fa-diamond-turn-right text-sm"></i>
+                            </a>
                         </div>
 
                         <div class="flex items-start gap-3 pt-3 border-t border-dashed border-gray-100">

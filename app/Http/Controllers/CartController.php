@@ -51,16 +51,27 @@ class CartController extends Controller
         $cart->quantity = $request->qty;
         $cart->save();
 
+        // --- BAGIAN BARU: AMBIL DATA TERBARU UNTUK MINI CART ---
+        $cartItems = Cart::with(['variant.shoe', 'variant.images'])
+            ->where('user_id', Auth::id())
+            ->get();
+
         // Hitung ulang total belanja user
-        $newGrandTotal = Cart::where('user_id', Auth::id())
-            ->get()
-            ->sum(function ($item) {
-                return $item->quantity * $item->variant->price;
-            });
+        $newGrandTotal = $cartItems->sum(function ($item) {
+            return $item->quantity * $item->variant->price;
+        });
+
+        // Render ulang tampilan Mini Cart (File Partial)
+        $miniCartHtml = view('layouts.frontend.partial.mini-cart-items', [
+            'cartItems' => $cartItems,
+            'cartTotal' => $newGrandTotal
+        ])->render();
 
         return response()->json([
             'status' => 'success',
-            'grand_total' => 'Rp ' . number_format($newGrandTotal, 0, ',', '.')
+            'grand_total' => 'Rp ' . number_format($newGrandTotal, 0, ',', '.'),
+            'cart_count' => $cartItems->count(),
+            'mini_cart_html' => $miniCartHtml
         ]);
     }
 
@@ -119,11 +130,22 @@ class CartController extends Controller
             ]);
         }
 
+        // Ambil semua item keranjang user untuk di-render ulang
+        $cartItems = Cart::with(['variant.shoe', 'variant.images'])
+            ->where('user_id', Auth::id())
+            ->get();
+
+        // Hitung total harga
+        $cartTotal = $cartItems->sum(function ($item) {
+            return $item->variant->price * $item->quantity;
+        });
+
         // 6. Return response sukses + update badge keranjang
         return response()->json([
             'status' => 'success',
             'message' => 'Produk berhasil masuk keranjang!',
-            'cart_count' => Cart::where('user_id', Auth::id())->count()
+            'cart_count' => $cartItems->count(),
+            'mini_cart_html' => view('layouts.frontend.partial.mini-cart-items', compact('cartItems', 'cartTotal'))->render()
         ]);
     }
 

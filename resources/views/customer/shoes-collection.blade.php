@@ -160,5 +160,47 @@
             display: flex;
             gap: 5px;
         }
+
+        /* Reset background container pagination */
+        nav[role="navigation"] {
+            background-color: transparent !important;
+        }
+
+        /* 1. Tombol Biasa (Link) */
+        nav[role="navigation"] a {
+            background-color: #ffffff !important;
+            color: #374151 !important;
+            /* Gray-700 */
+            border-color: #e5e7eb !important;
+        }
+
+        nav[role="navigation"] a:hover {
+            background-color: #f3f4f6 !important;
+        }
+
+        /* 2. Tombol Disabled (Arrow Kiri/Kanan saat mentok) - INI PERBAIKANNYA */
+        nav[role="navigation"] span[aria-disabled="true"] span,
+        nav[role="navigation"] span[aria-disabled="true"] {
+            background-color: #ffffff !important;
+            /* Paksa Putih */
+            color: #d1d5db !important;
+            /* Gray-300 (Warna disabled) */
+            border-color: #e5e7eb !important;
+            cursor: not-allowed;
+        }
+
+        /* 3. Tombol Aktif (Halaman saat ini) */
+        nav[role="navigation"] span[aria-current="page"]>span {
+            background-color: #3b82f6 !important;
+            /* Blue-500 */
+            color: #ffffff !important;
+            border-color: #3b82f6 !important;
+        }
+
+        /* Sembunyikan Text Previous/Next bawaan Laravel jika mengganggu layout */
+        nav[role="navigation"] svg {
+            width: 20px;
+            height: 20px;
+        }
     </style>
 @endpush

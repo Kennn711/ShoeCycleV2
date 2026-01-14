@@ -8,7 +8,7 @@
             <div class="text-sm breadcrumbs text-gray-500">
                 <ul>
                     <li><a href="{{ route('landing-page') }}">Beranda</a></li>
-                    <li><a href="#">{{ $shoe->category->category_name }}</a></li> {{-- fitur mendatang --}}
+                    <li><a href="{{ route('all-category.index') }}#cat-{{ $shoe->category->id }}">{{ $shoe->category->category_name }}</a></li> {{-- fitur mendatang --}}
                     <li class="font-bold text-gray-900 overflow-hidden text-ellipsis whitespace-nowrap max-w-[200px]">{{ $shoe->name }}</li>
                 </ul>
             </div>
@@ -428,65 +428,68 @@
             $('#qty-error').removeClass('opacity-100').addClass('opacity-0');
         }
 
-        // --- 8. ADD TO CART ACTION ---
+        // --- 8. ADD TO CART ACTION (REVISED) ---
         $('#btn-add-to-cart').click(function() {
-
-            // --- VALIDASI LOGIN (Blade Directive) ---
-            // Kita inject status login dari server ke variabel JS
             const isLoggedIn = {{ Auth::check() ? 'true' : 'false' }};
-
             if (!isLoggedIn) {
-                // Jika belum login, buka modal dan hentikan proses
                 openLoginModal();
-                // Opsional: Tampilkan pesan di modal agar user tau kenapa dia disuruh login
-                $('#login-error-msg').text("Silakan login untuk belanja.").parent().removeClass('hidden');
                 return;
             }
 
-            // --- JIKA SUDAH LOGIN, LANJUT PROSES ---
             const btn = $(this);
             const originalText = btn.html();
 
-            // 1. Validasi Client Side (Warna & Ukuran)
-            if (!selectedColor || !selectedSize) {
-                alert('Pilih warna dan ukuran dulu'); // Atau pakai toast
-                return;
-            }
+            btn.prop('disabled', true).html('<span class="loading loading-spinner loading-xs"></span>');
 
-            // 2. Loading State
-            btn.prop('disabled', true).html('<span class="loading loading-spinner loading-xs"></span> Menyimpan...');
-
-            // 3. AJAX Request
             $.ajax({
                 url: "{{ route('cart.store') }}",
                 method: "POST",
                 data: {
                     _token: "{{ csrf_token() }}",
-                    shoe_slug: "{{ $shoe->slug }}", // Pastikan slug dikirim
+                    shoe_slug: "{{ $shoe->slug }}",
                     color: selectedColor,
                     size: selectedSize,
                     qty: $('#qty-input').val()
                 },
                 success: function(response) {
-                    // Balikkan tombol
                     btn.prop('disabled', false).html(originalText);
 
                     if (response.status === 'success') {
-                        // Tampilkan Notifikasi Sukses (Bisa ganti SweetAlert nanti)
-                        alert(response.message);
+                        // 1. Update Angka Badge
+                        const badge = $('#cart-badge-count');
+                        badge.text(response.cart_count);
 
-                        // Update Badge Cart di Navbar (Cari elemen badge di navbar Anda)
-                        $('.badge-cart-count').text(response.cart_count); // Pastikan class badge di navbar sesuai
+                        // 2. LOGIKA PENTING: Jika sebelumnya hidden (keranjang 0), maka tampilkan
+                        if (response.cart_count > 0) {
+                            badge.removeClass('hidden');
+                        }
+
+                        // 3. Update Isi Dropdown Mini Cart
+                        $('#mini-cart-dropdown-content').html(response.mini_cart_html);
+
+                        // 4. Feedback Visual (Toast)
+                        const Toast = Swal.mixin({
+                            toast: true,
+                            position: 'top',
+                            showConfirmButton: false,
+                            timer: 2000,
+                            timerProgressBar: true,
+                        });
+
+                        Toast.fire({
+                            icon: 'success',
+                            title: response.message
+                        });
+
+                        // Animasi bounce pada icon tas
+                        $('.fa-shopping-bag').parent().addClass('animate-bounce');
+                        setTimeout(() => $('.fa-shopping-bag').parent().removeClass('animate-bounce'), 1000);
                     }
                 },
                 error: function(xhr) {
                     btn.prop('disabled', false).html(originalText);
-
-                    let msg = 'Terjadi kesalahan.';
-                    if (xhr.responseJSON && xhr.responseJSON.message) {
-                        msg = xhr.responseJSON.message;
-                    }
-                    alert(msg);
+                    // Jika error, baru tampilkan pesan (opsional pakai Toast juga)
+                    Swal.fire('Oops!', xhr.responseJSON.message || 'Gagal menambahkan barang', 'error');
                 }
             });
         });

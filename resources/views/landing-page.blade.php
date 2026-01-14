@@ -28,7 +28,7 @@
                         <a href="#new-arrivals" class="btn btn-primary btn-lg border-none bg-blue-600 hover:bg-blue-700 shadow-xl shadow-blue-200 text-white px-10 h-14 rounded-full font-bold">
                             Belanja Sekarang <i class="fas fa-arrow-right ml-2"></i>
                         </a>
-                        <a href="#categories" class="btn btn-outline btn-lg hover:bg-white px-10 h-14 rounded-full border-gray-300 font-medium">
+                        <a href="{{ route('all-category.index') }}" class="btn btn-outline btn-lg hover:bg-white px-10 h-14 rounded-full border-gray-300 font-medium">
                             Lihat Kategori
                         </a>
                     </div>
@@ -154,7 +154,7 @@
                     <h2 class="text-4xl font-bold text-gray-900 mb-3 font-heading">Koleksi Terbaru</h2>
                     <p class="text-gray-500 text-lg">Pilihan eksklusif untuk gaya Anda.</p>
                 </div>
-                <a href="#" class="btn btn-outline rounded-lg text-white px-8 bg-blue-500 hover:bg-blue-600  border-gray-300">
+                <a href="{{ route('shoes-collection.index') }}" class="btn btn-outline rounded-lg text-white px-8 bg-blue-500 hover:bg-blue-600  border-gray-300">
                     Lihat Semua
                 </a>
             </div>

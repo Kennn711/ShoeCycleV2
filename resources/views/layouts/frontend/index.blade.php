@@ -137,26 +137,21 @@
                         <i class="fas fa-search text-lg"></i>
                     </button>
 
-                    {{-- Cart --}}
+                    {{-- Dropdown Keranjang Belanja --}}
                     <div class="dropdown dropdown-end">
-                        <div tabindex="0" role="button" class="btn btn-ghost btn-circle text-gray-600 hover:text-blue-600 hover:bg-blue-50">
+                        <div tabindex="0" role="button" class="btn btn-ghost btn-circle text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all">
                             <div class="indicator">
                                 <i class="fas fa-shopping-bag text-lg"></i>
-                                <span class="badge badge-sm bg-blue-600 text-white border-none indicator-item">0</span>
+
+                                {{-- PERBAIKAN: Hapus @if di luar span, masukkan logika hidden ke dalam class --}}
+                                <span id="cart-badge-count" class="badge badge-sm bg-blue-600 text-white border-none indicator-item shadow-sm {{ isset($cartItems) && $cartItems->count() > 0 ? '' : 'hidden' }}">
+                                    {{ isset($cartItems) ? $cartItems->count() : 0 }}
+                                </span>
                             </div>
                         </div>
-                        <div tabindex="0" class="dropdown-content mt-3 z-1 card card-compact w-72 bg-white shadow-xl border border-gray-100 rounded-xl">
-                            <div class="card-body">
-                                <div class="flex items-center justify-between mb-3">
-                                    <span class="font-bold text-lg">Keranjang</span>
-                                    <span class="text-sm text-gray-500">0 item</span>
-                                </div>
-                                <div class="text-center py-8">
-                                    <i class="fas fa-shopping-bag text-4xl text-gray-300 mb-3"></i>
-                                    <p class="text-sm text-gray-500">Keranjang masih kosong</p>
-                                </div>
-                                <a href="{{ route('cart.index') }}" class="btn btn-primary btn-sm rounded-lg text-white">Mulai Belanja</a>
-                            </div>
+
+                        <div tabindex="0" id="mini-cart-dropdown-content" class="dropdown-content mt-3 z-[60] card card-compact w-80 bg-white shadow-2xl border border-gray-100 rounded-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                            @include('layouts.frontend.partial.mini-cart-items')
                         </div>
                     </div>
 

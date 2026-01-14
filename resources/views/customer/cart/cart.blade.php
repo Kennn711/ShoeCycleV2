@@ -139,6 +139,43 @@
             @endif
         </div>
     </section>
+
+    {{-- MODAL KONFIRMASI HAPUS --}}
+    <dialog id="modal_confirm_delete" class="modal modal-bottom sm:modal-middle">
+        <div class="modal-box bg-white p-0 overflow-hidden max-w-sm">
+            <div class="p-8 text-center">
+                <div class="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-trash-alt text-3xl"></i>
+                </div>
+                <h3 class="font-bold text-xl text-gray-900">Hapus Barang?</h3>
+                <p class="text-gray-500 mt-2">Barang ini akan dikeluarkan dari keranjang belanja Anda.</p>
+            </div>
+            <div class="flex border-t border-gray-100">
+                <form method="dialog" class="flex-1">
+                    <button class="btn btn-ghost w-full h-14 rounded-none border-r border-gray-100 font-bold text-gray-400 no-animation">Batal</button>
+                </form>
+                <button id="btn-confirm-delete" class="flex-1 btn btn-ghost h-14 rounded-none font-bold text-red-600 hover:bg-red-50 no-animation">Ya, Hapus</button>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button>close</button></form>
+    </dialog>
+
+    {{-- MODAL PERINGATAN (GENERAL) --}}
+    <dialog id="modal_warning" class="modal modal-bottom sm:modal-middle">
+        <div class="modal-box bg-white p-6 text-center">
+            <div class="w-16 h-16 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-exclamation-triangle text-2xl"></i>
+            </div>
+            <h3 class="font-bold text-lg text-gray-900" id="warning-title">Peringatan</h3>
+            <p class="text-gray-500 mt-2" id="warning-message"></p>
+            <div class="modal-action justify-center">
+                <form method="dialog">
+                    <button class="btn btn-primary px-8 rounded-xl text-white">Mengerti</button>
+                </form>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button>close</button></form>
+    </dialog>
 @endsection
 
 @push('scripts')
@@ -226,13 +263,25 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'success') {
-                        // PENTING: Update Total Lokal juga setelah sukses
-                        calculateTotal();
+                        // 1. Update Grand Total di halaman keranjang saat ini
+                        document.getElementById('grand-total-display').innerText = data.grand_total;
+
+                        // 2. UPDATE MINI CART (NAVBAR)
+                        const badge = document.getElementById('cart-badge-count');
+                        if (badge) {
+                            badge.innerText = data.cart_count;
+                            if (data.cart_count > 0) badge.classList.remove('hidden');
+                        }
+
+                        const miniCartContainer = document.getElementById('mini-cart-dropdown-content');
+                        if (miniCartContainer) {
+                            miniCartContainer.innerHTML = data.mini_cart_html; // Pasang HTML baru
+                        }
+
                     } else {
-                        input.value = currentQty;
-                        if (data.reset_qty) input.value = data.reset_qty;
-                        alert(data.message);
-                        calculateTotal();
+                        // Jika gagal (stok habis)
+                        input.value = data.reset_qty || currentQty;
+                        showWarning('Stok Terbatas', data.message);
                     }
                 })
                 .catch(error => {
@@ -268,38 +317,36 @@
         // Hapus href di tombol beli (jika masih <a>) agar tidak langsung pindah
         document.querySelector('.btn-primary.w-full').removeAttribute('href');
 
-        // --- 2. DELETE ITEM ---
+        // --- 3. DELETE LOGIC WITH DAISYUI MODAL ---
         function deleteCartItem(id) {
-            if (!confirm('Yakin ingin menghapus barang ini dari keranjang?')) return;
+            itemToDelete = id;
+            document.getElementById('modal_confirm_delete').showModal();
+        }
 
-            fetch(`/cart/destroy/${id}`, {
+        document.getElementById('btn-confirm-delete').addEventListener('click', function() {
+            if (!itemToDelete) return;
+
+            const btn = this;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading loading-spinner loading-xs"></span>';
+
+            fetch(`/cart/destroy/${itemToDelete}`, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': csrfToken
                     }
                 })
-                .then(response => response.json())
+                .then(res => res.json())
                 .then(data => {
                     if (data.status === 'success') {
-                        // Hapus row dari DOM dengan animasi
-                        const row = document.getElementById(`cart-row-${id}`);
-                        row.style.opacity = '0';
-                        setTimeout(() => {
-                            row.remove();
-                            // Jika kosong, reload agar muncul empty state
-                            if (document.querySelectorAll('.cart-item-row').length === 0) {
-                                window.location.reload();
-                            } else {
-                                // Trigger update total (bisa panggil updateQty palsu atau reload simple)
-                                // Untuk simplisitas saat ini, reload agar total benar
-                                window.location.reload();
-                            }
-                        }, 300);
+                        window.location.reload();
                     } else {
-                        alert('Gagal menghapus item.');
+                        showWarning('Gagal', 'Terjadi kesalahan saat menghapus item.');
+                        btn.disabled = false;
+                        btn.innerText = 'Ya, Hapus';
                     }
                 });
-        }
+        });
     </script>
 @endpush
