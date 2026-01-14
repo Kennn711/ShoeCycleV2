@@ -33,6 +33,7 @@ Route::middleware(['auth', 'customer'])->group(function () {
 
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/checkout/store', [CheckoutController::class, 'store'])->name('checkout.store');
+    Route::put('/checkout/cancel/{id}', [CheckoutController::class, 'cancel'])->name('checkout.cancel');
 
     Route::get('my-orders', [TransactionController::class, 'indexCustomer'])->name('my-order.index');
     Route::post('/address/store', [AddressController::class, 'store'])->name('address.store');

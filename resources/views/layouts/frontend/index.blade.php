@@ -158,29 +158,47 @@
                     {{-- Auth Section --}}
                     @auth
                         <div class="dropdown dropdown-end">
-                            <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
+                            {{-- Trigger Avatar --}}
+                            <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar focus:bg-slate-100 active:bg-slate-200 transition-all">
                                 <div class="w-9 rounded-full ring-2 ring-gray-200 ring-offset-2">
                                     <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=2563eb&color=fff&bold=true" alt="{{ Auth::user()->name }}" />
                                 </div>
                             </div>
-                            <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-1 p-2 shadow-xl bg-white rounded-xl w-56 border border-gray-100">
-                                <li class="menu-title px-4 py-2">
-                                    <span class="text-xs text-gray-500">Hai, {{ Auth::user()->name }}</span>
+
+                            {{-- Dropdown Content --}}
+                            <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[60] p-0 shadow-2xl bg-white rounded-2xl w-60 border border-gray-100 overflow-hidden focus:outline-none">
+
+                                {{-- Header: Menghilangkan class menu-title untuk menghindari konflik CSS --}}
+                                <li class="px-5 py-4 border-b border-gray-50 bg-slate-50/50 select-none pointer-events-none">
+                                    <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Informasi Akun</span>
+                                    <span class="block text-sm font-bold text-gray-800 truncate">{{ Auth::user()->name }}</span>
                                 </li>
-                                <li><a href="#" class="text-sm"><i class="fa-solid fa-gear mr-2 w-4"></i> Pengaturan</a></li>
-                                <li><a href="{{ route('my-order.index') }}" class="text-sm"><i class="fa-solid fa-square-poll-horizontal mr-2 w-4"></i> Pesanan Saya</a></li>
-                                <li class="border-t border-gray-100 mt-1 pt-1">
-                                    <form method="POST" action="{{ route('logout') }}">
+
+                                {{-- Menu Link --}}
+                                <li class="p-0">
+                                    <a href="#" class="flex items-center px-5 py-3.5 hover:bg-blue-50 hover:text-blue-600 active:bg-blue-100 rounded-none transition-colors focus:bg-blue-50">
+                                        <i class="fa-solid fa-gear mr-3 w-4 text-gray-400"></i> Pengaturan
+                                    </a>
+                                </li>
+                                <li class="p-0">
+                                    <a href="{{ route('my-order.index') }}" class="flex items-center px-5 py-3.5 hover:bg-blue-50 hover:text-blue-600 active:bg-blue-100 rounded-none transition-colors focus:bg-blue-50">
+                                        <i class="fa-solid fa-square-poll-horizontal mr-3 w-4 text-gray-400"></i> Pesanan Saya
+                                    </a>
+                                </li>
+
+                                {{-- Logout Section: Form dibuat block agar tombol memenuhi lebar li --}}
+                                <li class="border-t border-gray-100 p-0">
+                                    <form method="POST" action="{{ route('logout') }}" class="block w-full">
                                         @csrf
-                                        <button type="submit" class="text-red-500  w-full text-left text-sm">
-                                            <i class="fas fa-sign-out-alt mr-2 w-4"></i> Logout
+                                        <button type="submit" class="w-full flex items-center px-5 py-4 text-red-500 hover:text-red-600 active:bg-red-100 transition-all font-bold focus:outline-none">
+                                            <i class="fas fa-sign-out-alt mr-3 w-4"></i> Logout
                                         </button>
                                     </form>
                                 </li>
                             </ul>
                         </div>
                     @else
-                        {{-- Ubah href menjadi onclick --}}
+                        {{-- Tombol Masuk --}}
                         <button onclick="openLoginModal()" class="btn btn-primary btn-sm rounded-lg text-white text-sm px-6 ml-2 hidden sm:flex shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition-all transform hover:-translate-y-0.5">
                             Masuk
                         </button>

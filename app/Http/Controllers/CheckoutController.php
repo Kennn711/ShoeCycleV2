@@ -141,6 +141,59 @@ class CheckoutController extends Controller
         }
     }
 
+    public function cancel($id)
+    {
+        $transaction = Transaction::where('id', $id)
+            ->where('customer_id', Auth::id())
+            ->where('payment_status', 'pending')
+            ->first();
+
+        if (!$transaction) {
+            return response()->json(['status' => 'error', 'message' => 'Transaksi tidak ditemukan.'], 404);
+        }
+
+        DB::beginTransaction();
+        try {
+            $details = TransactionDetail::where('transaction_id', $transaction->id)->get();
+
+            foreach ($details as $detail) {
+                // 1. Cari dulu apakah item ini sudah ada di keranjang user
+                // Catatan: Pastikan kolom di tabel carts adalah 'user_id' (sesuai error log Anda)
+                $cartItem = Cart::where('user_id', Auth::id())
+                    ->where('shoes_variant_id', $detail->variant_id)
+                    ->first();
+
+                if ($cartItem) {
+                    // 2. Jika sudah ada, TAMBAHKAN quantity-nya
+                    $cartItem->quantity += $detail->qty;
+                    $cartItem->save();
+                } else {
+                    // 3. Jika belum ada, BUAT BARU dengan quantity dari detail transaksi
+                    Cart::create([
+                        'user_id' => Auth::id(),
+                        'shoes_variant_id' => $detail->variant_id,
+                        'quantity' => $detail->qty
+                    ]);
+                }
+            }
+
+            // 4. Update status transaksi
+            $transaction->update([
+                'payment_status' => 'cancel',
+                'transaction_status' => 'failed'
+            ]);
+
+            DB::commit();
+            return response()->json(['status' => 'success', 'message' => 'Pesanan dibatalkan, barang kembali ke keranjang.']);
+        } catch (\Exception $e) {
+            DB::rollback();
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function callback(Request $request)
     {
         Config::$serverKey = config('midtrans.server_key');

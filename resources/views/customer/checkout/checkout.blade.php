@@ -290,7 +290,7 @@
                                             <div id="countdown-timer" class="text-xl font-mono font-bold text-orange-700">23:59:59</div>
                                         </div>
                                         <div class="flex gap-2">
-                                            <button type="button" onclick="window.location.reload()" class="btn btn-ghost border-gray-200 flex-1 rounded-xl text-red-500 font-bold">Batal</button>
+                                            <button type="button" onclick="cancelOrder('{{ $pendingTransaction->id ?? '' }}')" class="btn btn-ghost border-gray-200 flex-1 rounded-xl text-white bg-red-400 hover:bg-red-500 font-bold">Batal</button>
                                             <button type="button" id="btn-pay-snap" class="btn btn-success flex-[2] text-white font-bold rounded-xl shadow-lg">Bayar Sekarang</button>
                                         </div>
                                     </div>
@@ -498,6 +498,31 @@
         </div>
         <form method="dialog" class="modal-backdrop bg-gray-900/50"><button>close</button></form>
     </dialog>
+
+    {{-- MODAL 3: KONFIRMASI BATAL --}}
+    <dialog id="modal_cancel_confirmation" class="modal modal-bottom sm:modal-middle">
+        <div class="modal-box bg-white p-0 overflow-hidden max-w-md">
+            <div class="p-6 text-center">
+                <div class="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-exclamation-triangle text-3xl"></i>
+                </div>
+                <h3 class="font-bold text-xl text-gray-900">Batalkan Pesanan?</h3>
+                <p class="text-gray-500 mt-2 leading-relaxed">
+                    Apakah Anda yakin ingin membatalkan checkout ini? Barang akan dikembalikan ke keranjang Anda.
+                </p>
+            </div>
+            <div class="flex border-t border-gray-100 bg-gray-50 p-4 gap-3">
+                <form method="dialog" class="flex-1">
+                    <button class="btn btn-ghost w-full rounded-xl font-bold text-gray-400">Tutup</button>
+                </form>
+                {{-- Button ini akan memicu AJAX --}}
+                <button id="btn-execute-cancel" class="btn flex-1 text-white bg-red-400 hover:bg-red-500 font-bold rounded-xl shadow-lg">
+                    Ya, Batalkan
+                </button>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop bg-gray-900/50"><button>close</button></form>
+    </dialog>
 @endsection
 
 @push('scripts')
@@ -507,6 +532,8 @@
     <script type="text/javascript" src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.client_key') }}"></script>
 
     <script>
+        const csrfToken = $('meta[name="csrf-token"]').attr('content');
+
         // 1. DATA GLOBAL
         const userAddresses = @json($userAddresses);
         const STORE_LAT = {{ $storeConfig['lat'] }};
@@ -730,8 +757,13 @@
                                 console.error(result);
                             },
                             onClose: function() {
-                                /* Terpanggil saat user menutup modal tanpa bayar */
-                                alert('Jangan lupa selesaikan pembayaranmu sebelum waktu habis!');
+                                Swal.fire({
+                                    title: 'Pembayaran Belum Selesai',
+                                    text: 'Jangan lupa selesaikan pembayaran Anda sebelum batas waktu berakhir agar pesanan tidak dibatalkan otomatis.',
+                                    icon: 'warning',
+                                    confirmButtonColor: '#3b82f6',
+                                    confirmButtonText: 'Oke, Mengerti'
+                                });
                             }
                         });
                     };
@@ -792,10 +824,60 @@
             }, 1000);
         };
 
-        window.cancelOrder = function() {
-            if (confirm('Batalkan pesanan ini?')) {
-                window.location.href = "{{ route('landing-page') }}";
+        window.cancelOrder = function(id) {
+            if (!id || id === "") {
+                window.location.href = "{{ route('cart.index') }}";
+                return;
             }
+
+            const cancelModal = document.getElementById('modal_cancel_confirmation');
+            cancelModal.showModal();
+
+            $('#btn-execute-cancel').off('click').on('click', function() {
+                let $btn = $(this);
+                const originalHtml = $btn.html();
+
+                $btn.prop('disabled', true).html('<span class="loading loading-spinner loading-xs"></span>');
+
+                $.ajax({
+                    url: `/checkout/cancel/${id}`,
+                    type: "POST",
+                    data: {
+                        _token: csrfToken, // Pastikan variabel ini sudah dideklarasikan di paling atas script
+                        _method: "PUT"
+                    },
+                    success: function(res) {
+                        // TUTUP MODAL DAISYUI DULU sebelum buka SweetAlert
+                        cancelModal.close();
+
+                        if (res.status === 'success') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil Batal',
+                                text: res.message,
+                                confirmButtonColor: '#3b82f6',
+                            }).then(() => {
+                                window.location.href = "{{ route('cart.index') }}";
+                            });
+                        }
+                    },
+                    error: function(xhr) {
+                        // TUTUP MODAL DAISYUI agar backdrop hilang
+                        cancelModal.close();
+
+                        $btn.prop('disabled', false).html(originalHtml);
+
+                        let errorMsg = xhr.responseJSON ? xhr.responseJSON.message : 'Terjadi kesalahan sistem (500).';
+
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Gagal Membatalkan',
+                            text: errorMsg, // Akan memunculkan pesan error PHP jika 500
+                            confirmButtonColor: '#ef4444',
+                        });
+                    }
+                });
+            });
         };
 
         window.submitNewAddress = function() {
@@ -852,7 +934,12 @@
                             window.location.reload();
                         },
                         onClose: function() {
-                            alert('Segera selesaikan pembayaran Anda!');
+                            Swal.fire({
+                                title: 'Lanjutkan Pembayaran?',
+                                text: 'Pesanan Anda masih berstatus pending. Segera selesaikan pembayaran ya!',
+                                icon: 'info',
+                                confirmButtonColor: '#3b82f6'
+                            });
                         }
                     });
                 });

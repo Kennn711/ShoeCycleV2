@@ -134,6 +134,9 @@
                                         ];
                                     @endphp
                                     <span class="px-3 py-1 rounded-full text-[11px] font-bold uppercase {{ $tStatus[$trx->transaction_status] ?? 'bg-gray-100 text-gray-600' }}">
+                                        @if ($trx->transaction_status == 'failed' && $trx->payment_status == 'cancel')
+                                            Dibatalkan oleh Customer
+                                        @endif
                                         @if ($trx->transaction_status == 'processing' && empty($trx->courier_id))
                                             Diproses
                                         @endif
@@ -150,28 +153,38 @@
                                 </td>
 
                                 <td>
-                                    @if (empty($trx->courier_id))
-                                        <button class="btn btn-sm bg-yellow-400 tooltip" data-tip="Tugaskan Kurir" onclick="openStatusModal({{ $trx->id }}, '{{ $trx->invoice }}', '{{ $trx->transaction_status }}')" ...>
-                                            <i class="fa-solid fa-truck-fast text-sm text-gray-100"></i>
-                                        </button>
-                                    @endif
+                                    {{-- 1. Cek jika statusnya Batal (Failed & Cancel) --}}
+                                    @if ($trx->transaction_status == 'failed' && $trx->payment_status == 'cancel')
+                                    @else
+                                        {{-- 2. Jika TIDAK batal, baru tampilkan logika tombol-tombol aksi --}}
 
-                                    @if ($trx->transaction_status == 'processing' && !empty($trx->courier_id))
-                                        <button class="btn btn-sm bg-gray-400" disabled>
-                                            <i class="fa-solid fa-user-clock text-sm text-white"></i>
-                                        </button>
-                                    @endif
+                                        {{-- Siap Tugaskan Kurir (Jika sudah bayar/settlement tapi kurir belum ada) --}}
+                                        @if (empty($trx->courier_id) && $trx->payment_status == 'settlement')
+                                            <button class="btn btn-sm bg-yellow-400 tooltip" data-tip="Tugaskan Kurir" onclick="openStatusModal({{ $trx->id }}, '{{ $trx->invoice }}', '{{ $trx->transaction_status }}')">
+                                                <i class="fa-solid fa-truck-fast text-sm text-white"></i>
+                                            </button>
+                                        @endif
 
-                                    @if (!empty($trx->courier_id && $trx->transaction_status == 'shipping'))
-                                        <button class="btn btn-sm bg-gray-400" disabled>
-                                            <i class="fa-solid fa-user-clock text-sm text-white"></i>
-                                        </button>
-                                    @endif
+                                        {{-- Menunggu Pickup (Status processing dan kurir sudah ditugaskan) --}}
+                                        @if ($trx->transaction_status == 'processing' && !empty($trx->courier_id))
+                                            <button class="btn btn-sm bg-gray-400" disabled>
+                                                <i class="fa-solid fa-user-clock text-sm text-white"></i>
+                                            </button>
+                                        @endif
 
-                                    @if (!empty($trx->courier_id && $trx->transaction_status == 'delivered'))
-                                        <button class="btn btn-sm bg-green-100 tooltip" data-tip="Selesai" disabled>
-                                            <i class="fa-solid fa-square-check text-sm text-green-700"></i>
-                                        </button>
+                                        {{-- Dalam Perjalanan --}}
+                                        @if ($trx->transaction_status == 'shipping' && !empty($trx->courier_id))
+                                            <button class="btn btn-sm bg-blue-400" disabled>
+                                                <i class="fa-solid fa-truck-ramp-box text-sm text-white"></i>
+                                            </button>
+                                        @endif
+
+                                        {{-- Selesai --}}
+                                        @if ($trx->transaction_status == 'delivered' && !empty($trx->courier_id))
+                                            <button class="btn btn-sm bg-green-100 tooltip" data-tip="Selesai" disabled>
+                                                <i class="fa-solid fa-square-check text-sm text-green-700"></i>
+                                            </button>
+                                        @endif
                                     @endif
                                 </td>
                             </tr>
