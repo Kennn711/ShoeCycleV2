@@ -45,6 +45,11 @@ class Shoes extends Model
         return $this->hasMany(ShoesVariant::class, 'shoe_id');
     }
 
+    public function reviews()
+    {
+        return $this->hasMany(Reviews::class);
+    }
+
     // Accessor: Get all available colors
     public function getAvailableColorsAttribute()
     {

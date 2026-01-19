@@ -9,6 +9,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeliveryController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\ShoesController;
 use App\Http\Controllers\ShoesVariantController;
 use App\Http\Controllers\TransactionController;
@@ -37,6 +38,8 @@ Route::middleware(['auth', 'customer'])->group(function () {
 
     Route::get('my-orders', [TransactionController::class, 'indexCustomer'])->name('my-order.index');
     Route::post('/address/store', [AddressController::class, 'store'])->name('address.store');
+
+    Route::post('/reviews/store', [ReviewController::class, 'store'])->name('reviews.store');
 });
 
 Route::middleware(['auth', 'admin'])->group(function () {

@@ -51,4 +51,9 @@ class Transaction extends Model
     {
         return $this->belongsTo(Address::class, 'address_id');
     }
+
+    public function reviews()
+    {
+        return $this->hasMany(Reviews::class);
+    }
 }

@@ -64,7 +64,7 @@
                             </div>
                         </div>
 
-                        <div class="absolute -bottom-8 -left-8 md:bottom-20 md:left-0 bg-white/90 backdrop-blur-md rounded-2xl shadow-xl p-5 animate-float border border-white/60 z-20" style="animation-delay: 1.5s;">
+                        <div class="absolute -bottom-8 -mb-[225px] -left-8 md:bottom-20 md:left-0 bg-white/90 backdrop-blur-md rounded-2xl shadow-xl p-5 animate-float border border-white/60 z-20" style="animation-delay: 1.5s;">
                             <div class="flex items-center gap-4">
                                 <div class="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 shadow-inner">
                                     <i class="fas fa-shield-alt text-2xl"></i>

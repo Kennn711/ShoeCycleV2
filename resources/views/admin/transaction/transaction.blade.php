@@ -359,55 +359,73 @@
                     data.details.forEach(item => {
                         const img = item.variant.images.length > 0 ?
                             `/storage/${item.variant.images[0].image_path}` :
-                            '/assets/images/dummy-shoe.jpg';
+                            '/assets/upload/testing/dummy.jpg';
+
+                        // Logika untuk menampilkan catatan jika ada
+                        const customerNote = item.notes ?
+                            `<div class="mt-2 p-2 bg-amber-50 border border-amber-100 rounded-lg flex items-start gap-2">
+            <i class="fas fa-sticky-note text-amber-400 text-[10px] mt-0.5"></i>
+            <p class="text-[10px] text-amber-800 italic leading-tight">
+                <span class="font-bold not-italic">Catatan:</span> ${item.notes}
+            </p>
+        </div>` : '';
 
                         itemsHtml += `
-                <tr class="text-xs border-b border-gray-100">
-                    <td>
-                        <div class="flex items-center gap-3">
-                            <div class="w-12 h-12 bg-gray-50 rounded-lg overflow-hidden border border-gray-100 shrink-0">
-                                <img src="${img}" class="w-full h-full object-contain p-1">
-                            </div>
-                            <div>
-                                <div class="font-bold text-gray-900">${item.variant.shoe.name}</div>
-                                <div class="text-[10px] text-gray-400 uppercase">Warna: ${item.variant.color} | Size: ${item.variant.size}</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td class="text-center">${item.qty}</td>
-                    <td class="text-right">${formatRupiah(item.price)}</td>
-                    <td class="text-right font-bold text-gray-900">${formatRupiah(item.price * item.qty)}</td>
-                </tr>`;
+    <tr class="text-xs border-b border-gray-100">
+        <td>
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-gray-50 rounded-lg overflow-hidden border border-gray-100 shrink-0">
+                    <img src="${img}" class="w-full h-full object-contain p-1">
+                </div>
+                <div class="min-w-0">
+                    <div class="font-bold text-gray-900 truncate">${item.variant.shoe.name}</div>
+                    <div class="text-[10px] text-gray-400 uppercase">Warna: ${item.variant.color} | Size: ${item.variant.size}</div>
+                    
+                    ${customerNote} {{-- CATATAN MUNCUL DI SINI --}}
+                    
+                </div>
+            </div>
+        </td>
+        <td class="text-center font-medium">${item.qty}</td>
+        <td class="text-right text-gray-500">${formatRupiah(item.price)}</td>
+        <td class="text-right font-bold text-gray-900">${formatRupiah(item.price * item.qty)}</td>
+    </tr>`;
                     });
 
                     // Logika Tampilan Driver
                     let driverHtml = '';
                     if (data.courier) {
+                        // Cek apakah driver punya profile_picture, jika tidak pakai UI-Avatars
+                        const courierImg = data.courier.profile_picture ?
+                            `/storage/${data.courier.profile_picture}` :
+                            `https://ui-avatars.com/api/?name=${encodeURIComponent(data.courier.name)}&background=0D8ABC&color=fff`;
+
                         driverHtml = `
-                    <div class="flex items-center gap-3 bg-blue-50 p-3 rounded-xl border border-blue-100">
-                        <div class="avatar">
-                            <div class="w-10 rounded-full ring ring-blue-200 ring-offset-base-100 ring-offset-2">
-                                <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(data.courier.name)}&background=0D8ABC&color=fff" />
-                            </div>
-                        </div>
-                        <div>
-                            <p class="text-[10px] font-bold text-blue-600 uppercase leading-none mb-1">Kurir</p>
-                            <p class="text-sm font-bold text-gray-900">${data.courier.name}</p>
-                        </div>
-                    </div>
-                `;
+        <div class="flex items-center gap-3 bg-blue-50 p-3 rounded-xl border border-blue-100">
+            <div class="avatar">
+                <div class="w-10 h-10 rounded-full ring ring-blue-200 ring-offset-base-100 ring-offset-2 overflow-hidden">
+                    <img src="${courierImg}" class="w-full h-full object-cover" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(data.courier.name)}&background=0D8ABC&color=fff'"/>
+                </div>
+            </div>
+            <div>
+                <p class="text-[10px] font-bold text-blue-600 uppercase leading-none mb-1">Kurir</p>
+                <p class="text-sm font-bold text-gray-900">${data.courier.name}</p>
+            </div>
+        </div>
+    `;
                     } else {
+                        // ... (Logika jika kurir kosong tetap sama)
                         driverHtml = `
-                    <div class="flex items-center gap-3 bg-gray-50 p-3 rounded-xl border border-gray-200 opacity-60">
-                        <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-400">
-                            <i class="fas fa-user-slash"></i>
-                        </div>
-                        <div>
-                            <p class="text-[10px] font-bold text-gray-500 uppercase leading-none mb-1">Driver</p>
-                            <p class="text-xs italic text-gray-400">Belum ditugaskan</p>
-                        </div>
-                    </div>
-                `;
+        <div class="flex items-center gap-3 bg-gray-50 p-3 rounded-xl border border-gray-200 opacity-60">
+            <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-400">
+                <i class="fas fa-user-slash"></i>
+            </div>
+            <div>
+                <p class="text-[10px] font-bold text-gray-500 uppercase leading-none mb-1">Driver</p>
+                <p class="text-xs italic text-gray-400">Belum ditugaskan</p>
+            </div>
+        </div>
+    `;
                     }
 
                     container.innerHTML = `

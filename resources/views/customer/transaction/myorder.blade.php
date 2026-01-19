@@ -135,11 +135,23 @@
                                     <button onclick="window.snap.pay('{{ $transaction->snap_token }}')" class="btn btn-sm btn-primary text-white rounded-lg px-6 grow sm:grow-0">Bayar Sekarang</button>
                                 @endif
 
-                                {{-- Tombol Beri Rating (Jika Selesai) --}}
+                                {{-- Tombol Beri Rating (Hanya jika DELIVERED) --}}
                                 @if ($transaction->transaction_status == 'delivered')
-                                    <button class="btn btn-sm btn-outline btn-primary rounded-lg px-6 grow sm:grow-0 group-hover:bg-blue-600 group-hover:text-white transition-all">
-                                        <i class="fas fa-star mr-1"></i> Beri Rating
-                                    </button>
+                                    @php
+                                        $totalItems = $transaction->details->count();
+                                        // Pastikan nama model sesuai (Reviews atau Review)
+                                        $ratedItemsCount = \App\Models\Reviews::where('transaction_id', $transaction->id)->where('user_id', Auth::id())->count();
+                                    @endphp
+
+                                    @if ($ratedItemsCount < $totalItems)
+                                        <button type="button" class="btn-open-rating btn btn-sm btn-primary px-6 grow sm:grow-0 text-white" data-order="{{ json_encode($transaction->load(['details.variant.shoe', 'details.variant.images'])) }}">
+                                            <i class="fas fa-star mr-1"></i> Beri Ulasan
+                                        </button>
+                                    @else
+                                        <div class="flex items-center gap-1 text-green-600 font-bold text-xs uppercase px-4 select-none">
+                                            <i class="fas fa-check-circle"></i> Selesai Diulas
+                                        </div>
+                                    @endif
                                 @endif
 
                                 {{-- Ganti tag <a> "Lihat Detail" dengan ini --}}
@@ -254,6 +266,36 @@
         </div>
         <form method="dialog" class="modal-backdrop"><button>close</button></form>
     </dialog>
+
+    {{-- MODAL 3: RATING & ULASAN --}}
+    <dialog id="rating_modal" class="modal modal-bottom sm:modal-middle">
+        <div class="modal-box bg-white p-0 max-w-xl overflow-hidden">
+            {{-- Header --}}
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-slate-50">
+                <div>
+                    <h3 class="font-bold text-lg text-gray-900">Beri Ulasan Produk</h3>
+                    <p class="text-xs text-gray-500" id="mdl-rating-invoice">-</p>
+                </div>
+                <form method="dialog"><button class="btn btn-sm btn-circle btn-ghost">✕</button></form>
+            </div>
+
+            <form id="form-multiple-rating" action="{{ route('reviews.store') }}" method="POST">
+                @csrf
+                <input type="hidden" name="transaction_id" id="mdl-rating-transaction-id">
+
+                <div class="p-6 space-y-8 max-h-[60vh] overflow-y-auto" id="rating-items-container">
+                    {{-- Item akan di-generate via JavaScript --}}
+                </div>
+
+                <div class="p-4 bg-gray-50 border-t border-gray-100">
+                    <button type="submit" id="btn-submit-rating" class="btn btn-primary w-full text-white font-bold rounded-xl shadow-lg">
+                        Kirim Semua Ulasan
+                    </button>
+                </div>
+            </form>
+        </div>
+        <form method="dialog" class="modal-backdrop bg-gray-900/50"><button>close</button></form>
+    </dialog>
 @endsection
 
 @push('scripts')
@@ -287,6 +329,92 @@
             document.getElementById('mdl-proof-full-img').src = src;
             document.getElementById('proof_image_viewer').showModal();
         };
+
+        window.openRatingModal = function(transaction) {
+            const modal = document.getElementById('rating_modal');
+            const container = document.getElementById('rating-items-container');
+
+            $('#mdl-rating-invoice').text(transaction.invoice);
+            $('#mdl-rating-transaction-id').val(transaction.id);
+            container.innerHTML = '';
+
+            transaction.details.forEach((item, index) => {
+                // PROTEKSI: Cek apakah images ada dan memiliki isi
+                const imagePath = (item.variant.images && item.variant.images.length > 0) ?
+                    `/storage/${item.variant.images[0].image_path}` :
+                    '/assets/upload/testing/dummy.jpg'; // Path gambar default jika kosong
+
+                const itemHtml = `
+            <div class="space-y-4 border-b border-gray-100 pb-6 last:border-0 last:pb-0">
+                <div class="flex items-center gap-4">
+                    <img src="${imagePath}" class="w-12 h-12 object-contain bg-gray-50 rounded-lg border">
+                    <div>
+                        <h4 class="text-sm font-bold text-gray-900">${item.variant.shoe.name}</h4>
+                        <p class="text-[10px] text-gray-400 uppercase">Size: ${item.variant.size} | Warna: ${item.variant.color}</p>
+                    </div>
+                </div>
+
+                <input type="hidden" name="reviews[${index}][shoe_id]" value="${item.variant.shoe_id}">
+                
+                <div class="flex flex-col gap-2">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-bold text-gray-700">Rating:</span>
+                        <div class="rating rating-sm">
+                            <input type="radio" name="reviews[${index}][rating]" value="1" class="mask mask-star-2 bg-orange-400" />
+                            <input type="radio" name="reviews[${index}][rating]" value="2" class="mask mask-star-2 bg-orange-400" />
+                            <input type="radio" name="reviews[${index}][rating]" value="3" class="mask mask-star-2 bg-orange-400" />
+                            <input type="radio" name="reviews[${index}][rating]" value="4" class="mask mask-star-2 bg-orange-400" />
+                            <input type="radio" name="reviews[${index}][rating]" value="5" class="mask mask-star-2 bg-orange-400" checked />
+                        </div>
+                    </div>
+                    {{-- TEXTAREA DENGAN RESIZE-NONE --}}
+                    <textarea name="reviews[${index}][comment]" 
+                              class="textarea textarea-bordered w-full bg-slate-50 text-sm focus:border-blue-500 rounded-xl resize-none" 
+                              rows="3" 
+                              placeholder="Bagaimana kualitas sepatu ini? (Opsional)"></textarea>
+                </div>
+            </div>
+        `;
+                container.insertAdjacentHTML('beforeend', itemHtml);
+            });
+
+            modal.showModal();
+        };
+
+        /**
+         * HANDLE SUBMIT MULTIPLE RATING
+         */
+        $(document).on('submit', '#form-multiple-rating', function(e) {
+            e.preventDefault();
+            const form = $(this);
+            const btn = $('#btn-submit-rating');
+            const originalText = btn.text();
+
+            btn.prop('disabled', true).html('<span class="loading loading-spinner loading-xs"></span> Mengirim...');
+
+            $.ajax({
+                url: form.attr('action'),
+                method: 'POST',
+                data: form.serialize(),
+                success: function(res) {
+                    if (res.success) {
+                        document.getElementById('rating_modal').close();
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Ulasan Terkirim!',
+                            text: 'Terima kasih telah berbagi pengalaman belanja di ShoeCycle.',
+                            confirmButtonColor: '#3b82f6'
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    }
+                },
+                error: function(xhr) {
+                    btn.prop('disabled', false).text(originalText);
+                    Swal.fire('Error', 'Gagal mengirim ulasan. Pastikan semua field terisi.', 'error');
+                }
+            });
+        });
 
         /**
          * MODAL DETAIL PESANAN
@@ -351,6 +479,92 @@
         };
 
         $(document).ready(function() {
+            $(document).on('click', '.btn-open-rating', function() {
+                const transaction = $(this).data('order');
+                const modal = document.getElementById('rating_modal');
+                const container = document.getElementById('rating-items-container');
+
+                // Set Header Modal
+                $('#mdl-rating-invoice').text(transaction.invoice);
+                $('#mdl-rating-transaction-id').val(transaction.id);
+
+                container.innerHTML = ''; // Reset isi modal
+
+                // Generate Form untuk setiap produk dalam transaksi
+                transaction.details.forEach((item, index) => {
+                    const imagePath = (item.variant.images && item.variant.images.length > 0) ?
+                        `/storage/${item.variant.images[0].image_path}` :
+                        '/assets/upload/testing/dummy.jpg';
+
+                    const itemHtml = `
+                <div class="space-y-4 border-b border-gray-100 pb-6 last:border-0 last:pb-0">
+                    <div class="flex items-center gap-4">
+                        <img src="${imagePath}" class="w-14 h-14 object-contain bg-gray-50 rounded-xl border p-1">
+                        <div class="min-w-0">
+                            <h4 class="text-sm font-bold text-gray-900 truncate">${item.variant.shoe.name}</h4>
+                            <p class="text-[10px] text-gray-400 uppercase tracking-tight">Varian: ${item.variant.color} | Size: ${item.variant.size}</p>
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="reviews[${index}][shoe_id]" value="${item.variant.shoe_id}">
+                    
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between bg-slate-50 p-2 rounded-lg">
+                            <span class="text-xs font-bold text-gray-600 uppercase">Kualitas Produk:</span>
+                            <div class="rating rating-sm">
+                                <input type="radio" name="reviews[${index}][rating]" value="1" class="mask mask-star-2 bg-orange-400" />
+                                <input type="radio" name="reviews[${index}][rating]" value="2" class="mask mask-star-2 bg-orange-400" />
+                                <input type="radio" name="reviews[${index}][rating]" value="3" class="mask mask-star-2 bg-orange-400" />
+                                <input type="radio" name="reviews[${index}][rating]" value="4" class="mask mask-star-2 bg-orange-400" />
+                                <input type="radio" name="reviews[${index}][rating]" value="5" class="mask mask-star-2 bg-orange-400" checked />
+                            </div>
+                        </div>
+                        <textarea name="reviews[${index}][comment]" 
+                                  class="textarea textarea-bordered w-full bg-white text-sm focus:border-blue-500 rounded-xl resize-none" 
+                                  rows="3" 
+                                  placeholder="Ceritakan kepuasanmu belanja produk ini..."></textarea>
+                    </div>
+                </div>
+            `;
+                    container.insertAdjacentHTML('beforeend', itemHtml);
+                });
+
+                modal.showModal();
+            });
+
+            // 2. Handle Submit AJAX untuk Multiple Reviews
+            $(document).on('submit', '#form-multiple-rating', function(e) {
+                e.preventDefault();
+                const form = $(this);
+                const btn = $('#btn-submit-rating');
+                const originalText = btn.text();
+
+                btn.prop('disabled', true).html('<span class="loading loading-spinner loading-xs"></span> Mengirim...');
+
+                $.ajax({
+                    url: form.attr('action'),
+                    method: 'POST',
+                    data: form.serialize(),
+                    success: function(res) {
+                        if (res.success) {
+                            document.getElementById('rating_modal').close();
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Terima Kasih!',
+                                text: 'Ulasanmu sangat membantu perkembangan ShoeCycle.',
+                                confirmButtonColor: '#3b82f6'
+                            }).then(() => {
+                                window.location.reload();
+                            });
+                        }
+                    },
+                    error: function() {
+                        btn.prop('disabled', false).text(originalText);
+                        Swal.fire('Error', 'Gagal mengirim ulasan. Silakan coba beberapa saat lagi.', 'error');
+                    }
+                });
+            });
+
             // Tab Filter Click
             $(document).on('click', '.tab-filter', function() {
                 $('.tab-filter').removeClass('bg-blue-600 text-white shadow-md shadow-blue-200').addClass('bg-white text-gray-600 shadow-sm');
