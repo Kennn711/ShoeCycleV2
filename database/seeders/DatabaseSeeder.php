@@ -24,7 +24,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $sourcePath = public_path('assets/upload/testing/dummy.jpg');
+        $sourcePath = public_path('assets/upload/testing/sepatu1.webp');
 
         if (File::exists($sourcePath)) {
             // 1. Buat folder di storage jika belum ada
@@ -33,12 +33,12 @@ class DatabaseSeeder extends Seeder
 
             // 2. Copy file dari assets ke storage
             // Kita copy agar storage:link bisa membacanya
-            File::copy($sourcePath, storage_path('app/public/profile-pictures/dummy.jpg'));
-            File::copy($sourcePath, storage_path('app/public/variant-shoes/dummy.jpg'));
+            File::copy($sourcePath, storage_path('app/public/profile-pictures/sepatu1.webp'));
+            File::copy($sourcePath, storage_path('app/public/variant-shoes/sepatu1.webp'));
 
             $this->command->info('Gambar dummy berhasil disalin ke Storage!');
         } else {
-            $this->command->warn('PERINGATAN: File dummy.jpg tidak ditemukan di ' . $sourcePath);
+            $this->command->warn('PERINGATAN: File sepatu1.webp tidak ditemukan di ' . $sourcePath);
             $this->command->warn('Gambar akan broken di aplikasi.');
         }
 
@@ -245,7 +245,7 @@ class DatabaseSeeder extends Seeder
                 'password' => Hash::make('123456'),
                 'email_verified_at' => now(),
                 // Path ini sekarang valid karena file sudah dicopy di langkah 0
-                'profile_picture' => 'profile-pictures/dummy.jpg',
+                'profile_picture' => 'profile-pictures/sepatu1.webp',
             ]);
         }
 
@@ -293,7 +293,7 @@ class DatabaseSeeder extends Seeder
             // PERBAIKAN: Gunakan VariantImage (Singular)
             VariantImages::create([
                 'shoe_variant_id' => $variant->id,
-                'image_path' => 'variant-shoes/dummy.jpg',
+                'image_path' => 'variant-shoes/sepatu1.webp',
                 'is_primary' => true,
                 'order' => 1,
             ]);

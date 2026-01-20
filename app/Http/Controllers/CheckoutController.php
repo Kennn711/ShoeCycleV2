@@ -132,6 +132,7 @@ class CheckoutController extends Controller
             return response()->json([
                 'status'     => 'success',
                 'snap_token' => $snapToken,
+                'order_id'   => $transaction->id,
                 'expiry'     => date('c', strtotime('+24 hours'))
             ]);
         } catch (\Exception $e) {
@@ -143,54 +144,41 @@ class CheckoutController extends Controller
 
     public function cancel($id)
     {
-        $transaction = Transaction::where('id', $id)
-            ->where('customer_id', Auth::id())
-            ->where('payment_status', 'pending')
-            ->first();
-
-        if (!$transaction) {
-            return response()->json(['status' => 'error', 'message' => 'Transaksi tidak ditemukan.'], 404);
-        }
-
-        DB::beginTransaction();
         try {
-            $details = TransactionDetail::where('transaction_id', $transaction->id)->get();
+            $transaction = Transaction::with('details')->where('id', $id)
+                ->where('customer_id', Auth::id())
+                ->firstOrFail();
 
-            foreach ($details as $detail) {
-                // 1. Cari dulu apakah item ini sudah ada di keranjang user
-                // Catatan: Pastikan kolom di tabel carts adalah 'user_id' (sesuai error log Anda)
-                $cartItem = Cart::where('user_id', Auth::id())
+            // LOGIKA KEMBALIKAN BARANG KE KERANJANG
+            foreach ($transaction->details as $detail) {
+                $existingCart = Cart::where('user_id', Auth::id())
                     ->where('shoes_variant_id', $detail->variant_id)
                     ->first();
 
-                if ($cartItem) {
-                    // 2. Jika sudah ada, TAMBAHKAN quantity-nya
-                    $cartItem->quantity += $detail->qty;
-                    $cartItem->save();
+                if ($existingCart) {
+                    $existingCart->increment('quantity', $detail->qty);
                 } else {
-                    // 3. Jika belum ada, BUAT BARU dengan quantity dari detail transaksi
                     Cart::create([
                         'user_id' => Auth::id(),
                         'shoes_variant_id' => $detail->variant_id,
-                        'quantity' => $detail->qty
+                        'quantity' => $detail->qty,
                     ]);
                 }
             }
 
-            // 4. Update status transaksi
+            // UPDATE STATUS SESUAI PERMINTAAN
             $transaction->update([
-                'payment_status' => 'cancel',
-                'transaction_status' => 'failed'
+                'payment_status' => 'cancel', // payment_status === cancel
+                'transaction_status' => 'failed', // transaction_status === failed
             ]);
 
-            DB::commit();
-            return response()->json(['status' => 'success', 'message' => 'Pesanan dibatalkan, barang kembali ke keranjang.']);
-        } catch (\Exception $e) {
-            DB::rollback();
             return response()->json([
-                'status' => 'error',
-                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
-            ], 500);
+                'status' => 'success',
+                'message' => 'Pesanan dibatalkan. Barang telah kembali ke keranjang Anda.'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
     }
 

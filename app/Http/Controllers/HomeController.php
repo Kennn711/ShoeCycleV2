@@ -109,10 +109,23 @@ class HomeController extends Controller
 
     public function allCategory()
     {
-        // Eager loading untuk performa agar tidak lambat (N+1 query)
         $categories = Category::with(['shoes' => function ($query) {
-            $query->where('is_active', true);
-        }, 'shoes', 'shoes.variants.images'])->get();
+            $query->where('is_active', true)
+                // Load Gambar agar tidak hilang
+                ->with(['variants.images' => function ($q) {
+                    $q->orderBy('order', 'asc');
+                }])
+                // Hitung Rata-rata Rating
+                ->withAvg('reviews as average_rating', 'rating')
+                // Hitung Jumlah Ulasan
+                ->withCount('reviews')
+                // Hitung Total Terjual (Sum Qty dari Transaksi yang Lunas)
+                ->withSum(['transactionDetails as total_sold' => function ($q) {
+                    $q->whereHas('transaction', function ($sq) {
+                        $sq->whereIn('payment_status', ['settlement', 'capture']);
+                    });
+                }], 'qty');
+        }])->get();
 
         return view('customer.category', compact('categories'));
     }

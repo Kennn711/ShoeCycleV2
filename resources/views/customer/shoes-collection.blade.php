@@ -19,7 +19,7 @@
             <div class="flex flex-col lg:flex-row gap-10">
 
                 {{-- SIDEBAR FILTER --}}
-                <aside class="w-full lg:w-64 flex-shrink-0">
+                <aside class="w-full lg:w-64 shrink-0">
                     <form action="{{ route('shoes-collection.index') }}" method="GET" id="filterForm" class="space-y-8 sticky top-24">
                         {{-- Search --}}
                         <div>
@@ -74,7 +74,7 @@
                             @php
                                 $firstVariant = $shoe->variants->first();
                                 $image = $firstVariant ? $firstVariant->images->where('is_primary', true)->first() : null;
-                                $imageUrl = $image ? asset('storage/' . $image->image_path) : asset('assets/upload/testing/dummy.jpg');
+                                $imageUrl = $image ? asset('storage/' . $image->image_path) : asset('assets/upload/testing/sepatu1.webp');
 
                                 // Rating & Sold Dummy sesuai request landing page
                                 $soldCount = rand(50, 500);
@@ -90,7 +90,7 @@
                                 </div>
 
                                 {{-- Content --}}
-                                <div class="p-5 flex flex-col flex-grow relative">
+                                <div class="p-5 flex flex-col grow relative">
                                     {{-- Category --}}
                                     <div class="text-[14px] font-bold text-blue-600 uppercase mb-2">
                                         {{ $shoe->category->category_name ?? 'Shoes' }}

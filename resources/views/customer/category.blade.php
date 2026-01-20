@@ -15,7 +15,7 @@
     </div>
 
     {{-- Jump to Category Section (Sticky) --}}
-    <div class="sticky top-[80px] z-30 bg-slate-50/80 backdrop-blur-md border-b border-gray-100 py-4">
+    <div class="sticky top-20 z-30 bg-slate-50/80 backdrop-blur-md border-b border-gray-100 py-4">
         <div class="container mx-auto px-4 lg:px-6">
             <div class="flex items-center gap-4">
                 <span class="text-xs font-bold text-gray-400 uppercase whitespace-nowrap hidden md:block">Lompat ke:</span>
@@ -48,7 +48,7 @@
                         <h2 class="text-2xl md:text-3xl font-bold text-gray-900 font-heading uppercase tracking-tight">
                             {{ $category->category_name }}
                         </h2>
-                        <div class="h-[2px] bg-blue-600 flex-grow rounded-full opacity-20"></div>
+                        <div class="h-0.5 bg-blue-600 grow rounded-full opacity-20"></div>
                         <span class="text-sm font-bold text-blue-600 bg-blue-50 px-4 py-1 rounded-full border border-blue-100">
                             {{ $category->shoes->count() }} Produk
                         </span>
@@ -59,19 +59,20 @@
                         @foreach ($category->shoes as $index => $shoe)
                             @php
                                 $firstVariant = $shoe->variants->first();
-                                $image = $firstVariant ? $firstVariant->images->where('is_primary', true)->first() : null;
-                                $imageUrl = $image ? asset('storage/' . $image->image_path) : asset('assets/upload/testing/dummy.jpg');
+                                // Logika Gambar: Ambil primary, jika tidak ada ambil gambar pertama
+                                $image = $firstVariant ? ($firstVariant->images->where('is_primary', true)->first() ?: $firstVariant->images->first()) : null;
+                                $imageUrl = $image ? asset('storage/' . $image->image_path) : asset('assets/upload/testing/sepatu1.webp');
 
-                                // Logic Stok: Hitung total stok dari semua varian
+                                // AMBIL DATA ASLI DARI DATABASE
+                                $avgRating = round($shoe->average_rating, 1);
+                                $totalReviews = $shoe->reviews_count;
+                                $soldCount = $shoe->total_sold ?? 0;
+
                                 $totalStock = $shoe->variants->sum('stock');
                                 $isOutOfStock = $totalStock <= 0;
-
-                                // Logic Card sesuai Landing Page
-                                $soldCount = rand(50, 500);
-                                $rating = 4.8;
                             @endphp
 
-                            {{-- Product Card --}}
+                            {{-- Product Card (Design Tetap Sama) --}}
                             <div class="group bg-white rounded-3xl border border-gray-100 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-50 transition-all duration-300 overflow-hidden h-full flex flex-col relative" data-aos="fade-up" data-aos-delay="{{ $index * 50 }}">
                                 {{-- Stok Habis Badge --}}
                                 @if ($isOutOfStock)
@@ -91,27 +92,32 @@
                                 </div>
 
                                 {{-- Content --}}
-                                <div class="p-5 flex flex-col flex-grow relative">
-                                    {{-- Category --}}
+                                <div class="p-5 flex flex-col grow relative">
                                     <div class="text-[14px] font-bold text-blue-600 uppercase mb-2">
                                         {{ $category->category_name }}
                                     </div>
 
-                                    {{-- Name --}}
                                     <h3 class="card-title text-lg font-bold text-gray-900 mb-3 leading-snug group-hover:text-blue-600 transition-colors duration-300">
-                                        <a href="{{ route('detail-shoes', $shoe->slug) }}" class="line-clamp-2">{{ $shoe->name }}</a>
+                                        <a href="{{ route('detail-shoes', $shoe->slug) }}" class="line-clamp-2 text-black">{{ $shoe->name }}</a>
                                     </h3>
 
-                                    {{-- Row: Rating, Sold & Button --}}
+                                    {{-- Row: Rating & Sold (HANYA BAGIAN INI YANG DIUBAH MENJADI DINAMIS) --}}
                                     <div class="flex items-center justify-between mb-6">
-                                        {{-- Kiri: Rating & Terjual --}}
                                         <div class="flex items-center gap-3 text-xs text-gray-500">
-                                            <div class="flex items-center gap-1 bg-amber-50 px-2 py-1 rounded-md border border-amber-100">
-                                                <i class="fas fa-star text-amber-400 text-[10px]"></i>
-                                                <span class="font-bold text-amber-700">{{ $rating }}</span>
-                                            </div>
+                                            {{-- Pengecualian Jika Belum Ada Rating --}}
+                                            @if ($totalReviews > 0)
+                                                <div class="flex items-center gap-1 bg-amber-50 px-2 py-1 rounded-md border border-amber-100">
+                                                    <i class="fas fa-star text-amber-400 text-[10px]"></i>
+                                                    <span class="font-bold text-amber-700">{{ $avgRating }}</span>
+                                                </div>
+                                            @else
+                                                <div class="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-md border border-gray-100">
+                                                    <span class="text-gray-400 font-medium">-</span>
+                                                </div>
+                                            @endif
+
                                             <div class="w-1 h-1 bg-gray-300 rounded-full"></div>
-                                            <div class="font-medium">{{ $soldCount }} Terjual</div>
+                                            <div class="font-medium text-black">{{ $soldCount }} Terjual</div>
                                         </div>
 
                                         {{-- Kanan: Button Lihat --}}

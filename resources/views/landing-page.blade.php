@@ -3,7 +3,7 @@
 
 @section('frontend-content')
     {{-- 1. HERO SECTION (Updated Size) --}}
-    <section class="relative bg-gradient-to-br from-gray-50 to-blue-50 overflow-hidden min-h-[90vh] flex items-center">
+    <section class="relative bg-linear-to-br from-gray-50 to-blue-50 overflow-hidden min-h-[90vh] flex items-center">
         {{-- Background Pattern --}}
         <div class="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 rounded-full bg-blue-100 opacity-50 blur-3xl"></div>
         <div class="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 rounded-full bg-purple-100 opacity-50 blur-3xl"></div>
@@ -17,7 +17,7 @@
                     </span>
                     <h1 class="text-5xl md:text-7xl lg:text-8xl font-extrabold text-gray-900 leading-tight mb-8 font-heading">
                         Langkah Baru, <br>
-                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+                        <span class="text-transparent bg-clip-text bg-linear-to-r from-blue-600 to-purple-600">
                             Gaya Baru
                         </span>
                     </h1>
@@ -42,7 +42,7 @@
 
                         {{-- Background Glow diperbesar --}}
                         <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[140%] h-[140%]">
-                            <div class="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-purple-600/20 rounded-full blur-3xl animate-pulse"></div>
+                            <div class="absolute inset-0 bg-linear-to-br from-blue-400/20 to-purple-600/20 rounded-full blur-3xl animate-pulse"></div>
                         </div>
 
                         {{-- Shoe Image --}}
@@ -164,7 +164,7 @@
                     @php
                         $firstVariant = $shoe->variants->first();
                         $image = $firstVariant ? $firstVariant->images->where('is_primary', true)->first() : null;
-                        $imageUrl = $image ? asset('storage/' . $image->image_path) : asset('assets/upload/testing/dummy.jpg');
+                        $imageUrl = $image ? asset('storage/' . $image->image_path) : asset('assets/upload/testing/sepatu1.webp');
                         $price = $firstVariant ? number_format($firstVariant->price, 0, ',', '.') : '-';
 
                         $soldCount = rand(50, 500);
@@ -238,7 +238,7 @@
     {{-- ========================================================= --}}
     <section class="py-16 px-4">
         <div class="container mx-auto">
-            <div class="relative rounded-3xl bg-gradient-to-br from-blue-600 via-blue-700 to-purple-700 overflow-hidden shadow-2xl" data-aos="zoom-in">
+            <div class="relative rounded-3xl bg-linear-to-br from-blue-600 via-blue-700 to-purple-700 overflow-hidden shadow-2xl" data-aos="zoom-in">
                 {{-- Decorative Pattern --}}
                 <div class="absolute inset-0 opacity-10">
                     <div class="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
@@ -329,7 +329,7 @@
                             <input type="radio" name="faq-accordion" @if ($index === 0) checked @endif />
                             <div class="collapse-title text-lg font-bold text-gray-900 pr-16">
                                 <div class="flex items-start gap-4">
-                                    <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 mt-1">
+                                    <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center shrink-0 mt-1">
                                         <i class="fas fa-question text-lg"></i>
                                     </div>
                                     <span class="flex-1">{{ $faq['question'] }}</span>

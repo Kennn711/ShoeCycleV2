@@ -27,7 +27,7 @@
                             @php
                                 // Ambil gambar pertama dari varian atau fallback dummy
                                 $image = $item->variant->images->first();
-                                $imageUrl = $image ? asset('storage/' . $image->image_path) : asset('assets/upload/testing/dummy.jpg');
+                                $imageUrl = $image ? asset('storage/' . $image->image_path) : asset('assets/upload/testing/sepatu1.webp');
 
                                 // Cek Stok
                                 $isOutOfStock = $item->variant->stock < 1;

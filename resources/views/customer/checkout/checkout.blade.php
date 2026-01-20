@@ -200,10 +200,10 @@
                                 @foreach ($cartItems as $item)
                                     @php
                                         $image = $item->variant->images->first();
-                                        $imageUrl = $image ? asset('storage/' . $image->image_path) : asset('assets/upload/testing/dummy.jpg');
+                                        $imageUrl = $image ? asset('storage/' . $image->image_path) : asset('assets/upload/testing/sepatu1.webp');
                                     @endphp
                                     <div class="flex gap-4 mb-6 border-b border-gray-50 pb-6 last:border-0 last:pb-0 last:mb-0">
-                                        <div class="w-20 h-20 bg-gray-50 rounded-xl border border-gray-200 overflow-hidden flex-shrink-0">
+                                        <div class="w-20 h-20 bg-gray-50 rounded-xl border border-gray-200 overflow-hidden shrink-0">
                                             <img src="{{ $imageUrl }}" class="w-full h-full object-contain mix-blend-multiply p-1">
                                         </div>
                                         <div class="flex-1">
@@ -290,8 +290,10 @@
                                                 <div id="countdown-timer" class="text-xl font-mono font-bold text-orange-700">23:59:59</div>
                                             </div>
                                             <div class="flex gap-2">
-                                                <button type="button" onclick="cancelOrder('{{ $pendingTransaction->id ?? '' }}')" class="btn btn-ghost border-gray-200 flex-1 rounded-xl text-white bg-red-400 hover:bg-red-500 font-bold">Batal</button>
-                                                <button type="button" id="btn-pay-snap" class="btn btn-success flex-[2] text-white font-bold rounded-xl shadow-lg">Bayar Sekarang</button>
+                                                <button type="button" id="btn-cancel-trigger" onclick="cancelOrder('{{ $pendingTransaction->id ?? '' }}')" class="btn btn-ghost border-gray-200 flex-1 rounded-xl text-white bg-red-400 hover:bg-red-500 font-bold">
+                                                    Batal
+                                                </button>
+                                                <button type="button" id="btn-pay-snap" class="btn btn-success flex-2 text-white font-bold rounded-xl shadow-lg">Bayar Sekarang</button>
                                             </div>
                                         </div>
                                     </div>
@@ -377,18 +379,14 @@
                             </div>
                             <h4 class="font-bold text-xl text-gray-900 mb-4">Tentukan Lokasi Pengiriman</h4>
                             <div class="space-y-3">
-                                <button onclick="useCurrentLocation()" class="btn btn-ghost w-full justify-start gap-3 text-gray-700 normal-case border border-gray-200 hover:border-blue-500 hover:bg-blue-50 rounded-xl transition-all">
-                                    <i class="fa-solid fa-location-crosshairs text-blue-500"></i> Gunakan Lokasi Saat Ini
-                                </button>
-                                <div class="divider text-xs text-gray-400">Atau</div>
-                                <button onclick="goToStep(2)" class="btn btn-primary btn-outline w-full rounded-xl normal-case">Set Pinpoint Manual di Peta</button>
+                                <button onclick="goToStep(2)" class="btn bg-blue-400 hover:bg-blue-500 w-full rounded-xl normal-case text-white">Set Titik Koordinat di Peta</button>
                             </div>
                         </div>
                     </div>
 
                     {{-- STEP 2: PINPOINT DENGAN PENCARIAN --}}
-                    <div id="step-content-2" class="hidden h-full relative flex flex-col">
-                        <div class="absolute top-4 left-4 right-4 z-[1000]">
+                    <div id="step-content-2" class="flex h-full relative flex-col">
+                        <div class="absolute top-4 left-4 right-4 z-1000">
                             <div class="relative group">
                                 <div class="flex gap-2">
                                     <div class="relative flex-1 shadow-xl rounded-2xl overflow-hidden border border-blue-200 focus-within:border-blue-500 transition-all bg-white">
@@ -396,21 +394,21 @@
                                         <input type="text" id="search-address" placeholder="Ketik nama jalan, perumahan, atau gedung..." class="input w-full pl-12 bg-white text-black border-none focus:ring-0 text-sm h-12">
                                     </div>
                                 </div>
-                                <ul id="search-results" class="hidden mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden max-h-60 overflow-y-auto z-[1001] text-black">
+                                <ul id="search-results" class="hidden mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden max-h-60 overflow-y-auto z-1001 text-black">
                                 </ul>
                             </div>
                         </div>
 
                         <div id="map-container" class="flex-1 bg-slate-100"></div>
 
-                        <div class="absolute top-1/2 left-1/2 z-[500] pointer-events-none -translate-x-1/2 -translate-y-[40px]">
+                        <div class="absolute top-1/2 left-1/2 z-500 pointer-events-none -translate-x-1/2 -translate-y-10">
                             <div class="relative flex flex-col items-center">
                                 <i class="fas fa-map-marker-alt text-red-500 text-4xl drop-shadow-lg"></i>
                                 <div class="w-2 h-2 bg-black/30 rounded-full blur-[1px] mt-[-5px]"></div>
                             </div>
                         </div>
 
-                        <div class="bg-white p-4 border-t border-gray-100 shadow-[0_-5px_20px_rgba(0,0,0,0.05)] z-[600]">
+                        <div class="bg-white p-4 border-t border-gray-100 shadow-[0_-5px_20px_rgba(0,0,0,0.05)] z-600">
                             <div class="flex items-center justify-between gap-4">
                                 <div class="flex-1 min-w-0">
                                     <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest"><i class="fas fa-map-pin mr-1"></i> Lokasi Terpilih</p>
@@ -424,10 +422,10 @@
                     </div>
 
                     {{-- STEP 3: DETAIL FORM --}}
-                    <div id="step-content-3" class="hidden h-full flex flex-col">
+                    <div id="step-content-3" class="h-full flex flex-col">
                         <div class="flex-1 overflow-y-auto p-6 md:px-8">
                             <div class="flex items-center gap-3 mb-6 bg-blue-50 p-4 rounded-xl border border-blue-100">
-                                <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-blue-600 shadow-sm flex-shrink-0"><i class="fas fa-check"></i></div>
+                                <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-blue-600 shadow-sm shrink-0"><i class="fas fa-check"></i></div>
                                 <div class="flex-1">
                                     <h4 class="font-bold text-gray-900 text-sm">Pinpoint Berhasil!</h4>
                                     <p class="text-xs text-gray-600 mt-0.5">Sekarang lengkapi detail alamat agar kurir tidak nyasar.</p>
@@ -488,9 +486,13 @@
                                     <textarea name="courier_note" class="textarea textarea-bordered w-full resize-none rounded-xl focus:border-blue-500" placeholder="Warna pagar, patokan, titip satpam, dll."></textarea>
                                 </div>
 
-                                <div class="form-control bg-gray-50 p-3 rounded-xl border border-gray-100">
+                                @php
+                                    $hasPrimary = $userAddresses->where('is_primary', true)->first();
+                                @endphp
+
+                                <div class="form-control bg-gray-50 p-3 rounded-xl border border-gray-100 {{ $hasPrimary ? 'hidden' : '' }}">
                                     <label class="label cursor-pointer justify-start gap-3 p-0">
-                                        <input type="checkbox" name="is_primary" class="checkbox checkbox-primary checkbox-sm rounded" checked>
+                                        <input type="checkbox" name="is_primary" value="1" class="checkbox checkbox-primary checkbox-sm rounded" {{ !$hasPrimary ? 'checked' : '' }}>
                                         <span class="label-text text-gray-700 font-medium">Jadikan Alamat Utama</span>
                                     </label>
                                 </div>
@@ -511,19 +513,19 @@
             <div class="modal-box bg-white p-0 overflow-hidden max-w-md">
                 <div class="p-6 text-center">
                     <div class="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-exclamation-triangle text-3xl"></i>
+                        <i class="fas fa-trash-alt text-3xl"></i>
                     </div>
                     <h3 class="font-bold text-xl text-gray-900">Batalkan Pesanan?</h3>
                     <p class="text-gray-500 mt-2 leading-relaxed">
-                        Apakah Anda yakin ingin membatalkan checkout ini? Barang akan dikembalikan ke keranjang Anda.
+                        Barang akan dikembalikan ke keranjang Anda dan transaksi ini akan digagalkan.
                     </p>
                 </div>
-                <div class="flex border-t border-gray-100 bg-gray-50 p-4 gap-3">
+                <div class="flex border-t border-gray-100 bg-gray-50 p-4 gap-3 text-black">
                     <form method="dialog" class="flex-1">
                         <button class="btn btn-ghost w-full rounded-xl font-bold text-gray-400">Tutup</button>
                     </form>
-                    {{-- Button ini akan memicu AJAX --}}
-                    <button id="btn-execute-cancel" class="btn flex-1 text-white bg-red-400 hover:bg-red-500 font-bold rounded-xl shadow-lg">
+                    {{-- Tombol Eksekusi --}}
+                    <button id="btn-execute-cancel" class="btn flex-1 text-white bg-red-500 hover:bg-red-600 border-none font-bold rounded-xl shadow-lg">
                         Ya, Batalkan
                     </button>
                 </div>
@@ -583,6 +585,7 @@
                 if (step === 2) {
                     setTimeout(() => {
                         window.initMap();
+                        window.updateAddressInfo(selectedLat, selectedLng);
                     }, 400);
                 }
 
@@ -636,22 +639,16 @@
                 updateAddressInfo(lat, lng);
             };
 
-            // --- LOGIKA TERJEMAH TITIK KE ALAMAT (REVERSE GEOCODING) ---
             window.updateAddressInfo = function(lat, lng) {
                 $('#current-address-text').text('Mencari alamat...');
-                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        const addressName = data.display_name || "Alamat tidak ditemukan";
-                        $('#current-address-text').text(addressName);
-                        $('#map-coords-preview').text(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
 
-                        // Auto-fill form step 3 agar user tidak ngetik manual
-                        if (data.address) {
-                            $('input[name="district"]').val(data.address.subdistrict || data.address.city_district || '').trigger('input');
-                            $('input[name="village"]').val(data.address.village || data.address.suburb || '').trigger('input');
-                        }
-                    });
+                // Simpan koordinat ke input hidden form
+                $('#form-lat').val(lat);
+                $('#form-lng').val(lng);
+
+                $('#current-address-text').text(`Koordinat: ${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+
+                if (typeof validate === 'function') validate();
             };
 
             // --- LOGIKA MAP & GEOLOCATION ---
@@ -673,32 +670,6 @@
                     selectedLng = center.lng;
                     updateAddressInfo(selectedLat, selectedLng);
                 });
-            };
-
-            window.useCurrentLocation = function() {
-                if (!navigator.geolocation) return alert('Browser tidak mendukung lokasi.');
-                let $btn = $(event.currentTarget);
-                $btn.html('<span class="loading loading-spinner loading-xs"></span>').prop('disabled', true);
-
-                navigator.geolocation.getCurrentPosition(
-                    (pos) => {
-                        selectedLat = pos.coords.latitude;
-                        selectedLng = pos.coords.longitude;
-                        $btn.html('<i class="fa-solid fa-location-crosshairs text-lg text-white"></i>').prop('disabled', false);
-                        window.goToStep(2);
-                        setTimeout(() => {
-                            if (map) map.setView([selectedLat, selectedLng], 18);
-                        }, 500);
-                    },
-                    (err) => {
-                        alert("Gagal: " + err.message);
-                        $btn.html('<i class="fa-solid fa-location-crosshairs text-lg text-white"></i>').prop('disabled', false);
-                        window.goToStep(2);
-                    }, {
-                        enableHighAccuracy: true,
-                        timeout: 10000
-                    }
-                );
             };
 
             // 3. LOGIKA HARGA & ONGKIR
@@ -812,10 +783,8 @@
                     success: function(res) {
                         // 1. Ganti UI: Sembunyikan konfirmasi, tampilkan area pembayaran & timer
                         $btn.addClass('hidden');
-                        if ($('#pay-now-container').length) {
-                            $('#pay-now-container').removeClass('hidden').fadeIn();
-                        }
-
+                        $('#btn-cancel-trigger').attr('onclick', `cancelOrder('${res.order_id}')`);
+                        $('#pay-now-container').removeClass('hidden').fadeIn();
                         // 2. Jalankan Timer Berdasarkan Waktu ISO dari Server (Anti-Loncat)
                         window.startTimer(res.expiry);
 
@@ -901,35 +870,33 @@
             };
 
             window.cancelOrder = function(id) {
+                // Cek apakah ID ada
                 if (!id || id === "") {
-                    window.location.href = "{{ route('cart.index') }}";
+                    Swal.fire('Info', 'Tidak ada transaksi aktif yang bisa dibatalkan.', 'info');
                     return;
                 }
 
+                // Tampilkan Modal DaisyUI
                 const cancelModal = document.getElementById('modal_cancel_confirmation');
-                cancelModal.showModal();
 
+                // Simpan ID ke tombol eksekusi di dalam modal
                 $('#btn-execute-cancel').off('click').on('click', function() {
                     let $btn = $(this);
-                    const originalHtml = $btn.html();
-
                     $btn.prop('disabled', true).html('<span class="loading loading-spinner loading-xs"></span>');
 
                     $.ajax({
-                        url: `/checkout/cancel/${id}`,
+                        url: `/checkout/cancel/${id}`, // Pastikan route ini ada di web.php
                         type: "POST",
                         data: {
-                            _token: csrfToken, // Pastikan variabel ini sudah dideklarasikan di paling atas script
+                            _token: csrfToken,
                             _method: "PUT"
                         },
                         success: function(res) {
-                            // TUTUP MODAL DAISYUI DULU sebelum buka SweetAlert
                             cancelModal.close();
-
                             if (res.status === 'success') {
                                 Swal.fire({
                                     icon: 'success',
-                                    title: 'Berhasil Batal',
+                                    title: 'Dibatalkan',
                                     text: res.message,
                                     confirmButtonColor: '#3b82f6',
                                 }).then(() => {
@@ -938,22 +905,14 @@
                             }
                         },
                         error: function(xhr) {
-                            // TUTUP MODAL DAISYUI agar backdrop hilang
                             cancelModal.close();
-
-                            $btn.prop('disabled', false).html(originalHtml);
-
-                            let errorMsg = xhr.responseJSON ? xhr.responseJSON.message : 'Terjadi kesalahan sistem (500).';
-
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Gagal Membatalkan',
-                                text: errorMsg, // Akan memunculkan pesan error PHP jika 500
-                                confirmButtonColor: '#ef4444',
-                            });
+                            $btn.prop('disabled', false).text('Ya, Batalkan');
+                            Swal.fire('Gagal', 'Terjadi kesalahan saat membatalkan pesanan.', 'error');
                         }
                     });
                 });
+
+                cancelModal.showModal();
             };
 
             window.submitNewAddress = function() {

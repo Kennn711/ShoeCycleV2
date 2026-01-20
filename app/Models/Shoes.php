@@ -35,6 +35,18 @@ class Shoes extends Model
         });
     }
 
+    public function transactionDetails()
+    {
+        return $this->hasManyThrough(
+            TransactionDetail::class,
+            ShoesVariant::class,
+            'shoe_id',
+            'variant_id',
+            'id',
+            'id'
+        );
+    }
+
     public function category()
     {
         return $this->belongsTo(Category::class);

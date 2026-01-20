@@ -168,7 +168,7 @@
 
                     {{-- CONTENT 1: DESKRIPSI --}}
                     <div id="content-desc" class="tab-pane block"> {{-- Gunakan 'block' untuk default --}}
-                        <div class="prose max-w-none text-gray-600 leading-relaxed text-black">
+                        <div class="prose max-w-none text-gray-600 leading-relaxed">
                             {!! nl2br(e($shoe->description)) !!}
                         </div>
                     </div>
@@ -325,7 +325,7 @@
             if (defaultImages.length > 0) {
                 renderGallery(defaultImages.map(img => `/storage/${img.image_path}`));
             } else {
-                renderGallery(['/assets/upload/testing/dummy.jpg']);
+                renderGallery(['/assets/upload/testing/sepatu1.webp']);
             }
         });
 
@@ -409,7 +409,7 @@
             const mainImage = $('#main-image');
             thumbContainer.empty();
             if (images.length === 0) {
-                mainImage.attr('src', '/assets/upload/testing/dummy.jpg');
+                mainImage.attr('src', '/assets/upload/testing/sepatu1.webp');
                 return;
             }
             mainImage.attr('src', images[0]);

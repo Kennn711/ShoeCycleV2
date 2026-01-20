@@ -83,6 +83,9 @@
                                     @if ($transaction->transaction_status == 'delivered')
                                         Selesai
                                     @endif
+                                    @if ($transaction->payment_status == 'cancel' && $transaction->transaction_status == 'failed')
+                                        Dibatalkan
+                                    @endif
                                 </span>
                             </div>
                         </div>
@@ -125,8 +128,10 @@
                                         <p class="text-xs font-bold text-gray-800">{{ $transaction->courier->name }}</p>
                                     </div>
                                 </div>
-                            @else
-                                <div class="text-xs text-gray-400 italic">Menunggu penugasan kurir...</div>
+                            @endif
+
+                            @if (empty($transaction->courier_id) && $transaction->payment_status == 'cancel')
+                                <div class="text-xs text-gray-400 italic">Pesanan dibatalkan oleh Anda</div>
                             @endif
 
                             {{-- Cari bagian ini dan tambahkan id pada pembungkusnya --}}
@@ -428,7 +433,7 @@
                 transaction.details.forEach((item, index) => {
                     const imagePath = (item.variant.images && item.variant.images.length > 0) ?
                         `/storage/${item.variant.images[0].image_path}` :
-                        '/assets/upload/testing/dummy.jpg';
+                        '/assets/upload/testing/sepatu1.webp';
 
                     const itemHtml = `
                         <div class="space-y-4 border-b border-gray-100 pb-6 last:border-0 last:pb-0 text-black">
