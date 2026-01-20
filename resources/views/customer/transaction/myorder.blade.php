@@ -129,17 +129,17 @@
                                 <div class="text-xs text-gray-400 italic">Menunggu penugasan kurir...</div>
                             @endif
 
-                            <div class="flex gap-3 w-full sm:w-auto">
-                                {{-- Tombol Khusus Belum Bayar --}}
+                            {{-- Cari bagian ini dan tambahkan id pada pembungkusnya --}}
+                            <div class="flex gap-3 w-full sm:w-auto" id="btn-container-{{ $transaction->id }}">
+                                {{-- Tombol Bayar --}}
                                 @if ($transaction->payment_status == 'pending')
                                     <button onclick="window.snap.pay('{{ $transaction->snap_token }}')" class="btn btn-sm btn-primary text-white rounded-lg px-6 grow sm:grow-0">Bayar Sekarang</button>
                                 @endif
 
-                                {{-- Tombol Beri Rating (Hanya jika DELIVERED) --}}
+                                {{-- Tombol Beri Ulasan --}}
                                 @if ($transaction->transaction_status == 'delivered')
                                     @php
                                         $totalItems = $transaction->details->count();
-                                        // Pastikan nama model sesuai (Reviews atau Review)
                                         $ratedItemsCount = \App\Models\Reviews::where('transaction_id', $transaction->id)->where('user_id', Auth::id())->count();
                                     @endphp
 
@@ -154,8 +154,8 @@
                                     @endif
                                 @endif
 
-                                {{-- Ganti tag <a> "Lihat Detail" dengan ini --}}
-                                <button type="button" onclick="showOrderDetail({{ json_encode($transaction->load(['details.variant.shoe', 'address', 'courier'])) }})" class="btn btn-sm btn-primary text-white text-xs normal-case font-bold">
+                                {{-- Tombol Lihat Detail (FIXED: Menggunakan data-detail) --}}
+                                <button type="button" class="btn-show-detail btn btn-sm btn-primary text-white text-xs normal-case font-bold px-6" data-detail="{{ json_encode($transaction->load(['details.variant.shoe', 'address', 'courier'])) }}">
                                     Lihat Detail
                                 </button>
                             </div>
@@ -304,6 +304,7 @@
         let activeFilter = 'all';
         let searchTimeout;
 
+        // Fungsi Format Rupiah
         window.formatRupiah = (num) => 'Rp ' + new Intl.NumberFormat('id-ID').format(num);
 
         /**
@@ -323,101 +324,16 @@
         }
 
         /**
-         * DOUBLE MODAL: PENAMPIL GAMBAR
+         * DOUBLE MODAL: PENAMPIL GAMBAR (LIGHTBOX)
          */
         window.openProofViewer = function(src) {
             document.getElementById('mdl-proof-full-img').src = src;
             document.getElementById('proof_image_viewer').showModal();
         };
 
-        window.openRatingModal = function(transaction) {
-            const modal = document.getElementById('rating_modal');
-            const container = document.getElementById('rating-items-container');
-
-            $('#mdl-rating-invoice').text(transaction.invoice);
-            $('#mdl-rating-transaction-id').val(transaction.id);
-            container.innerHTML = '';
-
-            transaction.details.forEach((item, index) => {
-                // PROTEKSI: Cek apakah images ada dan memiliki isi
-                const imagePath = (item.variant.images && item.variant.images.length > 0) ?
-                    `/storage/${item.variant.images[0].image_path}` :
-                    '/assets/upload/testing/dummy.jpg'; // Path gambar default jika kosong
-
-                const itemHtml = `
-            <div class="space-y-4 border-b border-gray-100 pb-6 last:border-0 last:pb-0">
-                <div class="flex items-center gap-4">
-                    <img src="${imagePath}" class="w-12 h-12 object-contain bg-gray-50 rounded-lg border">
-                    <div>
-                        <h4 class="text-sm font-bold text-gray-900">${item.variant.shoe.name}</h4>
-                        <p class="text-[10px] text-gray-400 uppercase">Size: ${item.variant.size} | Warna: ${item.variant.color}</p>
-                    </div>
-                </div>
-
-                <input type="hidden" name="reviews[${index}][shoe_id]" value="${item.variant.shoe_id}">
-                
-                <div class="flex flex-col gap-2">
-                    <div class="flex items-center gap-3">
-                        <span class="text-xs font-bold text-gray-700">Rating:</span>
-                        <div class="rating rating-sm">
-                            <input type="radio" name="reviews[${index}][rating]" value="1" class="mask mask-star-2 bg-orange-400" />
-                            <input type="radio" name="reviews[${index}][rating]" value="2" class="mask mask-star-2 bg-orange-400" />
-                            <input type="radio" name="reviews[${index}][rating]" value="3" class="mask mask-star-2 bg-orange-400" />
-                            <input type="radio" name="reviews[${index}][rating]" value="4" class="mask mask-star-2 bg-orange-400" />
-                            <input type="radio" name="reviews[${index}][rating]" value="5" class="mask mask-star-2 bg-orange-400" checked />
-                        </div>
-                    </div>
-                    {{-- TEXTAREA DENGAN RESIZE-NONE --}}
-                    <textarea name="reviews[${index}][comment]" 
-                              class="textarea textarea-bordered w-full bg-slate-50 text-sm focus:border-blue-500 rounded-xl resize-none" 
-                              rows="3" 
-                              placeholder="Bagaimana kualitas sepatu ini? (Opsional)"></textarea>
-                </div>
-            </div>
-        `;
-                container.insertAdjacentHTML('beforeend', itemHtml);
-            });
-
-            modal.showModal();
-        };
-
         /**
-         * HANDLE SUBMIT MULTIPLE RATING
-         */
-        $(document).on('submit', '#form-multiple-rating', function(e) {
-            e.preventDefault();
-            const form = $(this);
-            const btn = $('#btn-submit-rating');
-            const originalText = btn.text();
-
-            btn.prop('disabled', true).html('<span class="loading loading-spinner loading-xs"></span> Mengirim...');
-
-            $.ajax({
-                url: form.attr('action'),
-                method: 'POST',
-                data: form.serialize(),
-                success: function(res) {
-                    if (res.success) {
-                        document.getElementById('rating_modal').close();
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Ulasan Terkirim!',
-                            text: 'Terima kasih telah berbagi pengalaman belanja di ShoeCycle.',
-                            confirmButtonColor: '#3b82f6'
-                        }).then(() => {
-                            window.location.reload();
-                        });
-                    }
-                },
-                error: function(xhr) {
-                    btn.prop('disabled', false).text(originalText);
-                    Swal.fire('Error', 'Gagal mengirim ulasan. Pastikan semua field terisi.', 'error');
-                }
-            });
-        });
-
-        /**
-         * MODAL DETAIL PESANAN
+         * FUNGSI MENAMPILKAN DETAIL PESANAN
+         * (Dipanggil oleh listener tombol .btn-show-detail)
          */
         window.showOrderDetail = function(data) {
             const modal = $('#order_detail_modal')[0];
@@ -436,11 +352,11 @@
 
             // Status Badges
             $('#mdl-status-badges').html(`
-            <span class="badge badge-outline font-bold text-[10px] uppercase">${data.payment_type ? data.payment_type.replace(/_/g, ' ') : 'PENDING'}</span>
-            <span class="badge badge-info text-white font-bold text-[10px] uppercase">${data.transaction_status}</span>
-        `);
+                <span class="badge badge-outline font-bold text-[10px] uppercase text-black">${data.payment_type ? data.payment_type.replace(/_/g, ' ') : 'PENDING'}</span>
+                <span class="badge badge-info text-white font-bold text-[10px] uppercase">${data.transaction_status}</span>
+            `);
 
-            // LOGIKA DRIVER & BUKTI FOTO
+            // Logika Driver & Bukti Foto
             if (data.courier) {
                 $('#mdl-delivery-info').removeClass('hidden');
                 $('#mdl-courier-name').text(data.courier.name);
@@ -457,11 +373,11 @@
                 $('#mdl-delivery-info').addClass('hidden');
             }
 
-            // Tabel Barang
+            // Tabel Barang di Modal Detail
             let tableHtml = '';
             data.details.forEach(item => {
                 tableHtml += `
-                <tr class="border-b border-gray-50 text-xs">
+                <tr class="border-b border-gray-50 text-xs text-black">
                     <td><div class="font-bold text-gray-900">${item.variant.shoe.name}</div><div class="text-[10px] text-gray-400 uppercase">Size: ${item.variant.size} | ${item.variant.color}</div></td>
                     <td class="text-center">${item.qty}</td>
                     <td class="text-right font-bold">${window.formatRupiah(item.price * item.qty)}</td>
@@ -469,7 +385,7 @@
             });
             $('#mdl-items-body').html(tableHtml);
 
-            // Biaya
+            // Rincian Biaya
             $('#mdl-subtotal').text(window.formatRupiah(data.subtotal));
             $('#mdl-shipping').text(window.formatRupiah(data.shipping_cost));
             $('#mdl-admin').text(window.formatRupiah(data.admin_fee));
@@ -479,65 +395,77 @@
         };
 
         $(document).ready(function() {
+            // 1. Tombol Filter Tab
+            $(document).on('click', '.tab-filter', function() {
+                $('.tab-filter').removeClass('bg-blue-600 text-white shadow-md shadow-blue-200').addClass('bg-white text-gray-600 shadow-sm');
+                $(this).removeClass('bg-white text-gray-600 shadow-sm').addClass('bg-blue-600 text-white shadow-md shadow-blue-200');
+                activeFilter = $(this).data('filter');
+                applyFilters();
+            });
+
+            // 2. Input Pencarian
+            $('#search-invoice').on('keyup', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => applyFilters(), 300);
+            });
+
+            // 3. Listener Tombol Lihat Detail (Memperbaiki Syntax Error)
+            $(document).on('click', '.btn-show-detail', function() {
+                const data = $(this).data('detail');
+                showOrderDetail(data);
+            });
+
+            // 4. Listener Tombol Beri Ulasan
             $(document).on('click', '.btn-open-rating', function() {
                 const transaction = $(this).data('order');
                 const modal = document.getElementById('rating_modal');
                 const container = document.getElementById('rating-items-container');
 
-                // Set Header Modal
                 $('#mdl-rating-invoice').text(transaction.invoice);
                 $('#mdl-rating-transaction-id').val(transaction.id);
+                container.innerHTML = '';
 
-                container.innerHTML = ''; // Reset isi modal
-
-                // Generate Form untuk setiap produk dalam transaksi
                 transaction.details.forEach((item, index) => {
                     const imagePath = (item.variant.images && item.variant.images.length > 0) ?
                         `/storage/${item.variant.images[0].image_path}` :
                         '/assets/upload/testing/dummy.jpg';
 
                     const itemHtml = `
-                <div class="space-y-4 border-b border-gray-100 pb-6 last:border-0 last:pb-0">
-                    <div class="flex items-center gap-4">
-                        <img src="${imagePath}" class="w-14 h-14 object-contain bg-gray-50 rounded-xl border p-1">
-                        <div class="min-w-0">
-                            <h4 class="text-sm font-bold text-gray-900 truncate">${item.variant.shoe.name}</h4>
-                            <p class="text-[10px] text-gray-400 uppercase tracking-tight">Varian: ${item.variant.color} | Size: ${item.variant.size}</p>
-                        </div>
-                    </div>
-
-                    <input type="hidden" name="reviews[${index}][shoe_id]" value="${item.variant.shoe_id}">
-                    
-                    <div class="space-y-3">
-                        <div class="flex items-center justify-between bg-slate-50 p-2 rounded-lg">
-                            <span class="text-xs font-bold text-gray-600 uppercase">Kualitas Produk:</span>
-                            <div class="rating rating-sm">
-                                <input type="radio" name="reviews[${index}][rating]" value="1" class="mask mask-star-2 bg-orange-400" />
-                                <input type="radio" name="reviews[${index}][rating]" value="2" class="mask mask-star-2 bg-orange-400" />
-                                <input type="radio" name="reviews[${index}][rating]" value="3" class="mask mask-star-2 bg-orange-400" />
-                                <input type="radio" name="reviews[${index}][rating]" value="4" class="mask mask-star-2 bg-orange-400" />
-                                <input type="radio" name="reviews[${index}][rating]" value="5" class="mask mask-star-2 bg-orange-400" checked />
+                        <div class="space-y-4 border-b border-gray-100 pb-6 last:border-0 last:pb-0 text-black">
+                            <div class="flex items-center gap-4">
+                                <img src="${imagePath}" class="w-14 h-14 object-contain bg-gray-50 rounded-xl border p-1">
+                                <div class="min-w-0">
+                                    <h4 class="text-sm font-bold text-gray-900 truncate">${item.variant.shoe.name}</h4>
+                                    <p class="text-[10px] text-gray-400 uppercase tracking-tight">Varian: ${item.variant.color} | Size: ${item.variant.size}</p>
+                                </div>
                             </div>
-                        </div>
-                        <textarea name="reviews[${index}][comment]" 
-                                  class="textarea textarea-bordered w-full bg-white text-sm focus:border-blue-500 rounded-xl resize-none" 
-                                  rows="3" 
-                                  placeholder="Ceritakan kepuasanmu belanja produk ini..."></textarea>
-                    </div>
-                </div>
-            `;
+                            <input type="hidden" name="reviews[${index}][shoe_id]" value="${item.variant.shoe_id}">
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between bg-slate-50 p-2 rounded-lg">
+                                    <span class="text-xs font-bold text-gray-600 uppercase">Kualitas Produk:</span>
+                                    <div class="rating rating-sm">
+                                        <input type="radio" name="reviews[${index}][rating]" value="1" class="mask mask-star-2 bg-orange-400" />
+                                        <input type="radio" name="reviews[${index}][rating]" value="2" class="mask mask-star-2 bg-orange-400" />
+                                        <input type="radio" name="reviews[${index}][rating]" value="3" class="mask mask-star-2 bg-orange-400" />
+                                        <input type="radio" name="reviews[${index}][rating]" value="4" class="mask mask-star-2 bg-orange-400" />
+                                        <input type="radio" name="reviews[${index}][rating]" value="5" class="mask mask-star-2 bg-orange-400" checked />
+                                    </div>
+                                </div>
+                                <textarea name="reviews[${index}][comment]" class="textarea textarea-bordered w-full bg-white text-sm focus:border-blue-500 rounded-xl resize-none" rows="3" placeholder="Ceritakan kepuasanmu..."></textarea>
+                            </div>
+                        </div>`;
                     container.insertAdjacentHTML('beforeend', itemHtml);
                 });
-
                 modal.showModal();
             });
 
-            // 2. Handle Submit AJAX untuk Multiple Reviews
+            // 5. Submit Rating via AJAX
             $(document).on('submit', '#form-multiple-rating', function(e) {
                 e.preventDefault();
                 const form = $(this);
                 const btn = $('#btn-submit-rating');
                 const originalText = btn.text();
+                const transactionId = $('#mdl-rating-transaction-id').val();
 
                 btn.prop('disabled', true).html('<span class="loading loading-spinner loading-xs"></span> Mengirim...');
 
@@ -548,38 +476,34 @@
                     success: function(res) {
                         if (res.success) {
                             document.getElementById('rating_modal').close();
+
                             Swal.fire({
                                 icon: 'success',
                                 title: 'Terima Kasih!',
-                                text: 'Ulasanmu sangat membantu perkembangan ShoeCycle.',
-                                confirmButtonColor: '#3b82f6'
-                            }).then(() => {
-                                window.location.reload();
+                                text: 'Ulasanmu berhasil dikirim.',
+                                showConfirmButton: false,
+                                timer: 1500
                             });
+
+                            // UPDATE UI INSTAN: Ganti tombol ulasan menjadi badge Selesai
+                            const container = $(`#btn-container-${transactionId}`);
+                            container.find('.btn-open-rating').replaceWith(`
+                                <div class="flex items-center gap-1 text-green-600 font-bold text-xs uppercase px-4 select-none animate-in fade-in zoom-in duration-300">
+                                    <i class="fas fa-check-circle"></i> Selesai Diulas
+                                </div>
+                            `);
+
+                            btn.prop('disabled', false).text(originalText);
                         }
                     },
                     error: function() {
                         btn.prop('disabled', false).text(originalText);
-                        Swal.fire('Error', 'Gagal mengirim ulasan. Silakan coba beberapa saat lagi.', 'error');
+                        Swal.fire('Error', 'Gagal mengirim ulasan.', 'error');
                     }
                 });
             });
 
-            // Tab Filter Click
-            $(document).on('click', '.tab-filter', function() {
-                $('.tab-filter').removeClass('bg-blue-600 text-white shadow-md shadow-blue-200').addClass('bg-white text-gray-600 shadow-sm');
-                $(this).removeClass('bg-white text-gray-600 shadow-sm').addClass('bg-blue-600 text-white shadow-md shadow-blue-200');
-                activeFilter = $(this).data('filter');
-                applyFilters();
-            });
-
-            // Search Input Keyup
-            $('#search-invoice').on('keyup', function() {
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(() => applyFilters(), 300);
-            });
-
-            // Midtrans Redirect Check
+            // 6. Cek Redirect Midtrans
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('status_code') === '200') {
                 Swal.fire({

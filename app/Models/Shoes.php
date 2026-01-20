@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use App\Models\Reviews;
 
 class Shoes extends Model
 {
@@ -47,7 +48,7 @@ class Shoes extends Model
 
     public function reviews()
     {
-        return $this->hasMany(Reviews::class);
+        return $this->hasMany(Reviews::class, 'shoe_id');
     }
 
     // Accessor: Get all available colors

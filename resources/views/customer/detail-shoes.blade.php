@@ -58,11 +58,22 @@
                         {{-- Rating & Sold --}}
                         <div class="flex items-center gap-4 mb-6 pb-6 border-b border-gray-100">
                             <div class="flex items-center gap-1 text-amber-400">
-                                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
-                                <span class="text-gray-600 ml-1 text-sm font-medium">(4.8)</span>
+                                {{-- Logika Bintang Dinamis --}}
+                                @for ($i = 1; $i <= 5; $i++)
+                                    @if ($i <= floor($avgRating))
+                                        <i class="fas fa-star"></i> {{-- Bintang Penuh --}}
+                                    @elseif ($i == ceil($avgRating) && $avgRating - floor($avgRating) >= 0.5)
+                                        <i class="fas fa-star-half-alt"></i> {{-- Bintang Setengah --}}
+                                    @else
+                                        <i class="far fa-star text-gray-300"></i> {{-- Bintang Kosong --}}
+                                    @endif
+                                @endfor
+                                <span class="text-gray-600 ml-1 text-sm font-medium">({{ $avgRating }})</span>
                             </div>
                             <div class="w-1 h-4 bg-gray-200"></div>
-                            <div class="text-sm text-gray-600"><span class="font-bold text-gray-900">120+</span> Terjual</div>
+                            <div class="text-sm text-gray-600">
+                                <span class="font-bold text-gray-900">{{ $totalReviews }}</span> Ulasan
+                            </div>
                         </div>
 
                         {{-- PRICE SECTION --}}
@@ -139,18 +150,112 @@
     <section class="py-10 bg-gray-50">
         <div class="container mx-auto px-4">
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-10 max-w-4xl mx-auto">
-                <div class="border-b border-gray-100 mb-6">
+
+                {{-- Tab Headers --}}
+                <div class="border-b border-gray-100 mb-8">
                     <div class="flex gap-8">
-                        <button class="pb-4 border-b-2 border-blue-600 text-blue-600 font-bold text-sm uppercase tracking-wide">Deskripsi Produk</button>
-                        <button class="pb-4 border-b-2 border-transparent text-gray-500 hover:text-gray-800 font-medium text-sm uppercase tracking-wide transition-colors">Ulasan (0)</button>
+                        <button id="btn-tab-desc" onclick="switchTab('desc')" class="tab-btn pb-4 border-b-2 border-blue-600 text-blue-600 font-bold text-sm uppercase tracking-wide transition-all duration-300">
+                            Deskripsi Produk
+                        </button>
+                        <button id="btn-tab-review" onclick="switchTab('review')" class="tab-btn pb-4 border-b-2 border-transparent text-gray-400 hover:text-gray-800 font-medium text-sm uppercase tracking-wide transition-all duration-300">
+                            Ulasan ({{ $totalReviews }})
+                        </button>
                     </div>
                 </div>
-                <div class="prose max-w-none text-gray-600 leading-relaxed">
-                    <p>{{ $shoe->description }}</p>
-                </div>
+
+                {{-- AREA KONTEN --}}
+                <div id="tab-container-content">
+
+                    {{-- CONTENT 1: DESKRIPSI --}}
+                    <div id="content-desc" class="tab-pane block"> {{-- Gunakan 'block' untuk default --}}
+                        <div class="prose max-w-none text-gray-600 leading-relaxed text-black">
+                            {!! nl2br(e($shoe->description)) !!}
+                        </div>
+                    </div>
+
+                    {{-- CONTENT 2: RATING & ULASAN --}}
+                    <div id="content-review" class="tab-pane hidden">
+                        <div class="space-y-10">
+                            {{-- Ringkasan Rating --}}
+                            <div class="flex flex-col md:flex-row items-center gap-8 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                                <div class="text-center">
+                                    <h4 class="text-5xl font-bold text-gray-900">{{ $avgRating }}</h4>
+                                    <p class="text-sm text-gray-500 mt-1 uppercase tracking-widest font-bold">dari 5.0</p>
+                                    <div class="flex gap-1 text-amber-400 mt-3 text-lg justify-center">
+                                        @for ($i = 1; $i <= 5; $i++)
+                                            <i class="{{ $i <= round($avgRating) ? 'fas' : 'far' }} fa-star"></i>
+                                        @endfor
+                                    </div>
+                                </div>
+
+                                <div class="flex-1 w-full space-y-2">
+                                    @php
+                                        $counts = [5 => 0, 4 => 0, 3 => 0, 2 => 0, 1 => 0];
+                                        foreach ($shoe->reviews as $r) {
+                                            if (isset($counts[$r->rating])) {
+                                                $counts[$r->rating]++;
+                                            }
+                                        }
+                                    @endphp
+                                    @foreach ([5, 4, 3, 2, 1] as $star)
+                                        <div class="flex items-center gap-3">
+                                            <span class="text-xs font-bold text-gray-600 w-3">{{ $star }}</span>
+                                            <i class="fas fa-star text-amber-400 text-[10px]"></i>
+                                            <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                                <div class="h-full bg-amber-400 rounded-full" style="width: {{ $totalReviews > 0 ? ($counts[$star] / $totalReviews) * 100 : 0 }}%"></div>
+                                            </div>
+                                            <span class="text-xs text-gray-400 w-8 text-right">{{ $counts[$star] }}</span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            {{-- Daftar List Komentar --}}
+                            <div class="space-y-6">
+                                @forelse ($shoe->reviews()->latest()->get() as $review)
+                                    <div class="flex gap-4 pb-6 border-b border-gray-50 last:border-0">
+                                        <div class="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-gray-100">
+                                            <img src="https://ui-avatars.com/api/?name={{ urlencode($review->user->name) }}&background=0D8ABC&color=fff" class="w-full h-full object-cover">
+                                        </div>
+                                        <div class="flex-1 text-black">
+                                            <div class="flex justify-between items-center mb-1">
+                                                <h4 class="text-sm font-bold text-gray-900">{{ $review->user->name }}</h4>
+                                                <span class="text-[10px] text-gray-400">{{ $review->created_at->diffForHumans() }}</span>
+                                            </div>
+                                            <div class="flex gap-0.5 text-amber-400 text-[10px] mb-2">
+                                                @for ($r = 1; $r <= 5; $r++)
+                                                    <i class="{{ $r <= $review->rating ? 'fas' : 'far' }} fa-star"></i>
+                                                @endfor
+                                            </div>
+                                            <p class="text-sm text-gray-600 italic leading-relaxed">"{{ $review->comment ?: 'Pembeli tidak memberikan komentar teks.' }}"</p>
+                                        </div>
+                                    </div>
+                                @empty
+                                    <div class="text-center py-10">
+                                        <i class="fas fa-comment-slash text-gray-200 text-xl block mb-3"></i>
+                                        <p class="text-gray-400 italic text-sm">Belum ada ulasan untuk produk ini.</p>
+                                    </div>
+                                @endforelse
+                            </div>
+                        </div>
+                    </div>
+
+                </div> {{-- End tab-container-content --}}
             </div>
         </div>
     </section>
+
+    {{-- FIXED: Beri ID 'btn-buy-now' pada tombol di sticky footer agar tidak terjadi JS Error --}}
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-50 lg:hidden shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+        <div class="flex gap-3">
+            <button class="btn btn-square btn-ghost border border-gray-200 text-gray-500">
+                <i class="far fa-comment-dots text-xl"></i>
+            </button>
+            <button id="btn-buy-now" class="btn bg-blue-600 text-white flex-1 rounded-xl shadow-lg border-none" disabled>
+                Beli Sekarang
+            </button>
+        </div>
+    </div>
 
     {{-- MOBILE STICKY FOOTER (Optional, for UX like Shopee/Tokped) --}}
     <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-50 lg:hidden shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
@@ -192,11 +297,8 @@
 @push('scripts')
     <script>
         // --- 1. DATA DARI SERVER ---
-        // Mapping kombinasi varian: "Warna_Size" => {price, stock, images}
         const variantMap = @json($variantMap);
-        // Mapping Warna => List Size yang tersedia: "Hitam" => [40, 41, 42]
         const availableSizes = @json($availableSizesPerColor);
-        // Default Images
         const defaultImages = @json($defaultImages);
 
         // State Variables
@@ -204,9 +306,22 @@
         let selectedSize = null;
         let currentStock = 0;
 
-        // --- 2. INIT DEFAULT VIEW ---
+        // --- 2. FUNGSI PERPINDAHAN TAB (GLOBAL) ---
+        window.switchTab = function(type) {
+            $('.tab-btn').removeClass('border-blue-600 text-blue-600 font-bold').addClass('border-transparent text-gray-400 font-medium');
+            $('.tab-pane').addClass('hidden').removeClass('block');
+
+            if (type === 'desc') {
+                $('#btn-tab-desc').addClass('border-blue-600 text-blue-600 font-bold').removeClass('border-transparent text-gray-400 font-medium');
+                $('#content-desc').removeClass('hidden').addClass('block');
+            } else {
+                $('#btn-tab-review').addClass('border-blue-600 text-blue-600 font-bold').removeClass('border-transparent text-gray-400 font-medium');
+                $('#content-review').removeClass('hidden').addClass('block');
+            }
+        };
+
+        // --- 3. INIT DEFAULT VIEW ---
         $(document).ready(function() {
-            // Render gambar default saat load (jika belum pilih varian)
             if (defaultImages.length > 0) {
                 renderGallery(defaultImages.map(img => `/storage/${img.image_path}`));
             } else {
@@ -214,23 +329,15 @@
             }
         });
 
-        // --- 3. LOGIC PILIH WARNA ---
+        // --- 4. LOGIC PILIH WARNA ---
         $('.variant-color-selector').on('change', function() {
             selectedColor = $(this).val();
-            selectedSize = null; // Reset size saat ganti warna
-
-            // UI Updates
+            selectedSize = null;
             $('#selected-color-text').text(selectedColor);
             $('#selected-size-text').text('-');
-
-            // Reset Tombol Beli
             resetPurchaseButtons();
-
-            // Render Ulang Size Button berdasarkan Warna
             renderSizeButtons(selectedColor);
 
-            // Update Gambar Galeri (Ambil preview dari varian pertama warna ini)
-            // Kita cari size pertama yang available buat warna ini untuk ambil gambarnya
             const firstSize = availableSizes[selectedColor][0];
             const variantKey = `${selectedColor}_${firstSize}`;
             if (variantMap[variantKey] && variantMap[variantKey].images.length > 0) {
@@ -238,94 +345,55 @@
             }
         });
 
-        // --- HELPER: RENDER SIZE BUTTONS (UPDATED: RANGE 35-48) ---
+        // --- 5. RENDER SIZE BUTTONS ---
         function renderSizeButtons(color) {
             const container = $('#size-container');
             container.empty();
-
-            // 1. Definisikan Range Ukuran Standar (35 - 48)
             const startSize = 35;
             const endSize = 48;
 
-            // Loop dari 35 sampai 48
             for (let size = startSize; size <= endSize; size++) {
-
-                // 2. Cek Ketersediaan di Data Varian
-                // Kita cek langsung ke variantMap (yang memuat data stok & harga)
                 const key = `${color}_${size}`;
                 const variantData = variantMap[key];
-
-                // Kondisi Available: Data ada, Status Available = true, Stok > 0
                 const isAvailable = variantData && variantData.is_available && variantData.stock > 0;
 
-                // 3. Tentukan Styling Class
-                let btnClass = '';
-                let attributes = '';
+                let btnClass = isAvailable ?
+                    'bg-white text-gray-900 border-gray-200 hover:border-blue-600 hover:text-blue-600 cursor-pointer size-selector shadow-sm' :
+                    'bg-gray-100 text-gray-300 border-transparent cursor-not-allowed';
 
-                if (isAvailable) {
-                    // Style: AKTIF / TERSEDIA
-                    // Border abu-abu, hover jadi biru, text hitam
-                    btnClass = 'bg-white text-gray-900 border-gray-200 hover:border-blue-600 hover:text-blue-600 cursor-pointer size-selector shadow-sm';
-                    attributes = `onclick="selectSize(this)"`;
-                } else {
-                    // Style: DISABLED / TIDAK TERSEDIA
-                    // Background abu-abu muda, text abu-abu pudar, border transparan, cursor not-allowed
-                    btnClass = 'bg-gray-100 text-gray-300 border-transparent cursor-not-allowed';
-                    // Opsional: Tambahkan tooltip title
-                    const reason = !variantData ? 'Varian tidak ada' : 'Stok habis';
-                    attributes = `title="${reason}"`;
-                }
-
-                // Cek jika ukuran ini sedang dipilih (agar highlight tetap ada saat render ulang)
                 if (selectedSize == size && isAvailable) {
                     btnClass += ' ring-2 ring-blue-600 border-blue-600 bg-blue-50 text-blue-700';
                 }
 
-                // 4. Render HTML
-                const html = `
-                <div class="${btnClass} border rounded-lg py-2.5 text-center transition-all font-medium text-sm select-none"
-                     data-size="${size}" 
-                     ${attributes}>
-                    ${size}
-                </div>
-            `;
+                const html = `<div class="${btnClass} border rounded-lg py-2.5 text-center transition-all font-medium text-sm select-none"
+                                data-size="${size}" ${isAvailable ? `onclick="selectSize(this)"` : ''}>${size}</div>`;
                 container.append(html);
             }
         }
 
-        // --- 5. LOGIC PILIH SIZE (FINAL SELECTION) ---
+        // --- 6. LOGIC PILIH SIZE ---
         window.selectSize = function(el) {
-            // Visual Selection
             $('.size-selector').removeClass('ring-2 ring-blue-600 border-blue-600 bg-blue-50 text-blue-700');
             $(el).addClass('ring-2 ring-blue-600 border-blue-600 bg-blue-50 text-blue-700');
-
             selectedSize = $(el).data('size');
             $('#selected-size-text').text('EU ' + selectedSize);
-
-            // --- FINAL LOGIC: UPDATE HARGA & STOK & TOMBOL ---
             updateProductDetails();
         }
 
         function updateProductDetails() {
             if (!selectedColor || !selectedSize) return;
-
             const key = `${selectedColor}_${selectedSize}`;
             const data = variantMap[key];
-
             if (data) {
-                // Update Harga
                 $('#display-price').text(data.formatted_price);
-
-                // Update Stok Display
                 currentStock = data.stock;
                 $('#stock-display').html(`Stok: <span class="font-bold text-gray-900">${currentStock}</span> tersisa`);
-
-                // Update Tombol Beli
                 $('#btn-add-to-cart, #btn-buy-now').prop('disabled', false).removeClass('opacity-50 cursor-not-allowed');
 
-                // Reset Qty Input jika melebihi stok baru
+                // Live validation check jika qty saat ini > stok baru
                 if (parseInt($('#qty-input').val()) > currentStock) {
-                    $('#qty-input').val(1);
+                    $('#qty-input').val(currentStock);
+                    showQtyError(`Stok terbatas, disesuaikan ke ${currentStock}`);
                 }
             }
         }
@@ -333,58 +401,39 @@
         function resetPurchaseButtons() {
             $('#btn-add-to-cart, #btn-buy-now').prop('disabled', true).addClass('opacity-50 cursor-not-allowed');
             $('#stock-display').text('Pilih varian untuk melihat stok');
-            // Harga tidak perlu direset ke range, biarkan harga terakhir atau range awal
         }
 
-        // --- 6. IMAGE GALLERY LOGIC ---
+        // --- 7. IMAGE GALLERY LOGIC ---
         function renderGallery(images) {
             const thumbContainer = $('#thumbnail-container');
             const mainImage = $('#main-image');
-
             thumbContainer.empty();
-
             if (images.length === 0) {
                 mainImage.attr('src', '/assets/upload/testing/dummy.jpg');
                 return;
             }
-
-            // Set Main Image ke gambar pertama
             mainImage.attr('src', images[0]);
-            // Animasi fade in simple
-            mainImage.hide().fadeIn(300);
-
-            // Generate Thumbnails
             images.forEach((imgSrc, index) => {
-                const activeClass = index === 0 ? 'border-blue-600 ring-1 ring-blue-600' : 'border-gray-200 hover:border-gray-400';
-                const thumb = `
-                <div class="w-16 h-16 md:w-20 md:h-20 flex-shrink-0 bg-gray-50 rounded-lg border ${activeClass} cursor-pointer overflow-hidden p-1 transition-all thumbnail-item"
-                     onmouseover="changeMainImage(this, '${imgSrc}')">
-                    <img src="${imgSrc}" class="w-full h-full object-contain mix-blend-multiply">
-                </div>
-            `;
+                const activeClass = index === 0 ? 'border-blue-600 ring-1 ring-blue-600' : 'border-gray-200';
+                const thumb = `<div class="w-16 h-16 md:w-20 md:h-20 flex-shrink-0 bg-gray-50 rounded-lg border ${activeClass} cursor-pointer overflow-hidden p-1 thumbnail-item"
+                                     onmouseover="changeMainImage(this, '${imgSrc}')">
+                                <img src="${imgSrc}" class="w-full h-full object-contain mix-blend-multiply">
+                              </div>`;
                 thumbContainer.append(thumb);
             });
         }
 
         window.changeMainImage = function(el, src) {
-            // Ganti source gambar utama
             $('#main-image').attr('src', src);
-
-            // Update active state thumbnail
             $('.thumbnail-item').removeClass('border-blue-600 ring-1 ring-blue-600').addClass('border-gray-200');
             $(el).removeClass('border-gray-200').addClass('border-blue-600 ring-1 ring-blue-600');
         }
 
-        // --- 7. QTY LOGIC (LIVE VALIDATION) ---
+        // --- 8. QTY LOGIC (LIVE VALIDATION RESTORED) ---
         window.updateQty = function(change) {
             const errorSpan = $('#qty-error');
-
-            // 1. Validasi: Belum Pilih Varian
             if ($('#btn-add-to-cart').is(':disabled')) {
                 showQtyError('Pilih varian dulu');
-                // Efek shake ringan pada container varian agar user notice
-                $('.variant-color-selector').parent().parent().addClass('animate-pulse');
-                setTimeout(() => $('.variant-color-selector').parent().parent().removeClass('animate-pulse'), 500);
                 return;
             }
 
@@ -392,53 +441,32 @@
             let currentVal = parseInt(input.val());
             let newVal = currentVal + change;
 
-            // Reset Error dulu
             hideQtyError();
 
-            // 2. Validasi: Minimal 1
             if (newVal < 1) {
                 newVal = 1;
-                // Optional: Bisa kasih feedback visual mentok bawah
-            }
-
-            // 3. Validasi: Maksimal Stok
-            if (newVal > currentStock) {
+            } else if (newVal > currentStock) {
                 newVal = currentStock;
                 showQtyError(`Maks. stok ${currentStock}`);
-            } else {
-                // Jika valid dan tidak melebihi stok, sembunyikan error
-                hideQtyError();
             }
 
             input.val(newVal);
         }
 
-        // Helper: Show Error Text
         function showQtyError(msg) {
-            const span = $('#qty-error');
-            span.text(msg).removeClass('opacity-0').addClass('opacity-100');
-
-            // Auto hide setelah 3 detik agar bersih
+            $('#qty-error').text(msg).removeClass('opacity-0').addClass('opacity-100');
             if (window.qtyTimeout) clearTimeout(window.qtyTimeout);
             window.qtyTimeout = setTimeout(() => hideQtyError(), 3000);
         }
 
-        // Helper: Hide Error Text
         function hideQtyError() {
             $('#qty-error').removeClass('opacity-100').addClass('opacity-0');
         }
 
-        // --- 8. ADD TO CART ACTION (REVISED) ---
+        // --- 9. ADD TO CART AJAX (SWEETALERT RESTORED) ---
         $('#btn-add-to-cart').click(function() {
-            const isLoggedIn = {{ Auth::check() ? 'true' : 'false' }};
-            if (!isLoggedIn) {
-                openLoginModal();
-                return;
-            }
-
             const btn = $(this);
             const originalText = btn.html();
-
             btn.prop('disabled', true).html('<span class="loading loading-spinner loading-xs"></span>');
 
             $.ajax({
@@ -453,21 +481,12 @@
                 },
                 success: function(response) {
                     btn.prop('disabled', false).html(originalText);
-
                     if (response.status === 'success') {
-                        // 1. Update Angka Badge
                         const badge = $('#cart-badge-count');
-                        badge.text(response.cart_count);
-
-                        // 2. LOGIKA PENTING: Jika sebelumnya hidden (keranjang 0), maka tampilkan
-                        if (response.cart_count > 0) {
-                            badge.removeClass('hidden');
-                        }
-
-                        // 3. Update Isi Dropdown Mini Cart
+                        badge.text(response.cart_count).removeClass('hidden');
                         $('#mini-cart-dropdown-content').html(response.mini_cart_html);
 
-                        // 4. Feedback Visual (Toast)
+                        // SweetAlert Style Original
                         const Toast = Swal.mixin({
                             toast: true,
                             position: 'top',
@@ -481,14 +500,12 @@
                             title: response.message
                         });
 
-                        // Animasi bounce pada icon tas
                         $('.fa-shopping-bag').parent().addClass('animate-bounce');
                         setTimeout(() => $('.fa-shopping-bag').parent().removeClass('animate-bounce'), 1000);
                     }
                 },
                 error: function(xhr) {
                     btn.prop('disabled', false).html(originalText);
-                    // Jika error, baru tampilkan pesan (opsional pakai Toast juga)
                     Swal.fire('Oops!', xhr.responseJSON.message || 'Gagal menambahkan barang', 'error');
                 }
             });
