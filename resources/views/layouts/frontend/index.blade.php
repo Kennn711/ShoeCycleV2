@@ -288,19 +288,22 @@
 
                 {{-- Quick Links --}}
                 <div>
-                    <h3 class="text-white font-bold mb-4 text-sm uppercase tracking-wider">Belanja</h3>
+                    <h3 class="text-white font-bold mb-4 text-sm uppercase tracking-wider">Jelajahi</h3>
                     <ul class="space-y-2.5">
-                        <li><a href="#" class="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-2">
-                                <i class="fas fa-chevron-right text-xs text-blue-600"></i> Semua Produk
+                        <li><a href="{{ route('landing-page') }}" class="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-2">
+                                <i class="fas fa-chevron-right text-xs text-blue-600"></i> Beranda
+                            </a></li>
+                        <li><a href="{{ route('shoes-collection.index') }}" class="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-2">
+                                <i class="fas fa-chevron-right text-xs text-blue-600"></i> Koleksi
+                            </a></li>
+                        <li><a href="{{ route('all-category.index') }}" class="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-2">
+                                <i class="fas fa-chevron-right text-xs text-blue-600"></i> Kategori
+                            </a></li>
+                        <li><a href="{{ route('my-order.index') }}" class="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-2">
+                                <i class="fas fa-chevron-right text-xs text-blue-600"></i> Pesanan Saya
                             </a></li>
                         <li><a href="#" class="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-2">
-                                <i class="fas fa-chevron-right text-xs text-blue-600"></i> Pria
-                            </a></li>
-                        <li><a href="#" class="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-2">
-                                <i class="fas fa-chevron-right text-xs text-blue-600"></i> Wanita
-                            </a></li>
-                        <li><a href="#" class="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-2">
-                                <i class="fas fa-chevron-right text-xs text-blue-600"></i> Diskon
+                                <i class="fas fa-chevron-right text-xs text-blue-600"></i> Pengaturan Akun
                             </a></li>
                     </ul>
                 </div>

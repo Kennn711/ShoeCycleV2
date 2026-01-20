@@ -163,24 +163,43 @@
                 @forelse($newArrivals as $index => $shoe)
                     @php
                         $firstVariant = $shoe->variants->first();
-                        $image = $firstVariant ? $firstVariant->images->where('is_primary', true)->first() : null;
-                        $imageUrl = $image ? asset('storage/' . $image->image_path) : asset('assets/upload/testing/sepatu1.webp');
-                        $price = $firstVariant ? number_format($firstVariant->price, 0, ',', '.') : '-';
 
-                        $soldCount = rand(50, 500);
-                        $rating = 4.8;
+                        // LOGIKA GAMBAR: Wajib sepatu1.webp jika null
+                        $image = $firstVariant ? ($firstVariant->images->where('is_primary', true)->first() ?: $firstVariant->images->first()) : null;
+                        $imageUrl = $image ? asset('storage/' . $image->image_path) : asset('assets/upload/testing/sepatu1.webp');
+
+                        // LOGIKA STOK
+                        $totalStock = $shoe->variants->sum('stock');
+                        $isOutOfStock = $totalStock <= 0;
+
+                        // DATA DINAMIS DARI DATABASE
+                        $avgRating = round($shoe->average_rating, 1);
+                        $totalReviews = $shoe->reviews_count;
+                        $soldCount = $shoe->total_sold ?? 0;
                     @endphp
 
                     {{-- Product Card --}}
                     <div class="group bg-white rounded-3xl border border-gray-100 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-50 transition-all duration-300 overflow-hidden h-full flex flex-col relative" data-aos="fade-up" data-aos-delay="{{ $index * 50 }}">
 
+                        {{-- Stok Habis Badge --}}
+                        @if ($isOutOfStock)
+                            <div class="absolute top-4 left-4 z-20">
+                                <span class="bg-red-500 text-white text-[10px] font-black uppercase px-3 py-1.5 rounded-xl shadow-md shadow-red-200 flex items-center gap-1.5">
+                                    <i class="fas fa-exclamation-circle text-xs"></i> Stok Habis
+                                </span>
+                            </div>
+                        @endif
+
                         {{-- Image Container --}}
                         <div class="relative bg-gray-50 flex items-center justify-center overflow-hidden">
                             <img src="{{ $imageUrl }}" alt="{{ $shoe->name }}" class="w-full h-full rounded-[4rem] object-contain p-4 mix-blend-multiply" />
+                            @if ($isOutOfStock)
+                                <div class="absolute inset-0 bg-gray-900/5 transition-opacity"></div>
+                            @endif
                         </div>
 
                         {{-- Content --}}
-                        <div class="p-5 flex flex-col flex-grow relative">
+                        <div class="p-5 flex flex-col flex-grow relative text-black">
                             {{-- Category --}}
                             <div class="text-[14px] font-bold text-blue-600 uppercase mb-2">
                                 {{ $shoe->category->category_name ?? 'Shoes' }}
@@ -188,33 +207,37 @@
 
                             {{-- Name --}}
                             <h3 class="card-title text-lg font-bold text-gray-900 mb-3 leading-snug group-hover:text-blue-600 transition-colors duration-300">
-                                <a href="#" class="line-clamp-2">{{ $shoe->name }}</a>
+                                <a href="{{ route('detail-shoes', $shoe->slug) }}" class="line-clamp-2">{{ $shoe->name }}</a>
                             </h3>
 
-                            {{-- Row: Rating, Sold & Button (UPDATED) --}}
-                            {{-- justify-between mendorong elemen kiri dan kanan berjauhan --}}
+                            {{-- Row: Rating & Terjual --}}
                             <div class="flex items-center justify-between mb-6">
-
-                                {{-- Kiri: Rating & Terjual --}}
+                                {{-- Kiri: Rating & Terjual Dinamis --}}
                                 <div class="flex items-center gap-3 text-xs text-gray-500">
-                                    <div class="flex items-center gap-1 bg-amber-50 px-2 py-1 rounded-md border border-amber-100">
-                                        <i class="fas fa-star text-amber-400 text-[10px]"></i>
-                                        <span class="font-bold text-amber-700">{{ $rating }}</span>
-                                    </div>
+                                    @if ($totalReviews > 0)
+                                        <div class="flex items-center gap-1 bg-amber-50 px-2 py-1 rounded-md border border-amber-100">
+                                            <i class="fas fa-star text-amber-400 text-[10px]"></i>
+                                            <span class="font-bold text-amber-700">{{ $avgRating }}</span>
+                                        </div>
+                                    @else
+                                        <div class="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-md border border-gray-100">
+                                            <span class="text-gray-400 font-medium">-</span>
+                                        </div>
+                                    @endif
                                     <div class="w-1 h-1 bg-gray-300 rounded-full"></div>
                                     <div class="font-medium">{{ $soldCount }} Terjual</div>
                                 </div>
 
-                                {{-- Kanan: Button Lihat (Dipindah kesini) --}}
-                                <a href="{{ route('detail-shoes', $shoe->slug) }}" class="btn btn-sm rounded-full bg-blue-500 hover:bg-blue-600 text-white border-none px-4 font-normal shadow-sm transition-colors duration-300">
+                                {{-- Kanan: Button Lihat --}}
+                                <a href="{{ route('detail-shoes', $shoe->slug) }}" class="btn btn-sm rounded-full bg-blue-500 hover:bg-blue-600 text-white border-none px-4 font-normal shadow-sm transition-colors duration-300 text-[11px]">
                                     Lihat Selengkapnya
                                 </a>
                             </div>
 
-                            {{-- Footer: Price Only --}}
+                            {{-- Footer: Price --}}
                             <div class="mt-auto pt-4 border-t border-gray-100">
                                 <p class="text-[10px] text-gray-400 uppercase font-semibold mb-0.5">Harga</p>
-                                <div class="text-lg font-bold text-gray-900 leading-none">
+                                <div class="text-lg font-bold {{ $isOutOfStock ? 'text-gray-400 line-through opacity-70' : 'text-gray-900' }} leading-none">
                                     {{ $shoe->price_display }}
                                 </div>
                             </div>
@@ -234,54 +257,77 @@
     </section>
 
     {{-- ========================================================= --}}
-    {{-- 5. PROMO BANNER - Eye-catching                           --}}
+    {{-- 5. PROMO BANNER - Authenticity & UMKM Support             --}}
     {{-- ========================================================= --}}
     <section class="py-16 px-4">
         <div class="container mx-auto">
-            <div class="relative rounded-3xl bg-linear-to-br from-blue-600 via-blue-700 to-purple-700 overflow-hidden shadow-2xl" data-aos="zoom-in">
-                {{-- Decorative Pattern --}}
-                <div class="absolute inset-0 opacity-10">
-                    <div class="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-                    <div class="absolute bottom-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+            {{-- Main Banner Container --}}
+            <div class="relative rounded-[2.5rem] overflow-hidden shadow-2xl" data-aos="fade-up">
+
+                {{-- Background Image with Gradient Overlay --}}
+                {{-- GANTI 'https://source.unsplash.com/random/1200x600/?shoemaker,craftsman' dengan gambar background Anda sendiri (misal: suasana workshop yang agak blur) --}}
+                <div class="absolute inset-0">
+                    <img src="https://source.unsplash.com/random/1200x600/?workshop,leather,tools" alt="Background Workshop" class="w-full h-full object-cover grayscale opacity-30 mix-blend-luminosity">
+                    {{-- Gradient Overlay: Biru tua ke arah emas/hangat untuk kesan premium dan semangat UMKM --}}
+                    <div class="absolute inset-0 bg-linear-to-r from-slate-900/95 via-blue-900/90 to-amber-900/70"></div>
                 </div>
 
-                <div class="relative grid grid-cols-1 lg:grid-cols-2 items-center gap-8 p-8 md:p-16">
-                    {{-- Text Content --}}
-                    <div class="text-center lg:text-left text-white space-y-6">
-                        <div class="inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full">
-                            <i class="fas fa-shipping-fast text-amber-400"></i>
-                            <span class="text-sm font-bold">Promo Spesial</span>
+                {{-- Decorative Pattern (Subtle lines) --}}
+                <div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+
+                <div class="relative grid grid-cols-1 lg:grid-cols-12 items-center gap-8 p-8 md:p-12 lg:p-16">
+
+                    {{-- LEFT COLUMN: Text Content (Span 7 cols) --}}
+                    <div class="lg:col-span-7 text-center lg:text-left space-y-8 z-10">
+                        {{-- Badges --}}
+                        <div class="flex flex-wrap gap-3 justify-center lg:justify-start">
+                            <div class="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/20 backdrop-blur-md border border-blue-400/30 rounded-full text-white">
+                                <i class="fas fa-check-circle text-blue-300"></i>
+                                <span class="text-sm font-bold tracking-wide">Jaminan 100% Original</span>
+                            </div>
+                            <div class="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/20 backdrop-blur-md border border-amber-400/30 rounded-full text-white">
+                                <i class="fas fa-hand-holding-heart text-amber-300"></i>
+                                <span class="text-sm font-bold tracking-wide">Berdaya Bersama UMKM</span>
+                            </div>
                         </div>
 
-                        <h2 class="text-3xl md:text-5xl font-bold leading-tight">
-                            Gratis Ongkir<br>
-                            se-Mojokerto!
+                        {{-- Headline --}}
+                        <h2 class="text-3xl md:text-4xl lg:text-5xl font-extrabold text-white leading-tight tracking-tight">
+                            Lebih Dari Sekadar Sepatu,<br>
+                            <span class="text-transparent bg-clip-text bg-linear-to-r from-blue-200 to-amber-200">
+                                Ini Adalah Kebanggaan Lokal.
+                            </span>
                         </h2>
 
-                        <p class="text-lg text-blue-100 leading-relaxed max-w-md">
-                            Khusus pembelian di atas Rp 500.000 menggunakan driver lokal kami. Cepat, aman, dan hemat.
+                        {{-- Paragraph --}}
+                        <p class="text-lg text-gray-200 leading-relaxed max-w-xl mx-auto lg:mx-0 font-light">
+                            Setiap pasang sepatu original yang Anda beli di sini bukan hanya investasi gaya, tetapi juga dukungan nyata bagi keberlangsungan dan pertumbuhan pengrajin UMKM di Mojokerto. Melangkah pasti dengan kualitas asli.
                         </p>
-
-                        <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                            <button class="px-8 py-4 bg-white text-blue-700 font-bold rounded-xl hover:bg-blue-50 transition-all hover:-translate-y-1 shadow-lg">
-                                Belanja Sekarang
-                            </button>
-                            <button class="px-8 py-4 bg-white/10 backdrop-blur-sm text-white font-bold rounded-xl border-2 border-white/30 hover:bg-white/20 transition-all">
-                                Lihat Syarat & Ketentuan
-                            </button>
-                        </div>
                     </div>
 
-                    {{-- Illustration --}}
-                    <div class="flex justify-center lg:justify-end">
-                        <div class="relative w-64 h-64 md:w-80 md:h-80">
-                            <div class="absolute inset-0 bg-white/10 backdrop-blur-sm rounded-full animate-pulse"></div>
-                            <div class="absolute inset-8 bg-white/20 backdrop-blur-sm rounded-full animate-pulse animation-delay-1000"></div>
-                            <div class="absolute inset-0 flex items-center justify-center">
-                                <i class="fas fa-shipping-fast text-9xl text-white/30 transform rotate-12"></i>
+                    {{-- RIGHT COLUMN: Supporting Image (Span 5 cols) --}}
+                    <div class="lg:col-span-5 lg:h-full flex items-center justify-center lg:justify-end z-10 mt-8 lg:mt-0">
+                        <div class="relative w-full max-w-md aspect-square lg:aspect-auto lg:h-[450px]">
+                            {{-- Blob/Shape behind image --}}
+                            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-linear-to-tr from-blue-600/30 to-amber-600/30 blur-3xl rounded-full animate-pulse-slow"></div>
+
+                            {{-- Main Supporting Image --}}
+                            {{-- GANTI URL ini dengan foto produk Anda yang sedang dibuat oleh pengrajin, atau foto close-up detail sepatu yang menunjukkan kualitas --}}
+                            <img src="{{ asset('assets/upload/logo/shoes-eye-catching.avif') }}" alt="Pengrajin Sepatu Lokal" class="relative w-full h-full object-cover rounded-4xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] border-4 border-white/10 backdrop-blur-sm transform hover:scale-[1.02] transition-transform duration-500" data-aos="zoom-in-left" data-aos-delay="200">
+
+                            {{-- Floating Badge on Image --}}
+                            <div class="absolute -bottom-6 -left-6 md:bottom-4 md:-left-8 bg-white p-4 rounded-2xl shadow-xl flex items-center gap-3 animate-bounce-slow">
+                                <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-medal text-amber-600 text-xl"></i>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500 font-bold uppercase">Kualitas</p>
+                                    <p class="text-slate-900 font-bold text-lg leading-none">Original & Terjangkau</p>
+                                </div>
                             </div>
                         </div>
                     </div>
+
                 </div>
             </div>
         </div>
@@ -430,6 +476,14 @@
 
         .animation-delay-1000 {
             animation-delay: 1s;
+        }
+
+        .animate-pulse-slow {
+            animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        .animate-bounce-slow {
+            animation: bounce 3s infinite;
         }
 
         /* Gradient Animation */

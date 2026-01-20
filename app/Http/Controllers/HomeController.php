@@ -18,6 +18,15 @@ class HomeController extends Controller
             $q->where('is_primary', true);
         }])
             ->where('is_active', true)
+            ->withAvg('reviews as average_rating', 'rating')
+            // 2. Hitung Jumlah Ulasan
+            ->withCount('reviews')
+            // 3. Hitung Total Terjual (Berdasarkan transaksi lunas)
+            ->withSum(['transactionDetails as total_sold' => function ($q) {
+                $q->whereHas('transaction', function ($sq) {
+                    $sq->whereIn('payment_status', ['settlement', 'capture']);
+                });
+            }], 'qty')
             ->latest()
             ->take(8)
             ->get()
@@ -31,13 +40,8 @@ class HomeController extends Controller
                     $max = $prices->max();
 
                     if ($min == $max) {
-                        // KASUS 1: Harga Tunggal (Sama semua atau cuma 1 varian)
-                        // Output: Rp 1.500.000
                         $shoe->price_display = 'Rp ' . number_format($min, 0, ',', '.');
                     } else {
-                        // KASUS 2: Range Harga
-                        // Output: Rp 1.500.000 - Rp 2.000.000
-                        // Perhatikan penambahan ' - Rp ' di tengah
                         $shoe->price_display = 'Rp ' . number_format($min, 0, ',', '.') . ' - Rp ' . number_format($max, 0, ',', '.');
                     }
                 }
@@ -115,11 +119,8 @@ class HomeController extends Controller
                 ->with(['variants.images' => function ($q) {
                     $q->orderBy('order', 'asc');
                 }])
-                // Hitung Rata-rata Rating
                 ->withAvg('reviews as average_rating', 'rating')
-                // Hitung Jumlah Ulasan
                 ->withCount('reviews')
-                // Hitung Total Terjual (Sum Qty dari Transaksi yang Lunas)
                 ->withSum(['transactionDetails as total_sold' => function ($q) {
                     $q->whereHas('transaction', function ($sq) {
                         $sq->whereIn('payment_status', ['settlement', 'capture']);
@@ -132,10 +133,15 @@ class HomeController extends Controller
 
     public function shoesCollection(Request $request)
     {
-        // 1. Query dasar: hanya sepatu aktif dengan eager loading
-        $query = Shoes::with(['category', 'variants.images'])->where('is_active', true);
+        $query = Shoes::with(['category', 'variants.images'])->where('is_active', true)
+            ->withAvg('reviews as average_rating', 'rating')
+            ->withCount('reviews')
+            ->withSum(['transactionDetails as total_sold' => function ($q) {
+                $q->whereHas('transaction', function ($sq) {
+                    $sq->whereIn('payment_status', ['settlement', 'capture']);
+                });
+            }], 'qty');
 
-        // 2. Logika Search (Nama Sepatu atau Brand)
         if ($request->has('q') && $request->q != '') {
             $query->where(function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->q . '%')
@@ -143,15 +149,24 @@ class HomeController extends Controller
             });
         }
 
-        // 3. Logika Filter Kategori
         if ($request->has('category') && $request->category != '') {
             $query->where('category_id', $request->category);
         }
 
-        // 4. Ambil data dengan Pagination (misal: 12 produk per halaman)
-        $shoes = $query->latest()->paginate(12);
+        $shoes = $query->latest()->paginate(12)->through(function ($shoe) {
+            $prices = $shoe->variants->pluck('price');
+            if ($prices->isEmpty()) {
+                $shoe->price_display = 'Stok Habis';
+            } else {
+                $min = $prices->min();
+                $max = $prices->max();
+                $shoe->price_display = ($min == $max)
+                    ? 'Rp ' . number_format($min, 0, ',', '.')
+                    : 'Rp ' . number_format($min, 0, ',', '.') . ' - Rp ' . number_format($max, 0, ',', '.');
+            }
+            return $shoe;
+        });
 
-        // 5. Ambil semua kategori untuk ditampilkan di sidebar filter
         $categories = Category::all();
 
         return view('customer.shoes-collection', compact('shoes', 'categories'));

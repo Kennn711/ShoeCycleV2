@@ -73,24 +73,43 @@
                         @forelse($shoes as $index => $shoe)
                             @php
                                 $firstVariant = $shoe->variants->first();
-                                $image = $firstVariant ? $firstVariant->images->where('is_primary', true)->first() : null;
+
+                                // LOGIKA GAMBAR: Ambil primary, fallback wajib sepatu1.webp
+                                $image = $firstVariant ? ($firstVariant->images->where('is_primary', true)->first() ?: $firstVariant->images->first()) : null;
                                 $imageUrl = $image ? asset('storage/' . $image->image_path) : asset('assets/upload/testing/sepatu1.webp');
 
-                                // Rating & Sold Dummy sesuai request landing page
-                                $soldCount = rand(50, 500);
-                                $rating = 4.8;
+                                // DATA DINAMIS DARI DATABASE (Hapus Dummy rand)
+                                $avgRating = round($shoe->average_rating, 1);
+                                $totalReviews = $shoe->reviews_count;
+                                $soldCount = $shoe->total_sold ?? 0;
+
+                                // LOGIKA STOK
+                                $totalStock = $shoe->variants->sum('stock');
+                                $isOutOfStock = $totalStock <= 0;
                             @endphp
 
-                            {{-- PRODUCT CARD (Layout SAMA PERSIS dengan All Category) --}}
+                            {{-- PRODUCT CARD --}}
                             <div class="group bg-white rounded-3xl border border-gray-100 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-50 transition-all duration-300 overflow-hidden h-full flex flex-col relative" data-aos="fade-up" data-aos-delay="{{ ($index % 4) * 50 }}">
+
+                                {{-- Stok Habis Badge --}}
+                                @if ($isOutOfStock)
+                                    <div class="absolute top-4 left-4 z-20">
+                                        <span class="bg-red-500 text-white text-[10px] font-black uppercase px-3 py-1.5 rounded-xl shadow-md shadow-red-200 flex items-center gap-1.5">
+                                            <i class="fas fa-exclamation-circle text-xs"></i> Stok Habis
+                                        </span>
+                                    </div>
+                                @endif
 
                                 {{-- Image Container --}}
                                 <div class="relative bg-gray-50 flex items-center justify-center overflow-hidden">
                                     <img src="{{ $imageUrl }}" alt="{{ $shoe->name }}" class="w-full h-full rounded-[4rem] object-contain p-4 mix-blend-multiply" />
+                                    @if ($isOutOfStock)
+                                        <div class="absolute inset-0 bg-gray-900/5 transition-opacity"></div>
+                                    @endif
                                 </div>
 
                                 {{-- Content --}}
-                                <div class="p-5 flex flex-col grow relative">
+                                <div class="p-5 flex flex-col grow relative text-black">
                                     {{-- Category --}}
                                     <div class="text-[14px] font-bold text-blue-600 uppercase mb-2">
                                         {{ $shoe->category->category_name ?? 'Shoes' }}
@@ -103,32 +122,39 @@
 
                                     {{-- Row: Rating, Sold & Button --}}
                                     <div class="flex items-center justify-between mb-6">
-                                        {{-- Kiri: Rating & Terjual --}}
+                                        {{-- Kiri: Rating & Terjual Dinamis --}}
                                         <div class="flex items-center gap-3 text-xs text-gray-500">
-                                            <div class="flex items-center gap-1 bg-amber-50 px-2 py-1 rounded-md border border-amber-100">
-                                                <i class="fas fa-star text-amber-400 text-[10px]"></i>
-                                                <span class="font-bold text-amber-700">{{ $rating }}</span>
-                                            </div>
+                                            @if ($totalReviews > 0)
+                                                <div class="flex items-center gap-1 bg-amber-50 px-2 py-1 rounded-md border border-amber-100">
+                                                    <i class="fas fa-star text-amber-400 text-[10px]"></i>
+                                                    <span class="font-bold text-amber-700">{{ $avgRating }}</span>
+                                                </div>
+                                            @else
+                                                <div class="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-md border border-gray-100">
+                                                    <span class="text-gray-400 font-medium">-</span>
+                                                </div>
+                                            @endif
                                             <div class="w-1 h-1 bg-gray-300 rounded-full"></div>
                                             <div class="font-medium">{{ $soldCount }} Terjual</div>
                                         </div>
 
                                         {{-- Kanan: Button Lihat --}}
-                                        <a href="{{ route('detail-shoes', $shoe->slug) }}" class="btn btn-sm rounded-full bg-blue-500 hover:bg-blue-600 text-white border-none px-4 font-normal shadow-sm transition-colors duration-300">
+                                        <a href="{{ route('detail-shoes', $shoe->slug) }}" class="btn btn-sm rounded-full bg-blue-500 hover:bg-blue-600 text-white border-none px-4 font-normal shadow-sm transition-colors duration-300 text-[11px]">
                                             Lihat Selengkapnya
                                         </a>
                                     </div>
 
-                                    {{-- Footer: Price Only --}}
+                                    {{-- Footer: Price --}}
                                     <div class="mt-auto pt-4 border-t border-gray-100">
                                         <p class="text-[10px] text-gray-400 uppercase font-semibold mb-0.5">Harga</p>
-                                        <div class="text-lg font-bold text-gray-900 leading-none">
-                                            {{ $shoe->price_range }}
+                                        <div class="text-lg font-bold {{ $isOutOfStock ? 'text-gray-400 line-through opacity-70' : 'text-gray-900' }} leading-none">
+                                            {{ $shoe->price_display }}
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         @empty
+                            {{-- Empty State --}}
                             <div class="col-span-full py-20 text-center">
                                 <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300">
                                     <i class="fas fa-search text-3xl"></i>
