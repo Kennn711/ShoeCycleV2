@@ -138,7 +138,7 @@
                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                 <i class="fas fa-search text-slate-400 group-focus-within:text-blue-600 transition-colors"></i>
                             </div>
-                            <input type="text" id="input-search-global" placeholder="Cari sepatu, brand, atau kategori..." class="w-full h-11 pl-11 pr-16 bg-slate-100 border border-slate-200 rounded-2xl text-sm focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none text-slate-700" autocomplete="off">
+                            <input type="text" id="input-search-global" placeholder="Cari di ShoeCycle..." class="w-full h-11 pl-11 pr-16 bg-slate-100 border border-slate-200 rounded-2xl text-sm focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none text-slate-700" autocomplete="off">
 
                             {{-- Shortcut Hint --}}
                             <div class="absolute inset-y-0 right-3 flex items-center gap-1 pointer-events-none">
@@ -148,7 +148,7 @@
                         </div>
 
                         {{-- Dropdown Results (Tanpa Modal) --}}
-                        <div id="search-dropdown" class="hidden absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[60] animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div id="search-dropdown" class="hidden absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-60 animate-in fade-in slide-in-from-top-2 duration-200">
                             <div id="search-results-wrapper" class="max-h-[420px] overflow-y-auto p-2 custom-scrollbar">
                                 {{-- Hasil pencarian akan muncul di sini via AJAX --}}
                             </div>
@@ -585,30 +585,6 @@
         </div>
         <form method="dialog" class="modal-backdrop"><button>close</button></form>
     </dialog>
-
-    <div class="hidden md:flex flex-1 mx-8 relative group" id="search-global-container">
-        <div class="relative w-full max-w-2xl mx-auto">
-            <div class="relative flex items-center">
-                <i class="fas fa-search absolute left-4 text-slate-400 group-focus-within:text-blue-600 transition-colors"></i>
-                <input type="text" id="input-search-global" placeholder="Cari sepatu, brand, atau kategori..." class="w-full h-11 pl-12 pr-16 bg-slate-100 border border-transparent focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-2xl text-sm transition-all outline-none" autocomplete="off">
-
-                <div class="absolute right-3 flex gap-1 pointer-events-none">
-                    <kbd class="kbd kbd-sm bg-white border-slate-200 text-[10px] opacity-70">CTRL</kbd>
-                    <kbd class="kbd kbd-sm bg-white border-slate-200 text-[10px] opacity-70">K</kbd>
-                </div>
-            </div>
-
-            <div id="search-dropdown" class="hidden absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                <div id="search-results-wrapper" class="max-h-[400px] overflow-y-auto p-2 custom-scrollbar">
-                </div>
-
-                <div class="p-3 bg-slate-50 border-t border-slate-100 flex justify-between items-center px-4">
-                    <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Hasil Pencarian</span>
-                    <span class="text-[10px] text-slate-400">Tekan ESC untuk menutup</span>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <script src="{{ asset('assets/vendor/fontawesome/js/all.min.js') }}"></script>
     <script src="{{ asset('assets/vendor/jquery/jquery.min.js') }}"></script>

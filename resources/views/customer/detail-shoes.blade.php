@@ -486,7 +486,6 @@
                         badge.text(response.cart_count).removeClass('hidden');
                         $('#mini-cart-dropdown-content').html(response.mini_cart_html);
 
-                        // SweetAlert Style Original
                         const Toast = Swal.mixin({
                             toast: true,
                             position: 'top',
@@ -506,7 +505,15 @@
                 },
                 error: function(xhr) {
                     btn.prop('disabled', false).html(originalText);
-                    Swal.fire('Oops!', xhr.responseJSON.message || 'Gagal menambahkan barang', 'error');
+
+                    if (xhr.status === 401) {
+                        openLoginModal();
+
+                        $('#login-error-msg').text('Silakan masuk terlebih dahulu untuk menambahkan sepatu ke Keranjang.');
+                        $('#login-global-error').removeClass('hidden');
+                    } else {
+                        Swal.fire('Oops!', xhr.responseJSON.message || 'Gagal menambahkan barang', 'error');
+                    }
                 }
             });
         });

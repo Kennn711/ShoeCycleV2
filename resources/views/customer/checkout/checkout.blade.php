@@ -313,7 +313,7 @@
                     <form method="dialog"><button class="btn btn-sm btn-circle btn-ghost text-gray-500">✕</button></form>
                 </div>
                 <div class="p-4">
-                    <button onclick="openAddAddressModal()" class="btn btn-outline btn-primary w-full border-dashed border-2 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-600 normal-case gap-2 mb-4">
+                    <button onclick="openAddAddressModal()" class="btn bg-blue-400 w-full hover:bg-blue-500 text-white normal-case gap-2 mb-4">
                         <i class="fas fa-plus"></i> Tambah Alamat Baru
                     </button>
                     <div class="space-y-3 max-h-[400px] overflow-y-auto pr-1">
@@ -390,7 +390,7 @@
                             <div class="relative group">
                                 <div class="flex gap-2">
                                     <div class="relative flex-1 shadow-xl rounded-2xl overflow-hidden border border-blue-200 focus-within:border-blue-500 transition-all bg-white">
-                                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-blue-500"></i>
+                                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-blue-500 z-60"></i>
                                         <input type="text" id="search-address" placeholder="Ketik nama jalan, perumahan, atau gedung..." class="input w-full pl-12 bg-white text-black border-none focus:ring-0 text-sm h-12">
                                     </div>
                                 </div>
@@ -556,16 +556,14 @@
                 currentStep = 1,
                 searchTimeout;
 
-            // --- FUNGSI NAVIGASI MODAL (WAJIB ADA) ---
             window.openAddressListModal = function() {
                 $('#address_list_modal')[0].showModal();
             };
 
             window.openAddAddressModal = function() {
-                // Tutup modal list jika sedang terbuka
                 if ($('#address_list_modal').length) $('#address_list_modal')[0].close();
                 $('#add_address_modal')[0].showModal();
-                window.goToStep(1); // Mulai dari step 1 (pilih lokasi)
+                window.goToStep(1);
             };
 
             window.goToStep = function(step) {
@@ -573,7 +571,6 @@
                 $('[id^="step-content-"]').addClass('hidden');
                 $('#step-content-' + step).removeClass('hidden');
 
-                // Update Stepper UI
                 for (let i = 1; i <= 3; i++) {
                     let $el = $('#step-indicator-' + i);
                     $el.removeClass('active completed');
@@ -581,7 +578,6 @@
                     else if (i === step) $el.addClass('active');
                 }
 
-                // Jika masuk ke Step 2, inisialisasi Peta
                 if (step === 2) {
                     setTimeout(() => {
                         window.initMap();
@@ -589,7 +585,6 @@
                     }, 400);
                 }
 
-                // Kontrol tombol Back
                 if (step > 1) $('#btn-back-step').removeClass('invisible');
                 else $('#btn-back-step').addClass('invisible');
             };
@@ -598,7 +593,6 @@
                 if (currentStep > 1) window.goToStep(currentStep - 1);
             };
 
-            // --- LOGIKA PENCARIAN (GEOCODING) ---
             $(document).ready(function() {
                 $('#search-address').on('input', function() {
                     const query = $(this).val();
@@ -624,7 +618,6 @@
                     }, 500);
                 });
 
-                // Klik luar untuk tutup hasil search
                 $(document).on('click', function(e) {
                     if (!$(e.target).closest('.group').length) $('#search-results').addClass('hidden');
                 });
@@ -642,7 +635,6 @@
             window.updateAddressInfo = function(lat, lng) {
                 $('#current-address-text').text('Mencari alamat...');
 
-                // Simpan koordinat ke input hidden form
                 $('#form-lat').val(lat);
                 $('#form-lng').val(lng);
 
@@ -651,7 +643,6 @@
                 if (typeof validate === 'function') validate();
             };
 
-            // --- LOGIKA MAP & GEOLOCATION ---
             window.initMap = function() {
                 if (map) {
                     map.invalidateSize();
@@ -672,7 +663,6 @@
                 });
             };
 
-            // 3. LOGIKA HARGA & ONGKIR
             window.calculateShipping = function(lat, lng) {
                 if (!lat || !lng) return window.resetShippingUI();
 
@@ -688,7 +678,6 @@
                 if (distanceKm > 1) cost += Math.ceil(distanceKm) * COST_KM;
                 cost = Math.ceil(cost / 500) * 500;
 
-                // Gunakan jQuery .text() yang lebih aman daripada innerText manual
                 $('#shipping-cost-label').text(window.formatRupiah(cost));
                 $('#summary-shipping-cost').text(window.formatRupiah(cost));
                 $('#grand-total-display').text(window.formatRupiah(SUBTOTAL + ADMIN_FEE + cost));
@@ -697,7 +686,6 @@
                 $('#btn-pay').prop('disabled', false).removeClass('bg-blue-400').addClass('btn-primary');
             };
 
-            // Fungsi Reset UI jika Alamat tidak valid (PENTING untuk mencegah error null)
             window.resetShippingUI = function() {
                 $('#shipping-cost-label').text('Rp -');
                 $('#summary-shipping-cost').text('Rp -');
@@ -709,7 +697,6 @@
                 return 'Rp ' + new Intl.NumberFormat('id-ID').format(num);
             };
 
-            // 4. LOGIKA ALAMAT
             window.selectAddress = function(id) {
                 const addr = userAddresses.find(a => a.id == id);
                 if (!addr) return;
@@ -747,7 +734,6 @@
                 $('#address_list_modal')[0].close();
             };
 
-            // 5. KONFIRMASI & PEMBAYARAN (SNAP POP-UP)
             window.confirmOrder = function() {
                 let $btn = $('#btn-confirm');
                 let address_id = $('#input-address-id').val();
@@ -757,7 +743,6 @@
                     return;
                 }
 
-                // Ambil semua notes per item cart
                 let notes = {};
                 $('input[name^="notes"]').each(function() {
                     let match = $(this).attr('name').match(/\d+/);
@@ -766,7 +751,6 @@
 
                 let shipping = parseInt($('#input-shipping-cost').val()) || 0;
 
-                // Loading State
                 $btn.prop('disabled', true).html('<span class="loading loading-spinner loading-xs"></span> Memproses...');
 
                 $.ajax({
@@ -781,23 +765,17 @@
                         notes: notes
                     },
                     success: function(res) {
-                        // 1. Ganti UI: Sembunyikan konfirmasi, tampilkan area pembayaran & timer
                         $btn.addClass('hidden');
                         $('#btn-cancel-trigger').attr('onclick', `cancelOrder('${res.order_id}')`);
                         $('#pay-now-container').removeClass('hidden').fadeIn();
-                        // 2. Jalankan Timer Berdasarkan Waktu ISO dari Server (Anti-Loncat)
                         window.startTimer(res.expiry);
 
-                        // 3. LOGIKA POP-UP SNAP
-                        // Fungsi untuk memicu pop-up Midtrans
                         const triggerSnap = function() {
                             window.snap.pay(res.snap_token, {
                                 onPending: function(result) {
-                                    /* Terpanggil saat user mendapatkan instruksi bayar (misal: Virtual Account) */
                                     window.location.href = "/orders/status?order_id=" + result.order_id;
                                 },
                                 onError: function(result) {
-                                    /* Terpanggil saat terjadi kesalahan teknis */
                                     alert("Pembayaran gagal! Silakan coba lagi.");
                                     console.error(result);
                                 },
@@ -813,10 +791,8 @@
                             });
                         };
 
-                        // Picu pop-up pertama kali secara otomatis (Opsional)
                         triggerSnap();
 
-                        // Pasang logika yang sama ke tombol "Bayar Sekarang" jika user menutup pop-up secara tidak sengaja
                         $('#btn-pay-snap').off('click').on('click', function() {
                             triggerSnap();
                         });
@@ -832,20 +808,15 @@
             window.startTimer = function(expiryTime) {
                 if (!expiryTime) return;
 
-                // Menghitung target waktu berdasarkan string ISO dari server
                 let countDownDate = new Date(expiryTime).getTime();
 
-                // Hapus interval lama jika ada (mencegah timer ganda)
                 if (window.timerInterval) clearInterval(window.timerInterval);
 
                 window.timerInterval = setInterval(function() {
-                    // Ambil waktu sekarang (berdasarkan timezone browser user)
                     let now = new Date().getTime();
 
-                    // Jarak antara waktu sekarang dan waktu kadaluarsa
                     let distance = countDownDate - now;
 
-                    // Logika kalkulasi jam, menit, detik
                     let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                     let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
                     let seconds = Math.floor((distance % (1000 * 60)) / 1000);
@@ -859,7 +830,6 @@
                         timerEl.text(timerText);
                     }
 
-                    // Jika waktu habis
                     if (distance < 0) {
                         clearInterval(window.timerInterval);
                         if (timerEl.length) timerEl.text("EXPIRED");
@@ -870,22 +840,19 @@
             };
 
             window.cancelOrder = function(id) {
-                // Cek apakah ID ada
                 if (!id || id === "") {
                     Swal.fire('Info', 'Tidak ada transaksi aktif yang bisa dibatalkan.', 'info');
                     return;
                 }
 
-                // Tampilkan Modal DaisyUI
                 const cancelModal = document.getElementById('modal_cancel_confirmation');
 
-                // Simpan ID ke tombol eksekusi di dalam modal
                 $('#btn-execute-cancel').off('click').on('click', function() {
                     let $btn = $(this);
                     $btn.prop('disabled', true).html('<span class="loading loading-spinner loading-xs"></span>');
 
                     $.ajax({
-                        url: `/checkout/cancel/${id}`, // Pastikan route ini ada di web.php
+                        url: `/checkout/cancel/${id}`,
                         type: "POST",
                         data: {
                             _token: csrfToken,
@@ -945,21 +912,16 @@
                     }
                 });
 
-                // --- LOGIKA RECOVERY SAAT REFRESH ---
                 @if (isset($pendingTransaction) && $pendingTransaction->payment_status == 'pending')
-                    // 1. Sembunyikan tombol konfirmasi, tampilkan area bayar
                     $('#btn-confirm').addClass('hidden');
                     $('#pay-now-container').removeClass('hidden').show();
 
-                    // 2. Hitung sisa waktu (Created_at + 24 Jam)
                     @php
                         $expiryTime = $pendingTransaction->created_at->addHours(24)->toIso8601String();
                     @endphp
 
-                    // 3. Jalankan timer otomatis
                     window.startTimer("{{ $expiryTime }}");
 
-                    // 4. Pasang fungsi Snap ke tombol bayar menggunakan token lama
                     $('#btn-pay-snap').off('click').on('click', function() {
                         window.snap.pay("{{ $pendingTransaction->snap_token }}", {
                             onSuccess: function(result) {

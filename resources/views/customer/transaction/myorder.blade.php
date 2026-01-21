@@ -134,6 +134,10 @@
                                 <div class="text-xs text-gray-400 italic">Pesanan dibatalkan oleh Anda</div>
                             @endif
 
+                            @if (empty($transaction->courier_id))
+                                <div class="text-xs text-gray-400 italic">Pesanan sedang diproses oleh Admin</div>
+                            @endif
+
                             {{-- Cari bagian ini dan tambahkan id pada pembungkusnya --}}
                             <div class="flex gap-3 w-full sm:w-auto" id="btn-container-{{ $transaction->id }}">
                                 {{-- Tombol Bayar --}}
