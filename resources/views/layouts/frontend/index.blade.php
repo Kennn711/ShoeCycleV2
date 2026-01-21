@@ -110,7 +110,7 @@
                 {{-- Logo & Brand --}}
                 <div class="flex items-center gap-12">
                     <a href="{{ route('landing-page') }}" class="flex items-center gap-3 group">
-                        <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:shadow-blue-500/40 transition-all">
+                        <div class="w-10 h-10 bg-linear-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:shadow-blue-500/40 transition-all">
                             <img src="{{ asset('assets/upload/logo/logo.png') }}" alt="Logo" class="w-10 h-10 object-contain rounded-xl">
                         </div>
                         <span class="text-xl font-bold text-gray-900 font-heading hidden sm:block">ShoeCycle</span>
@@ -130,14 +130,39 @@
                     </div>
                 </div>
 
+                {{-- Search Global - Centered & Wide (Laravel Doc Style) --}}
+                <div class="hidden md:flex flex-1 justify-center max-w-2xl mx-auto px-4 relative group" id="search-global-wrapper">
+                    <div class="relative w-full">
+                        {{-- Input Field --}}
+                        <div class="relative flex items-center">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <i class="fas fa-search text-slate-400 group-focus-within:text-blue-600 transition-colors"></i>
+                            </div>
+                            <input type="text" id="input-search-global" placeholder="Cari sepatu, brand, atau kategori..." class="w-full h-11 pl-11 pr-16 bg-slate-100 border border-slate-200 rounded-2xl text-sm focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none text-slate-700" autocomplete="off">
+
+                            {{-- Shortcut Hint --}}
+                            <div class="absolute inset-y-0 right-3 flex items-center gap-1 pointer-events-none">
+                                <kbd class="kbd kbd-sm bg-white border-slate-200 text-[10px] text-slate-400 font-bold opacity-80">CTRL</kbd>
+                                <kbd class="kbd kbd-sm bg-white border-slate-200 text-[10px] text-slate-400 font-bold opacity-80">K</kbd>
+                            </div>
+                        </div>
+
+                        {{-- Dropdown Results (Tanpa Modal) --}}
+                        <div id="search-dropdown" class="hidden absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[60] animate-in fade-in slide-in-from-top-2 duration-200">
+                            <div id="search-results-wrapper" class="max-h-[420px] overflow-y-auto p-2 custom-scrollbar">
+                                {{-- Hasil pencarian akan muncul di sini via AJAX --}}
+                            </div>
+
+                            <div class="p-3 bg-slate-50 border-t border-slate-50 flex justify-between items-center px-5">
+                                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest text-black">Hasil Pencarian</span>
+                                <span class="text-[10px] text-slate-400 text-black">Tekan <kbd class="bg-white px-1 rounded border">ESC</kbd> untuk menutup</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 {{-- Right Actions --}}
                 <div class="flex items-center gap-2">
-                    {{-- Search --}}
-                    <button class="btn btn-ghost btn-circle text-gray-600 hover:text-blue-600 hover:bg-blue-50 hidden sm:flex">
-                        <i class="fas fa-search text-lg"></i>
-                    </button>
-
-                    {{-- Dropdown Keranjang Belanja --}}
                     <div class="dropdown dropdown-end">
                         <div tabindex="0" role="button" class="btn btn-ghost btn-circle text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all">
                             <div class="indicator">
@@ -150,7 +175,7 @@
                             </div>
                         </div>
 
-                        <div tabindex="0" id="mini-cart-dropdown-content" class="dropdown-content mt-3 z-[60] card card-compact w-80 bg-white shadow-2xl border border-gray-100 rounded-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <div tabindex="0" id="mini-cart-dropdown-content" class="dropdown-content mt-3 z-60 card card-compact w-80 bg-white shadow-2xl border border-gray-100 rounded-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
                             @include('layouts.frontend.partial.mini-cart-items')
                         </div>
                     </div>
@@ -166,15 +191,13 @@
                             </div>
 
                             {{-- Dropdown Content --}}
-                            <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[60] p-0 shadow-2xl bg-white rounded-2xl w-60 border border-gray-100 overflow-hidden focus:outline-none">
+                            <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-60 p-0 shadow-2xl bg-white rounded-2xl w-60 border border-gray-100 overflow-hidden focus:outline-none">
 
-                                {{-- Header: Menghilangkan class menu-title untuk menghindari konflik CSS --}}
                                 <li class="px-5 py-4 border-b border-gray-50 bg-slate-50/50 select-none pointer-events-none">
                                     <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Informasi Akun</span>
                                     <span class="block text-sm font-bold text-gray-800 truncate">{{ Auth::user()->name }}</span>
                                 </li>
 
-                                {{-- Menu Link --}}
                                 <li class="p-0">
                                     <a href="#" class="flex items-center px-5 py-3.5 hover:bg-blue-50 hover:text-blue-600 active:bg-blue-100 rounded-none transition-colors focus:bg-blue-50">
                                         <i class="fa-solid fa-gear mr-3 w-4 text-gray-400"></i> Pengaturan
@@ -186,7 +209,6 @@
                                     </a>
                                 </li>
 
-                                {{-- Logout Section: Form dibuat block agar tombol memenuhi lebar li --}}
                                 <li class="border-t border-gray-100 p-0">
                                     <form method="POST" action="{{ route('logout') }}" class="block w-full">
                                         @csrf
@@ -234,14 +256,14 @@
     {{-- ========================================================= --}}
     {{-- MAIN CONTENT                                              --}}
     {{-- ========================================================= --}}
-    <main class="flex-grow">
+    <main class="grow">
         @yield('frontend-content')
     </main>
 
     {{-- ========================================================= --}}
     {{-- FOOTER SECTION - Modern & Clean                          --}}
     {{-- ========================================================= --}}
-    <footer class="bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 text-gray-300 pt-16 pb-8 relative overflow-hidden">
+    <footer class="bg-linear-to-br from-gray-900 via-gray-900 to-gray-800 text-gray-300 pt-16 pb-8 relative overflow-hidden">
         {{-- Decorative elements --}}
         <div class="absolute top-0 right-0 w-96 h-96 bg-blue-600 rounded-full opacity-5 blur-3xl"></div>
         <div class="absolute bottom-0 left-0 w-80 h-80 bg-purple-600 rounded-full opacity-5 blur-3xl"></div>
@@ -252,7 +274,7 @@
                 {{-- Brand Info --}}
                 <div class="lg:col-span-1">
                     <div class="flex items-center gap-3 mb-4">
-                        <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
+                        <div class="w-10 h-10 bg-linear-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
                             <img src="{{ asset('assets/upload/logo/logo.png') }}" alt="Logo" class="w-10 h-10 object-contain rounded-xl">
                         </div>
                         <span class="text-2xl font-bold text-white font-heading">ShoeCycle</span>
@@ -313,9 +335,6 @@
                     <h3 class="text-white font-bold mb-4 text-sm uppercase tracking-wider">Bantuan</h3>
                     <ul class="space-y-2.5">
                         <li><a href="#" class="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-2">
-                                <i class="fas fa-chevron-right text-xs text-blue-600"></i>Pesanan Saya
-                            </a></li>
-                        <li><a href="#" class="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-2">
                                 <i class="fas fa-chevron-right text-xs text-blue-600"></i> Syarat & Ketentuan
                             </a></li>
                         <li><a href="#" class="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-2">
@@ -364,7 +383,7 @@
 
             <div class="flex flex-col">
                 {{-- Header Image / Illustration (Optional) --}}
-                <div class="h-32 bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center relative overflow-hidden">
+                <div class="h-32 bg-linear-to-br from-blue-600 to-blue-800 flex items-center justify-center relative overflow-hidden">
                     <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
                     <div class="text-center z-10">
                         <div class="w-16 h-16 bg-white rounded-xl mx-auto flex items-center justify-center shadow-lg mb-2">
@@ -426,7 +445,7 @@
                         </div>
 
                         {{-- Global Error Alert --}}
-                        <div id="login-global-error" class="alert alert-error text-sm py-3 rounded-lg hidden flex flex-row items-center justify-between shadow-sm border border-red-800">
+                        <div id="login-global-error" class="alert alert-error text-sm py-3 rounded-lg flex flex-row items-center justify-between shadow-sm border border-red-800">
 
                             {{-- Kiri: Ikon & Pesan --}}
                             <div class="flex items-center gap-2">
@@ -476,7 +495,7 @@
 
             <div class="flex flex-col">
                 {{-- Header Image / Illustration (Optional) --}}
-                <div class="h-32 bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center relative overflow-hidden">
+                <div class="h-32 bg-linear-to-br from-blue-600 to-blue-800 flex items-center justify-center relative overflow-hidden">
                     <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
                     <div class="text-center z-10">
                         <div class="w-16 h-16 bg-white rounded-xl mx-auto flex items-center justify-center shadow-lg mb-2">
@@ -567,6 +586,30 @@
         <form method="dialog" class="modal-backdrop"><button>close</button></form>
     </dialog>
 
+    <div class="hidden md:flex flex-1 mx-8 relative group" id="search-global-container">
+        <div class="relative w-full max-w-2xl mx-auto">
+            <div class="relative flex items-center">
+                <i class="fas fa-search absolute left-4 text-slate-400 group-focus-within:text-blue-600 transition-colors"></i>
+                <input type="text" id="input-search-global" placeholder="Cari sepatu, brand, atau kategori..." class="w-full h-11 pl-12 pr-16 bg-slate-100 border border-transparent focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-2xl text-sm transition-all outline-none" autocomplete="off">
+
+                <div class="absolute right-3 flex gap-1 pointer-events-none">
+                    <kbd class="kbd kbd-sm bg-white border-slate-200 text-[10px] opacity-70">CTRL</kbd>
+                    <kbd class="kbd kbd-sm bg-white border-slate-200 text-[10px] opacity-70">K</kbd>
+                </div>
+            </div>
+
+            <div id="search-dropdown" class="hidden absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div id="search-results-wrapper" class="max-h-[400px] overflow-y-auto p-2 custom-scrollbar">
+                </div>
+
+                <div class="p-3 bg-slate-50 border-t border-slate-100 flex justify-between items-center px-4">
+                    <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Hasil Pencarian</span>
+                    <span class="text-[10px] text-slate-400">Tekan ESC untuk menutup</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="{{ asset('assets/vendor/fontawesome/js/all.min.js') }}"></script>
     <script src="{{ asset('assets/vendor/jquery/jquery.min.js') }}"></script>
     <script src="{{ asset('assets/vendor/sweetalert2/sweetalert.js') }}"></script>
@@ -606,6 +649,99 @@
         document.querySelectorAll('#mobileMenu a').forEach(link => {
             link.addEventListener('click', () => {
                 document.getElementById('mobileMenu').classList.add('hidden');
+            });
+        });
+    </script>
+
+    <script>
+        $(document).ready(function() {
+            const $input = $('#input-search-global');
+            const $dropdown = $('#search-dropdown');
+            const $resultsWrapper = $('#search-results-wrapper');
+            let searchTimer;
+
+            // 1. Perbaikan Shortcut CTRL + K
+            $(document).on('keydown', function(e) {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                    e.preventDefault();
+                    $input.focus();
+                }
+            });
+
+            // 2. Tutup dropdown saat klik di luar area pencarian
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('#search-global-wrapper').length) {
+                    $dropdown.addClass('hidden');
+                }
+            });
+
+            // 3. Tombol ESC untuk tutup
+            $input.on('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    $dropdown.addClass('hidden');
+                    $input.blur();
+                }
+            });
+
+            // 4. Logika Pencarian AJAX Ringan
+            $input.on('input focus', function() {
+                const query = $(this).val().trim();
+
+                if (query.length < 3) {
+                    $dropdown.addClass('hidden');
+                    return;
+                }
+
+                // Tampilkan Dropdown & Loading State
+                $dropdown.removeClass('hidden');
+                $resultsWrapper.html(`
+                <div class="py-10 text-center">
+                    <span class="loading loading-spinner loading-md text-blue-600"></span>
+                </div>
+            `);
+
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(() => {
+                    $.ajax({
+                        url: "{{ route('api.search-global') }}",
+                        method: 'GET',
+                        data: {
+                            q: query
+                        },
+                        success: function(data) {
+                            if (data.length > 0) {
+                                let html = '';
+                                data.forEach(item => {
+                                    html += `
+                                <a href="${item.url}" class="flex items-center gap-4 p-3 rounded-xl hover:bg-blue-50/50 transition-all border border-transparent hover:border-blue-100 group">
+                                    <div class="w-12 h-12 bg-slate-50 rounded-lg overflow-hidden shrink-0 border border-slate-100">
+                                        <img src="${item.image}" class="w-full h-full object-contain mix-blend-multiply p-1">
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-0.5">${item.category}</div>
+                                        <h4 class="text-sm font-bold text-slate-900 truncate transition-colors">${item.name}</h4>
+                                        <p class="text-xs text-slate-500 font-medium">${item.price}</p>
+                                    </div>
+                                    <i class="fas fa-chevron-right text-slate-300 group-hover:text-blue-400 group-hover:translate-x-1 transition-all mr-2"></i>
+                                </a>`;
+                                });
+                                $resultsWrapper.html(html);
+                            } else {
+                                $resultsWrapper.html(`
+                                <div class="py-12 text-center">
+                                    <div class="w-12 h-12 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mx-auto mb-3">
+                                        <i class="fas fa-search text-xl"></i>
+                                    </div>
+                                    <p class="text-sm text-slate-500 font-medium">Tidak ada hasil untuk "${query}"</p>
+                                </div>
+                            `);
+                            }
+                        },
+                        error: function() {
+                            $dropdown.addClass('hidden');
+                        }
+                    });
+                }, 300); // Debounce 300ms (Sangat efisien untuk server)
             });
         });
     </script>

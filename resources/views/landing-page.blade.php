@@ -360,11 +360,11 @@
                         ],
                         [
                             'question' => 'Berapa lama proses pengiriman?',
-                            'answer' => 'Untuk pengiriman lokal (Mojokerto), pesanan yang dikonfirmasi sebelum jam 14.00 akan dikirim di hari yang sama (Same Day Delivery). Untuk luar kota menyesuaikan ekspedisi.',
+                            'answer' => 'Untuk pengiriman pesanan yang dikonfirmasi sebelum jam 14.00 akan dikirim di hari yang sama (Same Day Delivery).',
                         ],
                         [
-                            'question' => 'Apakah bisa tukar ukuran jika tidak pas?',
-                            'answer' => 'Tentu! Kami menyediakan garansi tukar size maksimal 3 hari setelah barang diterima, selama tag belum dilepas dan kondisi sepatu belum dipakai jalan (hanya fitting).',
+                            'question' => 'Apakah melayani pengiriman ke luar kota / luar pulau?',
+                            'answer' => 'Kami melayani pesanan / pengiriman hanya untuk area Kabupaten & Kota Mojokerto melalui driver lokal.',
                         ],
                     ];
                 @endphp

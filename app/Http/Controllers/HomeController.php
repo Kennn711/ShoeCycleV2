@@ -54,6 +54,42 @@ class HomeController extends Controller
         return view('landing-page', compact('categories', 'newArrivals', 'brands'));
     }
 
+    public function searchGlobal(Request $request)
+    {
+        $query = $request->get('q');
+        if (strlen($query) < 3) return response()->json([]);
+
+        $shoes = Shoes::select('id', 'name', 'slug', 'category_id')
+            ->with([
+                'category:id,category_name',
+                'variants' => function ($q) {
+                    $q->select('id', 'shoe_id', 'price')->limit(1);
+                },
+                'variants.images' => function ($q) {
+                    $q->select('id', 'shoe_variant_id', 'image_path')->where('is_primary', true)->limit(1);
+                }
+            ])
+            ->where('is_active', true)
+            ->where('name', 'LIKE', "%{$query}%")
+            ->orWhere('brand_name', 'LIKE', "%{$query}%")
+            ->limit(6)
+            ->get()
+            ->map(function ($shoe) {
+                $variant = $shoe->variants->first();
+                $image = $variant?->images->first();
+
+                return [
+                    'name'     => $shoe->name,
+                    'category' => $shoe->category->category_name ?? 'Shoes',
+                    'url'      => route('detail-shoes', $shoe->slug),
+                    'price'    => $variant ? 'Rp ' . number_format($variant->price, 0, ',', '.') : 'Stok Habis',
+                    'image'    => $image ? asset('storage/' . $image->image_path) : asset('assets/upload/testing/sepatu1.webp')
+                ];
+            });
+
+        return response()->json($shoes);
+    }
+
     public function detailShoes($slug)
     {
         // 1. Ambil data sepatu berdasarkan Slug
