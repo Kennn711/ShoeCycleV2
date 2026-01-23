@@ -39,15 +39,18 @@ Route::middleware(['auth', 'customer'])->group(function () {
     Route::put('/checkout/cancel/{id}', [CheckoutController::class, 'cancel'])->name('checkout.cancel');
 
     Route::get('my-orders', [TransactionController::class, 'indexCustomer'])->name('my-order.index');
+
     Route::post('/address/store', [AddressController::class, 'store'])->name('address.store');
+    Route::put('/address/update/{id}', [AddressController::class, 'update'])->name('address.update');
+    Route::put('/address/set-primary/{id}', [AddressController::class, 'setPrimary'])->name('address.set-primary');
 
     Route::post('/reviews/store', [ReviewController::class, 'store'])->name('reviews.store');
 
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
     Route::put('/settings/password', [SettingsController::class, 'updatePassword'])->name('settings.password.update');
+    Route::post('/settings/verify-password', [SettingsController::class, 'verifyCurrentPassword'])->name('settings.verify-password');
     Route::delete('/settings/account', [SettingsController::class, 'deleteAccount'])->name('settings.account.delete');
     Route::put('/settings/profile', [SettingsController::class, 'updateProfile'])->name('settings.profile.update');
-
     Route::post('/settings/check-email', [SettingsController::class, 'checkEmail'])->name('settings.check-email');
 });
 

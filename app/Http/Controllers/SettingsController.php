@@ -6,6 +6,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class SettingsController extends Controller
 {
@@ -13,9 +15,16 @@ class SettingsController extends Controller
     {
         $user = Auth::user();
 
-        $addresses = $user->addresses()->orderBy('is_primary', 'desc')->get();
+        $userAddresses = $user->addresses()->orderBy('is_primary', 'desc')->get();
+        $addresses = $userAddresses;
+        $storeConfig = ['lat' => -7.472613, 'lng' => 112.433912];
+        return view('customer.settings', compact('user', 'userAddresses', 'addresses', 'storeConfig'));
+    }
 
-        return view('customer.settings', compact('user', 'addresses'));
+    public function verifyCurrentPassword(Request $request)
+    {
+        $isValid = Hash::check($request->current_password, auth()->user()->password);
+        return response()->json(['valid' => $isValid]);
     }
 
     public function updatePassword(Request $request)
@@ -43,12 +52,33 @@ class SettingsController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
+            'profile_picture' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:100'
         ]);
 
-        $user->update([
+        $data = [
             'name' => $request->name,
             'email' => $request->email,
-        ]);
+        ];
+
+        // 3. Logika Upload Gambar
+        if ($request->hasFile('profile_picture')) {
+            $file = $request->file('profile_picture');
+            $filename = 'user_' . time() . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
+
+            // Simpan file baru
+            $path = $file->storeAs('profile-pictures', $filename, 'public');
+
+            // Hapus foto lama jika ada (agar storage tidak penuh)
+            if ($user->profile_picture && Storage::disk('public')->exists($user->profile_picture)) {
+                Storage::disk('public')->delete($user->profile_picture);
+            }
+
+            // Masukkan path baru ke array data
+            $data['profile_picture'] = $path;
+        }
+
+        // 4. Update Database
+        $user->update($data);
 
         return back()->with('success', 'Profil berhasil diperbarui.');
     }

@@ -74,4 +74,68 @@ class AddressController extends Controller
             ], 500);
         }
     }
+
+    // Method Update
+    public function update(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'label'          => 'required|in:Home,Office,Apartment,Boarding House,Other',
+            'recipient_name' => 'required|string|max:255',
+            'phone_number'   => 'required|string|max:20',
+            'full_address'   => 'required|string',
+            'district'       => 'required|string|max:255',
+            'village'        => 'required|string|max:255',
+            'courier_note'   => 'nullable|string',
+            'latitude'       => 'nullable|numeric',
+            'longitude'      => 'nullable|numeric',
+            'is_primary'     => 'nullable',
+        ]);
+
+        try {
+            DB::beginTransaction();
+            $address = Address::where('user_id', Auth::id())->findOrFail($id);
+            $isPrimary = $request->has('is_primary') || $request->is_primary == 1;
+
+            if ($isPrimary) {
+                Address::where('user_id', Auth::id())->update(['is_primary' => false]);
+            }
+
+            $address->update(array_merge($validated, ['is_primary' => $isPrimary]));
+
+            DB::commit();
+            return response()->json(['status' => 'success', 'message' => 'Alamat berhasil diperbarui.']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function setPrimary($id)
+    {
+        try {
+            DB::beginTransaction();
+
+            $user = Auth::user();
+
+            // 1. Set semua alamat user ini menjadi NOT primary
+            $user->addresses()->update(['is_primary' => false]);
+
+            // 2. Set alamat yang dipilih menjadi primary
+            $address = $user->addresses()->findOrFail($id);
+            $address->update(['is_primary' => true]);
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Alamat utama berhasil diperbarui!'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal memperbarui alamat: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

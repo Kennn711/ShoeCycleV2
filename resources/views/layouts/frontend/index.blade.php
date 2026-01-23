@@ -186,7 +186,7 @@
                             {{-- Trigger Avatar --}}
                             <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar focus:bg-slate-100 active:bg-slate-200 transition-all">
                                 <div class="w-9 rounded-full ring-2 ring-gray-200 ring-offset-2">
-                                    <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=2563eb&color=fff&bold=true" alt="{{ Auth::user()->name }}" />
+                                    <img src="{{ Auth::user()->profile_picture ? asset('storage/' . Auth::user()->profile_picture) : 'https://ui-avatars.com/api/?name=' . urlencode(Auth::user()->name) . '&background=2563eb&color=fff&bold=true' }}" />
                                 </div>
                             </div>
 
