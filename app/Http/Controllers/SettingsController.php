@@ -53,6 +53,14 @@ class SettingsController extends Controller
         return back()->with('success', 'Profil berhasil diperbarui.');
     }
 
+    public function checkEmail(Request $request)
+    {
+        $exists = User::where('email', $request->email)
+            ->where('id', '!=', Auth::id())
+            ->exists();
+        return response()->json(['exists' => $exists]);
+    }
+
     public function deleteAccount()
     {
         $user = Auth::user();

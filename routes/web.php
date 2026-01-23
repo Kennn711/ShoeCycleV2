@@ -47,6 +47,8 @@ Route::middleware(['auth', 'customer'])->group(function () {
     Route::put('/settings/password', [SettingsController::class, 'updatePassword'])->name('settings.password.update');
     Route::delete('/settings/account', [SettingsController::class, 'deleteAccount'])->name('settings.account.delete');
     Route::put('/settings/profile', [SettingsController::class, 'updateProfile'])->name('settings.profile.update');
+
+    Route::post('/settings/check-email', [SettingsController::class, 'checkEmail'])->name('settings.check-email');
 });
 
 Route::middleware(['auth', 'admin'])->group(function () {
