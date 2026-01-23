@@ -199,7 +199,7 @@
                                 </li>
 
                                 <li class="p-0">
-                                    <a href="#" class="flex items-center px-5 py-3.5 hover:bg-blue-50 hover:text-blue-600 active:bg-blue-100 rounded-none transition-colors focus:bg-blue-50">
+                                    <a href="{{ route('settings.index') }}" class="flex items-center px-5 py-3.5 hover:bg-blue-50 hover:text-blue-600 active:bg-blue-100 rounded-none transition-colors focus:bg-blue-50">
                                         <i class="fa-solid fa-gear mr-3 w-4 text-gray-400"></i> Pengaturan
                                     </a>
                                 </li>

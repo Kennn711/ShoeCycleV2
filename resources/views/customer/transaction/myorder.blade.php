@@ -145,15 +145,28 @@
                                     <button onclick="window.snap.pay('{{ $transaction->snap_token }}')" class="btn btn-sm btn-primary text-white rounded-lg px-6 grow sm:grow-0">Bayar Sekarang</button>
                                 @endif
 
-                                {{-- Tombol Beri Ulasan --}}
                                 @if ($transaction->transaction_status == 'delivered')
                                     @php
-                                        $totalItems = $transaction->details->count();
-                                        $ratedItemsCount = \App\Models\Reviews::where('transaction_id', $transaction->id)->where('user_id', Auth::id())->count();
+                                        $orderDetails = $transaction->details;
+
+                                        // Ambil ID Sepatu (model) yang sudah diulas user (Global atau per Transaksi)
+                                        $reviewedShoeIds = \App\Models\Reviews::where('user_id', Auth::id())->pluck('shoe_id')->toArray();
+
+                                        // Filter: Ambil item, tapi buat unik berdasarkan shoe_id
+                                        // Jadi jika ada 2 varian sepatu yang sama, hanya akan muncul 1 kali di list
+                                        $unreviewedItems = $orderDetails
+                                            ->filter(function ($item) use ($reviewedShoeIds) {
+                                                return !in_array($item->variant->shoe_id, $reviewedShoeIds);
+                                            })
+                                            ->unique(function ($item) {
+                                                return $item->variant->shoe_id; // KUNCI: Unik berdasarkan model sepatu
+                                            });
+
+                                        $unreviewedCount = $unreviewedItems->count();
                                     @endphp
 
-                                    @if ($ratedItemsCount < $totalItems)
-                                        <button type="button" class="btn-open-rating btn btn-sm btn-primary px-6 grow sm:grow-0 text-white" data-order="{{ json_encode($transaction->load(['details.variant.shoe', 'details.variant.images'])) }}">
+                                    @if ($unreviewedCount > 0)
+                                        <button type="button" class="btn-open-rating btn btn-sm btn-primary px-6 text-white" data-invoice="{{ $transaction->invoice }}" data-tid="{{ $transaction->id }}" data-items="{{ json_encode($unreviewedItems->values()->load(['variant.shoe.category', 'variant.images'])) }}">
                                             <i class="fas fa-star mr-1"></i> Beri Ulasan
                                         </button>
                                     @else
@@ -418,53 +431,60 @@
                 searchTimeout = setTimeout(() => applyFilters(), 300);
             });
 
-            // 3. Listener Tombol Lihat Detail (Memperbaiki Syntax Error)
             $(document).on('click', '.btn-show-detail', function() {
                 const data = $(this).data('detail');
                 showOrderDetail(data);
             });
 
-            // 4. Listener Tombol Beri Ulasan
             $(document).on('click', '.btn-open-rating', function() {
-                const transaction = $(this).data('order');
+                const invoice = $(this).data('invoice');
+                const transactionId = $(this).data('tid');
+                const items = $(this).data('items');
+
                 const modal = document.getElementById('rating_modal');
                 const container = document.getElementById('rating-items-container');
 
-                $('#mdl-rating-invoice').text(transaction.invoice);
-                $('#mdl-rating-transaction-id').val(transaction.id);
+                $('#mdl-rating-invoice').text(invoice);
+                $('#mdl-rating-transaction-id').val(transactionId);
                 container.innerHTML = '';
 
-                transaction.details.forEach((item, index) => {
+                items.forEach((item, index) => {
                     const imagePath = (item.variant.images && item.variant.images.length > 0) ?
                         `/storage/${item.variant.images[0].image_path}` :
                         '/assets/upload/testing/sepatu1.webp';
 
                     const itemHtml = `
-                        <div class="space-y-4 border-b border-gray-100 pb-6 last:border-0 last:pb-0 text-black">
-                            <div class="flex items-center gap-4">
-                                <img src="${imagePath}" class="w-14 h-14 object-contain bg-gray-50 rounded-xl border p-1">
-                                <div class="min-w-0">
-                                    <h4 class="text-sm font-bold text-gray-900 truncate">${item.variant.shoe.name}</h4>
-                                    <p class="text-[10px] text-gray-400 uppercase tracking-tight">Varian: ${item.variant.color} | Size: ${item.variant.size}</p>
-                                </div>
-                            </div>
-                            <input type="hidden" name="reviews[${index}][shoe_id]" value="${item.variant.shoe_id}">
-                            <div class="space-y-3">
-                                <div class="flex items-center justify-between bg-slate-50 p-2 rounded-lg">
-                                    <span class="text-xs font-bold text-gray-600 uppercase">Kualitas Produk:</span>
-                                    <div class="rating rating-sm">
-                                        <input type="radio" name="reviews[${index}][rating]" value="1" class="mask mask-star-2 bg-orange-400" />
-                                        <input type="radio" name="reviews[${index}][rating]" value="2" class="mask mask-star-2 bg-orange-400" />
-                                        <input type="radio" name="reviews[${index}][rating]" value="3" class="mask mask-star-2 bg-orange-400" />
-                                        <input type="radio" name="reviews[${index}][rating]" value="4" class="mask mask-star-2 bg-orange-400" />
-                                        <input type="radio" name="reviews[${index}][rating]" value="5" class="mask mask-star-2 bg-orange-400" checked />
-                                    </div>
-                                </div>
-                                <textarea name="reviews[${index}][comment]" class="textarea textarea-bordered w-full bg-white text-sm focus:border-blue-500 rounded-xl resize-none" rows="3" placeholder="Ceritakan kepuasanmu..."></textarea>
-                            </div>
-                        </div>`;
+<div class="space-y-4 border-b border-gray-100 pb-6 last:border-0 last:pb-0 text-black">
+    <div class="flex items-center gap-4">
+        <img src="${imagePath}" class="w-14 h-14 object-contain bg-gray-50 rounded-xl border p-1">
+        <div class="min-w-0">
+            <h4 class="text-sm font-bold text-gray-900 truncate">${item.variant.shoe.name}</h4>
+            {{-- PERBAIKAN: Gunakan pengecekan agar tidak error --}}
+            <p class="text-[10px] text-gray-400 uppercase tracking-tight">
+                Kategori: ${item.variant.shoe.category ? item.variant.shoe.category.category_name : 'Sepatu'}
+            </p>
+        </div>
+    </div>
+    
+    <input type="hidden" name="reviews[${index}][shoe_id]" value="${item.variant.shoe_id}">
+
+    <div class="space-y-3">
+        <div class="flex items-center justify-between bg-slate-50 p-2 rounded-lg">
+            <span class="text-xs font-bold text-gray-600 uppercase">Rating:</span>
+            <div class="rating rating-sm">
+                <input type="radio" name="reviews[${index}][rating]" value="1" class="mask mask-star-2 bg-orange-400" />
+                <input type="radio" name="reviews[${index}][rating]" value="2" class="mask mask-star-2 bg-orange-400" />
+                <input type="radio" name="reviews[${index}][rating]" value="3" class="mask mask-star-2 bg-orange-400" />
+                <input type="radio" name="reviews[${index}][rating]" value="4" class="mask mask-star-2 bg-orange-400" />
+                <input type="radio" name="reviews[${index}][rating]" value="5" class="mask mask-star-2 bg-orange-400" checked />
+            </div>
+        </div>
+        <textarea name="reviews[${index}][comment]" class="textarea textarea-bordered w-full bg-white text-sm focus:border-blue-500 rounded-xl resize-none text-black" rows="2" placeholder="Bagaimana kualitas model sepatu ini?"></textarea>
+    </div>
+</div>`;
                     container.insertAdjacentHTML('beforeend', itemHtml);
                 });
+
                 modal.showModal();
             });
 

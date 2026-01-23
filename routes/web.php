@@ -10,6 +10,7 @@ use App\Http\Controllers\DeliveryController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\ShoesController;
 use App\Http\Controllers\ShoesVariantController;
 use App\Http\Controllers\TransactionController;
@@ -41,6 +42,11 @@ Route::middleware(['auth', 'customer'])->group(function () {
     Route::post('/address/store', [AddressController::class, 'store'])->name('address.store');
 
     Route::post('/reviews/store', [ReviewController::class, 'store'])->name('reviews.store');
+
+    Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
+    Route::put('/settings/password', [SettingsController::class, 'updatePassword'])->name('settings.password.update');
+    Route::delete('/settings/account', [SettingsController::class, 'deleteAccount'])->name('settings.account.delete');
+    Route::put('/settings/profile', [SettingsController::class, 'updateProfile'])->name('settings.profile.update');
 });
 
 Route::middleware(['auth', 'admin'])->group(function () {
