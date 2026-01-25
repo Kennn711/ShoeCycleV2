@@ -440,7 +440,7 @@
                                     <input type="text" id="search-address" placeholder="Ketik nama jalan, perumahan, atau gedung..." class="input w-full pl-12 bg-white text-black border-none focus:ring-0 text-sm h-12">
                                 </div>
                             </div>
-                            <ul id="search-results" class="hidden mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden max-h-60 overflow-y-auto z-1001 text-black">
+                            <ul id="search-results" class="hidden mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden max-h-60 overflow-y-auto z-1002 text-black">
                             </ul>
                         </div>
                     </div>
@@ -553,6 +553,105 @@
         </div>
         <form method="dialog" class="modal-backdrop bg-black/50 backdrop-blur-sm"><button>close</button></form>
     </dialog>
+
+    {{-- MODAL EDIT ALAMAT --}}
+    <dialog id="edit_address_modal" class="modal modal-bottom sm:modal-middle">
+        <div class="modal-box w-11/12 rounded-xl max-w-4xl bg-white p-0 h-[650px] flex flex-col overflow-hidden text-black">
+            {{-- Header --}}
+            <div class="bg-white px-8 pt-8 pb-4 border-b border-gray-50 shadow-sm">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-black text-xl text-gray-900">Ubah Alamat</h3>
+                    <form method="dialog"><button class="btn btn-sm btn-circle btn-ghost">✕</button></form>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-8">
+                <form id="edit-address-form" class="space-y-5">
+                    @csrf
+                    @method('PUT')
+                    <input type="hidden" name="address_id" id="edit-address-id">
+                    <input type="hidden" name="latitude" id="edit-form-lat">
+                    <input type="hidden" name="longitude" id="edit-form-lng">
+
+                    {{-- Baris 4: TITIK KOORDINAT (KHUSUS EDIT) --}}
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-bold text-gray-700">Titik Lokasi</span></label>
+                        <div class="flex items-center justify-between p-4 bg-slate-50 border border-gray-200 rounded-2xl">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="text-[10px] font-bold text-gray-400 uppercase">Koordinat Terpasang</span>
+                                    <span id="edit-coords-display" class="text-sm font-black text-gray-700">Sudah diatur</span>
+                                </div>
+                            </div>
+                            <button type="button" onclick="rePinpointFromEdit()" class="btn btn-sm bg-blue-600 hover:bg-blue-700 border-none text-white rounded-lg px-5">Ubah</button>
+                        </div>
+                    </div>
+
+                    {{-- Baris 5: Label --}}
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-bold">Simpan Sebagai</span></label>
+                        <div class="flex flex-wrap gap-2 w-full">
+                            @foreach (['Home' => 'Rumah', 'Office' => 'Kantor', 'Apartment' => 'Apartemen', 'Boarding House' => 'Kos', 'Other' => 'Lainnya'] as $val => $lbl)
+                                <label class="cursor-pointer border border-gray-200 rounded-lg px-4 py-2 has-checked:bg-blue-50 has-checked:border-blue-500 flex items-center gap-2 transition-all">
+                                    <input type="radio" name="label" value="{{ $val }}" id="edit-label-{{ $val }}" class="radio radio-primary radio-xs">
+                                    <span class="text-sm font-medium">{{ $lbl }}</span>
+                                </label>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    {{-- Baris 3: Kecamatan & Desa --}}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="form-control">
+                            <label class="label"><span class="label-text font-bold">Kecamatan</span></label>
+                            <input type="text" name="district" id="edit-district" class="input input-bordered rounded-xl bg-slate-50 font-bold h-12" required>
+                        </div>
+                        <div class="form-control">
+                            <label class="label"><span class="label-text font-bold">Desa / Kelurahan</span></label>
+                            <input type="text" name="village" id="edit-village" class="input input-bordered rounded-xl bg-slate-50 font-bold h-12" required>
+                        </div>
+                    </div>
+
+                    {{-- Baris 1: Nama & Phone --}}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="form-control">
+                            <label class="label"><span class="label-text font-bold">Nama Penerima</span></label>
+                            <input type="text" name="recipient_name" id="edit-recipient" class="input input-bordered rounded-xl bg-slate-50 font-bold h-12" required>
+                        </div>
+                        <div class="form-control">
+                            <label class="label"><span class="label-text font-bold">Nomor HP</span></label>
+                            <input type="text" name="phone_number" id="edit-phone" class="input input-bordered rounded-xl bg-slate-50 font-bold h-12" required>
+                        </div>
+                    </div>
+
+                    {{-- Baris 2: Alamat Lengkap --}}
+                    <div class="form-control w-full group">
+                        <label class="label"><span class="label-text font-bold">Alamat Lengkap</span></label>
+                        <textarea name="full_address" id="edit-full-address" class="textarea textarea-bordered w-full rounded-xl focus:border-blue-500 text-base leading-relaxed" rows="4" style="resize: none" required></textarea>
+                    </div>
+
+                    {{-- Baris 6: Catatan --}}
+                    <div class="form-control w-full">
+                        <label class="label pb-1"><span class="label-text font-bold text-gray-700">Catatan Kurir (Opsional)</span></label>
+                        <textarea name="courier_note" id="edit-note" class="textarea textarea-bordered w-full resize-none rounded-xl" placeholder="Warna pagar, patokan, dll."></textarea>
+                    </div>
+
+                    {{-- Baris 7: Primary Checkbox --}}
+                    <label class="label cursor-pointer justify-start gap-3 bg-blue-50 p-4 rounded-2xl border border-blue-100">
+                        <input type="checkbox" name="is_primary" id="edit-is-primary" value="1" class="checkbox checkbox-primary">
+                        <span class="label-text font-black text-blue-700 uppercase text-[11px]">Jadikan Alamat Utama</span>
+                    </label>
+
+                    <button type="button" onclick="updateAddress()" id="btn-update-address" class="btn bg-blue-500 hover:bg-blue-600 text-white w-full h-14 rounded-2xl font-black border-none shadow-xl">
+                        Simpan Perubahan
+                    </button>
+                </form>
+            </div>
+        </div>
+    </dialog>
 @endsection
 
 @push('scripts')
@@ -563,6 +662,7 @@
         const userAddresses = @json($userAddresses);
         const STORE_LAT = {{ $storeConfig['lat'] }};
         const STORE_LNG = {{ $storeConfig['lng'] }};
+        const originalGoToStep = window.goToStep;
         let map = null,
             selectedLat = STORE_LAT,
             selectedLng = STORE_LNG,
@@ -570,6 +670,7 @@
             searchTimeout,
             listSearchTimer;
 
+        let isFromEdit = false;
         let isCurrentPwValid = false;
         let isNewPwValid = false;
         let isEmailAvailable = true;
@@ -610,6 +711,8 @@
                 }, 300);
             }
         }
+
+
 
         function validateAddressForm() {
             const form = $('#add-address-form');
@@ -652,6 +755,19 @@
         };
 
         window.goToStep = function(step) {
+            // Jika kita di Step 2 dan klik Konfirmasi (Step 3), cek apakah kita sedang dalam mode EDIT
+            if (step === 3 && isFromEdit) {
+                // Simpan koordinat baru ke form edit
+                $('#edit-form-lat').val(selectedLat);
+                $('#edit-form-lng').val(selectedLng);
+                $('#edit-coords-display').text(`${selectedLat.toFixed(5)}, ${selectedLng.toFixed(5)}`);
+
+                // Tutup modal peta, buka kembali modal edit
+                document.getElementById('add_address_modal').close();
+                document.getElementById('edit_address_modal').showModal();
+                return;
+            }
+
             currentStep = step;
             $('[id^="step-content-"]').addClass('hidden');
             $('#step-content-' + step).removeClass('hidden');
@@ -683,6 +799,28 @@
         window.prevStep = function() {
             if (currentStep > 1) window.goToStep(currentStep - 1);
         };
+
+        // --- FUNGSI SEARCH PERBAIKAN ---
+        function executeSearch(query) {
+            if (query.length < 3) return;
+
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=id&limit=5`)
+                .then(res => res.json())
+                .then(data => {
+                    let html = '';
+                    if (data.length > 0) {
+                        data.forEach(item => {
+                            html += `<li class="p-4 hover:bg-blue-50 cursor-pointer border-b border-gray-50 text-xs flex items-start gap-3 transition-colors" 
+                            onclick="selectSearchResult(${item.lat}, ${item.lon}, '${item.display_name.replace(/'/g, "\\'")}')">
+                            <i class="fas fa-map-marker-alt text-blue-500 mt-1"></i>
+                            <span class="leading-tight text-black font-medium">${item.display_name}</span></li>`;
+                        });
+                        $('#search-results').html(html).removeClass('hidden');
+                    } else {
+                        $('#search-results').html('<li class="p-4 text-xs text-gray-500">Alamat tidak ditemukan</li>').removeClass('hidden');
+                    }
+                });
+        }
 
         $(document).ready(function() {
             // --- LOGIKA INITIAL LOAD (REFRESH) ---
@@ -720,6 +858,35 @@
             } else {
                 switchTab('biodata'); // Default jika tidak ada hash
             }
+
+            // --- SEARCH INPUT LISTENER ---
+            $('#search-address').on('input', function() {
+                const query = $(this).val();
+                clearTimeout(searchTimeout);
+                if (query.length < 3) {
+                    $('#search-results').addClass('hidden');
+                    return;
+                }
+                searchTimeout = setTimeout(() => {
+                    executeSearch(query);
+                }, 500);
+            });
+
+            // --- FIX: ENTER KEY HANDLER ---
+            $('#search-address').on('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); // Cegah reload/submit form
+                    const query = $(this).val();
+
+                    // Jika sudah ada hasil, pilih yang paling atas
+                    const firstResult = $('#search-results li').first();
+                    if (firstResult.length > 0 && !$('#search-results').hasClass('hidden')) {
+                        firstResult.click();
+                    } else {
+                        executeSearch(query); // Jika belum ada hasil, paksa cari
+                    }
+                }
+            });
 
             // --- 2. LOGIKA PENCARIAN DAFTAR ALAMAT (DEBOUNCE) ---
             $('#search-address-list').on('input', function() {
@@ -810,6 +977,72 @@
                 }
             });
         };
+
+        window.editAddress = function(data) {
+            isFromEdit = false; // Reset flag
+            const modal = document.getElementById('edit_address_modal');
+
+            // Set ID dan Values
+            $('#edit-address-id').val(data.id);
+            $('#edit-recipient').val(data.recipient_name);
+            $('#edit-phone').val(data.phone_number);
+            $('#edit-full-address').val(data.full_address);
+            $('#edit-district').val(data.district);
+            $('#edit-village').val(data.village);
+            $('#edit-note').val(data.courier_note);
+
+            // Set Latitude/Longitude
+            selectedLat = parseFloat(data.latitude);
+            selectedLng = parseFloat(data.longitude);
+            $('#edit-form-lat').val(selectedLat);
+            $('#edit-form-lng').val(selectedLng);
+            $('#edit-coords-display').text(`${selectedLat.toFixed(5)}, ${selectedLng.toFixed(5)}`);
+
+            // Set Radio Label
+            $(`input[name="label"][value="${data.label}"]`).prop('checked', true);
+
+            // Set Checkbox Primary
+            $('#edit-is-primary').prop('checked', data.is_primary == 1);
+
+            modal.showModal();
+        };
+
+        function updateAddress() {
+            const id = $('#edit-address-id').val();
+            const formData = $('#edit-address-form').serialize();
+            const btn = $('#btn-update-address');
+
+            btn.prop('disabled', true).html('<span class="loading loading-spinner"></span>');
+
+            $.ajax({
+                url: `/address/update/${id}`,
+                type: 'PUT',
+                data: formData,
+                success: function(res) {
+                    sessionStorage.setItem('flash_toast_status', 'success');
+                    sessionStorage.setItem('flash_toast_message', res.message);
+                    window.location.reload();
+                },
+                error: function(xhr) {
+                    btn.prop('disabled', false).text('Simpan Perubahan');
+                    alert(xhr.responseJSON ? xhr.responseJSON.message : 'Gagal update.');
+                }
+            });
+        }
+
+        function rePinpointFromEdit() {
+            isFromEdit = true; // Set flag
+            document.getElementById('edit_address_modal').close(); // Tutup modal edit sebentar
+
+            // Buka modal add_address_modal langsung ke Step 2 (Peta)
+            $('#add_address_modal')[0].showModal();
+            goToStep(2);
+
+            // Pastikan peta terfokus ke koordinat alamat yang sedang diedit
+            setTimeout(() => {
+                if (map) map.setView([selectedLat, selectedLng], 18);
+            }, 500);
+        }
 
         function validateBiodataChanges() {
             const nameInput = document.getElementById('input-name');
