@@ -17,8 +17,8 @@ return new class extends Migration
             $table->foreignId('variant_id')->constrained('shoes_variants');
 
             $table->integer('qty');
-            $table->decimal('price', 12, 2); // Harga saat dibeli (fixed)
-            $table->text('notes')->nullable(); // Catatan per item (Tokopedia Style)
+            $table->decimal('price', 12, 2);
+            $table->text('notes')->nullable();
 
             $table->timestamps();
         });
