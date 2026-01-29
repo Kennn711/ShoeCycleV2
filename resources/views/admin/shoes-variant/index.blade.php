@@ -288,9 +288,9 @@
                             </div>
                         </div>
                         {{-- Error Message Span untuk Gambar --}}
-                        <span id="error-images" class="text-red-500 text-xs mt-2 hidden text-center block"></span>
+                        <span id="error-images" class="text-red-500 text-xs mt-2 text-center block"></span>
 
-                        <div id="image-preview-container" class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 hidden"></div>
+                        <div id="image-preview-container" class="mt-4 grid-cols-2 md:grid-cols-4 gap-3 hidden"></div>
                     </div>
 
                     {{-- SKU --}}
@@ -495,7 +495,7 @@
                         <div id="edit-existing-images" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                             {{-- Diisi via JS --}}
                         </div>
-                        <span id="edit-error-images" class="text-red-500 text-xs hidden mb-4 block">Jangan hapus semua gambar. Sisakan minimal 1 atau upload baru.</span>
+                        <span id="edit-error-images" class="text-red-500 text-xs mb-4 block">Jangan hapus semua gambar. Sisakan minimal 1 atau upload baru.</span>
 
                         {{-- 2. Upload Baru --}}
                         <p class="text-sm text-gray-500 mb-2 font-medium border-t border-gray-200 pt-4">Tambah Gambar Baru:</p>
@@ -506,7 +506,7 @@
                                 <input type="file" name="images[]" id="edit-image-upload" class="hidden" accept="image/*" multiple>
                             </div>
                         </div>
-                        <div id="edit-new-image-preview" class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 hidden"></div>
+                        <div id="edit-new-image-preview" class="mt-4 grid-cols-2 md:grid-cols-4 gap-3 hidden"></div>
                     </div>
 
                     {{-- Global Error --}}

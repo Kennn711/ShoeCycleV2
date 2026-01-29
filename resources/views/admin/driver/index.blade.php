@@ -106,7 +106,7 @@
                         <div class="relative w-32 h-32 mb-3 group cursor-pointer" onclick="document.getElementById('input-foto').click()">
                             <div class="w-full h-full rounded-full overflow-hidden border-4 border-gray-100 bg-gray-50 flex items-center justify-center" id="preview-container">
                                 <i id="icon-camera" class="fas fa-camera text-3xl text-gray-300 absolute"></i>
-                                <img id="img-preview" src="" class="w-full h-full object-cover hidden z-10 relative">
+                                <img id="img-preview" src="#" class="w-full h-full object-cover hidden z-10 relative">
                             </div>
                             <div class="absolute inset-0 bg-black bg-opacity-40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-35 transition-opacity z-20">
                                 <span class="text-white text-xs font-medium">Ubah Foto</span>
@@ -177,7 +177,7 @@
                         <div class="relative w-32 h-32 mb-3 group cursor-pointer" onclick="document.getElementById('edit-input-foto').click()">
                             <div class="w-full h-full rounded-full overflow-hidden border-4 border-gray-100 bg-gray-50 flex items-center justify-center relative">
                                 {{-- Preview Image (Selalu ada di edit, entah dummy atau foto asli) --}}
-                                <img id="edit-img-preview" src="" class="w-full h-full object-cover z-10 relative">
+                                <img id="edit-img-preview" src="#" class="w-full h-full object-cover z-10 relative">
                             </div>
                             <div class="absolute inset-0 bg-black bg-opacity-40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-35 transition-opacity z-20">
                                 <span class="text-white text-xs font-medium">Ganti Foto</span>
@@ -185,7 +185,7 @@
                         </div>
                         <span class="text-xs text-gray-500">Klik gambar untuk mengganti</span>
                         <input type="file" name="profile_picture" id="edit-input-foto" class="hidden" accept="image/*">
-                        <span id="edit-error-profile_picture" class="text-red-500 text-xs mt-1 hidden text-center block"></span>
+                        <span id="edit-error-profile_picture" class="text-red-500 text-xs mt-1 text-center block"></span>
                     </div>
 
                     {{-- Grid Input --}}
@@ -193,19 +193,19 @@
                         <div class="form-control">
                             <label class="label"><span class="label-text font-medium">Nama Lengkap <span class="text-red-500">*</span></span></label>
                             <input type="text" name="name" id="edit-input-name" class="input input-bordered bg-white w-full" required>
-                            <span id="edit-error-name" class="text-red-500 text-xs mt-1 hidden block"></span>
+                            <span id="edit-error-name" class="text-red-500 text-xs mt-1 block"></span>
                         </div>
 
                         <div class="form-control">
                             <label class="label"><span class="label-text font-medium">Email <span class="text-red-500">*</span></span></label>
                             <input type="email" name="email" id="edit-input-email" class="input input-bordered bg-white w-full" required>
-                            <span id="edit-error-email" class="text-red-500 text-xs mt-1 hidden block"></span>
+                            <span id="edit-error-email" class="text-red-500 text-xs mt-1 block"></span>
                         </div>
 
                         <div class="form-control col-span-1 md:col-span-2">
                             <label class="label"><span class="label-text font-medium">Password Baru <span class="text-gray-400 font-normal text-xs">(Kosongkan jika tidak ingin mengganti)</span></span></label>
                             <input type="password" name="password" id="edit-input-password" class="input input-bordered bg-white w-full" placeholder="Minimal 6 karakter">
-                            <span id="edit-error-password" class="text-red-500 text-xs mt-1 hidden block"></span>
+                            <span id="edit-error-password" class="text-red-500 text-xs mt-1 block"></span>
                         </div>
                     </div>
 

@@ -26,7 +26,7 @@
                                 <span>10 Data</span>
                                 <i class="fas fa-chevron-down text-gray-500 text-xs"></i>
                             </div>
-                            <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-white border border-gray-200 rounded-box w-44">
+                            <ul tabindex="0" class="dropdown-content z-1 menu p-2 shadow bg-white border border-gray-200 rounded-box w-44">
                                 <li><a class="text-sm text-gray-700 hover:bg-gray-100">5 Data</a></li>
                                 <li><a class="text-sm text-gray-700 hover:bg-gray-100">10 Data</a></li>
                                 <li><a class="text-sm text-gray-700 hover:bg-gray-100">15 Data</a></li>
@@ -43,7 +43,7 @@
                                 <span>Pilih Kategori</span>
                                 <i class="fas fa-chevron-down text-gray-500 text-xs"></i>
                             </div>
-                            <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-white border border-gray-200 rounded-box w-44">
+                            <ul tabindex="0" class="dropdown-content z-1 menu p-2 shadow bg-white border border-gray-200 rounded-box w-44">
                                 <li><a class="text-sm text-gray-700 hover:bg-gray-100">Semua Kategori</a></li>
                                 @foreach ($categories as $cat)
                                     <li><a class="text-sm text-gray-700 hover:bg-gray-100">{{ $cat->category_name }}</a></li>
@@ -60,7 +60,7 @@
                                 <span>Nama</span>
                                 <i class="fas fa-chevron-down text-gray-500 text-xs"></i>
                             </div>
-                            <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-white border border-gray-200 rounded-box w-44">
+                            <ul tabindex="0" class="dropdown-content z-1 menu p-2 shadow bg-white border border-gray-200 rounded-box w-44">
                                 <li><a class="text-sm text-gray-700 hover:bg-gray-100">Nama</a></li>
                                 <li><a class="text-sm text-gray-700 hover:bg-gray-100">Kategori</a></li>
                                 <li><a class="text-sm text-gray-700 hover:bg-gray-100">Stok</a></li>
@@ -77,7 +77,7 @@
                                 <span>A-Z / Terkecil</span>
                                 <i class="fas fa-chevron-down text-gray-500 text-xs"></i>
                             </div>
-                            <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-white border border-gray-200 rounded-box w-44">
+                            <ul tabindex="0" class="dropdown-content z-1 menu p-2 shadow bg-white border border-gray-200 rounded-box w-44">
                                 <li><a class="text-sm text-gray-700 hover:bg-gray-100">A-Z / Terkecil</a></li>
                                 <li><a class="text-sm text-gray-700 hover:bg-gray-100">Z-A / Terbesar</a></li>
                             </ul>
@@ -471,7 +471,7 @@
 
             <!-- Header -->
             <div class="flex items-start gap-3 mb-6 pb-4 border-b border-gray-200">
-                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
                     <i class="fas fa-align-left text-2xl text-blue-600"></i>
                 </div>
                 <div class="flex-1">
@@ -482,7 +482,7 @@
 
             <!-- Content dengan Scroll -->
             <div class="overflow-y-auto max-h-96">
-                <div class="bg-gradient-to-br from-gray-50 to-blue-50 rounded-lg p-6">
+                <div class="bg-linear-to-br from-gray-50 to-blue-50 rounded-lg p-6">
                     <div class="prose max-w-none">
                         <div class="text-gray-700 leading-relaxed space-y-3" id="description-content">
                             <!-- Deskripsi akan dimuat di sini -->
@@ -535,7 +535,7 @@
             <!-- Detail Sepatu yang akan dihapus -->
             <div class="bg-gray-50 rounded-lg p-4 mb-6">
                 <div class="flex items-start gap-3 mb-4">
-                    <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center shrink-0">
                         <i class="fa-solid fa-shoe-prints text-xl text-red-600"></i>
                     </div>
                     <div class="flex-1">

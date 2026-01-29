@@ -43,7 +43,7 @@
             <div class="stat-card bg-white p-6 rounded-3xl shadow-sm border border-slate-100" data-aos="fade-up" data-aos-delay="100">
                 <div class="flex justify-between items-start">
                     <div>
-                        <p class="text-slate-400 text-sm font-medium uppercase tracking-wider text-black">Total Pesanan</p>
+                        <p class="text-slate-400 text-sm font-medium uppercase tracking-wider">Total Pesanan</p>
                         <h3 class="text-2xl font-bold mt-1 text-black">{{ $total_orders ?? 0 }}</h3>
                     </div>
                     <div class="bg-orange-50 p-3 rounded-2xl text-orange-500">
@@ -59,10 +59,10 @@
             <div class="stat-card bg-white p-6 rounded-3xl shadow-sm border border-slate-100" data-aos="fade-up" data-aos-delay="200">
                 <div class="flex justify-between items-start">
                     <div>
-                        <p class="text-slate-400 text-sm font-medium uppercase tracking-wider text-black">Pelanggan</p>
+                        <p class="text-slate-400 text-sm font-medium uppercase tracking-wider">Pelanggan</p>
                         <h3 class="text-2xl font-bold mt-1 text-black">{{ $total_customers ?? 0 }}</h3>
                     </div>
-                    <div class="bg-purple-50 p-3 rounded-2xl text-purple-500 text-black">
+                    <div class="bg-purple-50 p-3 rounded-2xl text-purple-500 ">
                         <i class="fa-solid fa-users text-xl"></i>
                     </div>
                 </div>
@@ -75,10 +75,10 @@
             <div class="stat-card bg-white p-6 rounded-3xl shadow-sm border border-slate-100" data-aos="fade-up" data-aos-delay="300">
                 <div class="flex justify-between items-start">
                     <div>
-                        <p class="text-slate-400 text-sm font-medium uppercase tracking-wider text-black">Produk Aktif</p>
+                        <p class="text-slate-400 text-sm font-medium uppercase tracking-wider ">Produk Aktif</p>
                         <h3 class="text-2xl font-bold mt-1 text-black">{{ $active_shoes ?? 0 }}</h3>
                     </div>
-                    <div class="bg-green-50 p-3 rounded-2xl text-green-500 text-black">
+                    <div class="bg-green-50 p-3 rounded-2xl text-green-500 ">
                         <i class="fa-solid fa-shoe-prints text-xl"></i>
                     </div>
                 </div>

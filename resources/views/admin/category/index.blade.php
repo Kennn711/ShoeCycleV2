@@ -198,7 +198,7 @@
             <!-- Detail Kategori yang akan dihapus -->
             <div class="bg-gray-50 rounded-lg p-4 mb-6">
                 <div class="flex items-center gap-3 mb-3">
-                    <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink    ">
+                    <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center shrink    ">
                         <i class="fa-solid fa-layer-group text-xl text-red-600"></i>
                     </div>
                     <div class="flex-1">
@@ -259,7 +259,7 @@
             </div>
 
             <!-- Loading State -->
-            <div id="shoes-loading" class="flex flex-col items-center justify-center py-12 hidden">
+            <div id="shoes-loading" class="flex-col items-center justify-center py-12 hidden">
                 <span class="loading loading-spinner loading-lg text-blue-500"></span>
                 <p class="text-gray-500 mt-4">Memuat data sepatu...</p>
             </div>
