@@ -9,6 +9,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeliveryController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\ShoesController;
@@ -66,11 +67,12 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/driver/{id}', [DriverController::class, 'show'])->name('driver.show');
     Route::put('/driver/{id}', [DriverController::class, 'update'])->name('driver.update');
 
-    // Transaction
     Route::get('/transaction', [TransactionController::class, 'index'])->name('transaction.index');
     Route::get('/transaction/show/{id}', [TransactionController::class, 'show'])->name('transaction.show');
     Route::get('/transaction/get-courier', [TransactionController::class, 'getCouriers'])->name('transaction.get-courier');
     Route::post('/transaction/update-status/{id}', [TransactionController::class, 'updateStatus'])->name('transaction.update');
+
+    Route::get('/report', [ReportController::class, 'index'])->name('report.index');
 });
 
 Route::middleware(['auth', 'driver'])->group(function () {
