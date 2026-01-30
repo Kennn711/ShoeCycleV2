@@ -73,6 +73,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('/transaction/update-status/{id}', [TransactionController::class, 'updateStatus'])->name('transaction.update');
 
     Route::get('/report', [ReportController::class, 'index'])->name('report.index');
+    Route::get('/report/export-pdf', [ReportController::class, 'exportPdf'])->name('report.export-pdf');
 });
 
 Route::middleware(['auth', 'driver'])->group(function () {
