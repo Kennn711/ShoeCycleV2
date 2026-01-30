@@ -11,6 +11,7 @@ use App\Http\Controllers\DriverController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\ShoesController;
 use App\Http\Controllers\ShoesVariantController;
@@ -56,6 +57,8 @@ Route::middleware(['auth', 'customer'])->group(function () {
 });
 
 Route::middleware(['auth', 'admin'])->group(function () {
+    Route::get('/api/search-global', [SearchController::class, 'searchGlobal'])->name('backend.search-global');
+
     Route::get('/dashboard-admin', [DashboardController::class, 'admin'])->name('dashboard-admin');
 
     Route::resource('/shoes', ShoesController::class);
@@ -77,6 +80,8 @@ Route::middleware(['auth', 'admin'])->group(function () {
 });
 
 Route::middleware(['auth', 'driver'])->group(function () {
+    Route::get('/api/search-global', [SearchController::class, 'searchGlobal'])->name('backend.search-global');
+
     Route::get('/dashboard-driver', [DashboardController::class, 'driver'])->name('dashboard-driver');
 
     Route::get('/delivery', [DeliveryController::class, 'index'])->name('delivery.index');

@@ -154,8 +154,8 @@
                             </div>
 
                             <div class="p-3 bg-slate-50 border-t border-slate-50 flex justify-between items-center px-5">
-                                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest text-black">Hasil Pencarian</span>
-                                <span class="text-[10px] text-slate-400 text-black">Tekan <kbd class="bg-white px-1 rounded border">ESC</kbd> untuk menutup</span>
+                                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest ">Hasil Pencarian</span>
+                                <span class="text-[10px] text-slate-400 ">Tekan <kbd class="bg-white px-1 rounded border">ESC</kbd> untuk menutup</span>
                             </div>
                         </div>
                     </div>
