@@ -7,11 +7,6 @@
     <div class="space-y-6">
         <div class="flex justify-between items-center">
             <h2 class="text-2xl font-bold text-gray-900">Daftar Transaksi</h2>
-            <div class="flex gap-2">
-                <button class="btn btn-sm bg-green-500 hover:bg-green-600 text-white border-none">
-                    <i class="fas fa-file-excel mr-1"></i> Export Excel
-                </button>
-            </div>
         </div>
 
         {{-- Filter & Search Controls --}}

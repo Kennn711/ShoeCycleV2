@@ -44,8 +44,7 @@ class CheckoutController extends Controller
         $adminFee = 1000;
         $userAddresses = $user->addresses()->orderBy('is_primary', 'desc')->get();
         $address = $user->primaryAddress ?? $userAddresses->first();
-        $storeConfig = ['lat' => -7.472613, 'lng' => 112.433912, 'base_shipping_cost' => 5000, 'cost_per_km' => 2500];
-
+        $storeConfig = ['lat' => -7.55139419143815, 'lng' => 112.48052086345787, 'base_shipping_cost' => 5000, 'cost_per_km' => 2500];
         return view('customer.checkout.checkout', compact(
             'cartItems',
             'subtotal',

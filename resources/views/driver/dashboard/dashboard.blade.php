@@ -116,7 +116,7 @@
                                 <span class="text-[10px] font-black uppercase text-blue-600 bg-blue-50 px-2 py-1 rounded-md">#{{ $delivery->invoice }}</span>
                                 <i class="fa-solid fa-chevron-right text-slate-300 group-hover:text-blue-500 transition-transform group-hover:translate-x-1"></i>
                             </div>
-                            <h5 class="font-bold text-sm text-slate-800 truncate">{{ $delivery->customer->name }}</h5>
+                            <h5 class="font-bold text-sm text-slate-800 truncate">{{ $delivery->address->recipient_name }}</h5>
                             <p class="text-[11px] text-slate-500 line-clamp-2 mt-1">{{ $delivery->address->full_address }}</p>
                             <div class="mt-3 pt-3 border-t border-slate-200 flex justify-between items-center">
                                 <a href="https://www.google.com/maps?q={{ $delivery->address->latitude }},{{ $delivery->address->longitude }}" target="_blank" class="text-[10px] font-bold text-blue-500 hover:underline">

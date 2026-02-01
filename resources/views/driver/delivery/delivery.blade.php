@@ -61,7 +61,7 @@
                                 <h4 class="font-bold text-gray-900 truncate">{{ $trx->address->recipient_name }}</h4>
                                 <p class="text-sm font-bold text-blue-600">{{ $trx->address->phone_number }}</p>
                             </div>
-                            <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $trx->address->phone_number) }}" class="btn btn-circle btn-sm bg-green-500 border-none text-white hover:bg-green-600">
+                            <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $trx->address->phone_number) }}" target="_blank" class="btn btn-circle btn-sm bg-green-500 border-none text-white hover:bg-green-600">
                                 <i class="fab fa-whatsapp text-lg"></i>
                             </a>
                         </div>
