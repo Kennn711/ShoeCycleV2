@@ -36,14 +36,21 @@ class DeliveryController extends Controller
             // Set timestamp berdasarkan status baru
             switch ($newStatus) {
                 case 'shipping':
+                    // Driver mulai mengirim
+                    $updateData['shipped_at'] = now();
+                    break;
+
+                case 'delivered':
+                    // Driver selesai mengirim
+                    $updateData['delivered_at'] = now();
+
+                    // Jika belum ada shipped_at (edge case), set juga
                     if (!$transaction->shipped_at) {
                         $updateData['shipped_at'] = now();
                     }
                     break;
-                case 'delivered':
-                    $updateData['delivered_at'] = now();
-                    break;
             }
+
 
             // Jika ada upload gambar (status delivered)
             if ($request->hasFile('proof_of_delivery')) {

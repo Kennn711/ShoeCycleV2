@@ -174,17 +174,21 @@ class DatabaseSeeder extends Seeder
             $deliveredAt = null;
             $cancelledAt = null;
             $expiredAt = null;
+            $courierId = null;
 
             // Set timestamps berdasarkan status
             if ($pay_status == 'settlement') {
                 $paidAt = (clone $createdAt)->addMinutes(rand(5, 60));
+                $processingAt = $paidAt; // Langsung processing setelah bayar
 
-                if (in_array($trans_status, ['processing', 'shipping', 'delivered'])) {
-                    $processingAt = (clone $paidAt)->addMinutes(rand(10, 120));
+                // Jika shipping atau delivered, berarti sudah ada driver
+                if (in_array($trans_status, ['shipping', 'delivered'])) {
+                    $courierId = $driver->id;
+                    $shippedAt = (clone $processingAt)->addHours(rand(1, 5));
                 }
 
-                if (in_array($trans_status, ['shipping', 'delivered'])) {
-                    $shippedAt = (clone $processingAt)->addHours(rand(1, 5));
+                if ($trans_status == 'processing' && rand(0, 1) == 1) {
+                    $courierId = $driver->id;
                 }
 
                 if ($trans_status == 'delivered') {
@@ -196,10 +200,11 @@ class DatabaseSeeder extends Seeder
                 $cancelledAt = (clone $createdAt)->addMinutes(rand(30, 300));
             }
 
+
             $transaction = Transaction::create([
                 'customer_id' => $customer->id,
                 'address_id' => $address->id,
-                'courier_id' => (in_array($trans_status, ['shipping', 'delivered'])) ? $driver->id : null,
+                'courier_id' => $courierId,
                 'invoice' => 'INV-' . date('Ymd') . '-' . Str::upper(Str::random(6)),
                 'subtotal' => 0,
                 'shipping_cost' => 15000,
