@@ -21,6 +21,22 @@ class Transaction extends Model
         'proof_of_delivery',
         'payment_status',
         'transaction_status',
+
+        'paid_at',
+        'processing_at',
+        'shipped_at',
+        'delivered_at',
+        'cancelled_at',
+        'expired_at',
+    ];
+
+    protected $casts = [
+        'paid_at' => 'datetime',
+        'processing_at' => 'datetime',
+        'shipped_at' => 'datetime',
+        'delivered_at' => 'datetime',
+        'cancelled_at' => 'datetime',
+        'expired_at' => 'datetime',
     ];
 
     public function details()

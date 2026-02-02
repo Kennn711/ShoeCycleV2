@@ -154,7 +154,7 @@
 
                             <div class="flex gap-3 w-full sm:w-auto" id="btn-container-{{ $transaction->id }}">
                                 @if ($transaction->payment_status == 'pending')
-                                    <button onclick="window.snap.pay('{{ $transaction->snap_token }}')" class="btn btn-sm btn-primary text-white rounded-sm px-6 grow sm:grow-0">Bayar Sekarang</button>
+                                    <button onclick="window.snap.pay('{{ $transaction->snap_token }}')" class="btn btn-sm btn-primary text-white rounded-lg px-6 grow sm:grow-0">Bayar Sekarang</button>
                                 @endif
 
                                 @if ($transaction->transaction_status == 'delivered')
@@ -184,8 +184,8 @@
                                     @endif
                                 @endif
 
-                                {{-- Tombol Lihat Detail (FIXED: Menggunakan data-detail) --}}
-                                <button type="button" class="btn-show-detail btn btn-sm btn-primary text-white text-xs normal-case font-bold px-6" data-detail="{{ json_encode($transaction->load(['details.variant.shoe', 'address', 'courier'])) }}">
+                                {{-- Tombol Lihat Detail --}}
+                                <button type="button" class="btn-show-detail btn btn-sm btn-primary text-white text-xs normal-case font-bold px-6" data-detail="{{ json_encode($transaction->load(['details.variant.shoe', 'details.variant.images', 'address', 'courier'])) }}">
                                     Lihat Detail
                                 </button>
                             </div>
@@ -206,53 +206,73 @@
         </div>
     </section>
 
-    {{-- MODAL 1: DETAIL PESANAN --}}
+    {{-- MODAL 1: DETAIL PESANAN (DENGAN TIMELINE) --}}
     <dialog id="order_detail_modal" class="modal modal-bottom sm:modal-middle">
         <div class="modal-box bg-white p-0 max-w-2xl overflow-hidden">
             {{-- Header --}}
-            <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-slate-50">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-linear-to-r from-blue-600 to-indigo-600">
                 <div>
-                    <h3 class="font-bold text-lg text-gray-900" id="mdl-invoice">-</h3>
-                    <p class="text-xs text-gray-500" id="mdl-date">-</p>
+                    <h3 class="font-bold text-lg text-white" id="mdl-invoice">-</h3>
+                    <p class="text-xs text-blue-100" id="mdl-date">-</p>
                 </div>
-                <form method="dialog"><button class="btn btn-sm btn-circle btn-ghost">✕</button></form>
+                <form method="dialog"><button class="btn btn-sm btn-circle bg-white/20 border-none text-white hover:bg-white/30">✕</button></form>
             </div>
 
             <div class="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
+
+                {{-- ORDER TIMELINE --}}
+                <div class="bg-linear-to-br from-slate-50 to-blue-50 p-5 rounded-2xl border border-blue-100">
+                    <h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-5 flex items-center gap-2">
+                        <i class="fas fa-route text-blue-500"></i> Status Pesanan
+                    </h4>
+
+                    <div class="relative" id="mdl-timeline">
+                        {{-- Timeline akan di-generate via JavaScript --}}
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {{-- Alamat --}}
-                    <div>
-                        <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Info Pengiriman</h4>
+                    <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                        <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                            <i class="fas fa-map-marker-alt text-red-400"></i> Info Pengiriman
+                        </h4>
                         <p class="text-sm font-bold text-gray-900" id="mdl-recipient">-</p>
                         <p class="text-xs text-gray-600 mt-1" id="mdl-phone">-</p>
-                        <p class="text-xs text-gray-500 mt-1 leading-relaxed" id="mdl-address">-</p>
+                        <p class="text-xs text-gray-500 mt-2 leading-relaxed" id="mdl-address">-</p>
                     </div>
-                    {{-- Status --}}
-                    <div>
-                        <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Status & Pembayaran</h4>
+                    {{-- Pembayaran --}}
+                    <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                        <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                            <i class="fas fa-credit-card text-green-400"></i> Metode Pembayaran
+                        </h4>
                         <div id="mdl-status-badges" class="flex flex-wrap gap-2 items-start"></div>
                     </div>
                 </div>
 
-                {{-- INFO KURIR & BUKTI (Akan muncul jika sudah ada Driver) --}}
-                <div id="mdl-delivery-info" class="hidden pt-4 border-t border-gray-100">
+                {{-- INFO KURIR & BUKTI --}}
+                <div id="mdl-delivery-info" class="hidden">
                     <div class="flex flex-col md:flex-row gap-4">
-                        <div class="flex-1">
-                            <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Kurir Pengirim</h4>
-                            <div class="flex items-center gap-3 bg-blue-50 p-3 rounded-xl border border-blue-100">
-                                <img id="mdl-courier-avatar" src="" class="w-10 h-10 rounded-full">
+                        <div class="flex-1 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                            <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                <i class="fas fa-motorcycle text-indigo-400"></i> Kurir Pengirim
+                            </h4>
+                            <div class="flex items-center gap-3">
+                                <img id="mdl-courier-avatar" src="" class="w-12 h-12 rounded-full ring-2 ring-blue-200">
                                 <div>
                                     <p class="text-sm font-bold text-gray-900" id="mdl-courier-name">-</p>
-                                    <p class="text-[10px] text-blue-600 font-bold uppercase">Driver Lokal</p>
+                                    <p class="text-[10px] text-blue-600 font-bold uppercase">Driver Lokal ShoeCycle</p>
                                 </div>
                             </div>
                         </div>
-                        <div id="mdl-proof-section" class="flex-1 hidden">
-                            <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Bukti Sampai</h4>
-                            <div class="relative group cursor-pointer" onclick="openProofViewer(this.querySelector('img').src)">
-                                <img id="mdl-proof-img" src="" class="w-full h-16 object-cover rounded-xl border border-gray-200">
-                                <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/20 rounded-xl transition-all">
-                                    <i class="fas fa-expand text-white text-xs"></i>
+                        <div id="mdl-proof-section" class="flex-1 hidden bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                            <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                <i class="fas fa-camera text-purple-400"></i> Bukti Pengiriman
+                            </h4>
+                            <div class="relative group cursor-pointer rounded-xl overflow-hidden" onclick="openProofViewer(this.querySelector('img').src)">
+                                <img id="mdl-proof-img" src="" class="w-full h-20 object-cover">
+                                <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/40 transition-all">
+                                    <i class="fas fa-search-plus text-white text-lg"></i>
                                 </div>
                             </div>
                         </div>
@@ -260,11 +280,15 @@
                 </div>
 
                 {{-- Tabel Barang --}}
-                <div class="pt-4 border-t border-gray-100">
-                    <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Daftar Barang</h4>
-                    <div class="overflow-x-auto border border-gray-100 rounded-xl">
+                <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div class="px-4 py-3 bg-slate-50 border-b border-gray-100">
+                        <h4 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
+                            <i class="fas fa-box text-amber-400"></i> Daftar Barang
+                        </h4>
+                    </div>
+                    <div class="overflow-x-auto">
                         <table class="table w-full">
-                            <thead class="bg-slate-50">
+                            <thead class="bg-gray-50">
                                 <tr class="text-gray-600 text-[10px] uppercase">
                                     <th>Produk</th>
                                     <th class="text-center">Qty</th>
@@ -277,11 +301,19 @@
                 </div>
 
                 {{-- Rincian Biaya --}}
-                <div class="bg-slate-50 p-4 rounded-xl space-y-2">
-                    <div class="flex justify-between text-xs text-gray-600"><span>Subtotal Produk</span><span id="mdl-subtotal">-</span></div>
-                    <div class="flex justify-between text-xs text-gray-600"><span>Ongkos Kirim</span><span id="mdl-shipping">-</span></div>
-                    <div class="flex justify-between text-xs text-gray-600"><span>Biaya Admin</span><span id="mdl-admin">-</span></div>
-                    <div class="flex justify-between text-sm font-bold text-gray-900 pt-2 border-t border-gray-200"><span>Total</span><span class="text-blue-600" id="mdl-total">-</span></div>
+                <div class="bg-linear-to-br from-blue-50 to-indigo-50 p-5 rounded-xl border border-blue-100">
+                    <h4 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <i class="fas fa-receipt text-blue-400"></i> Rincian Pembayaran
+                    </h4>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-xs text-gray-600"><span>Subtotal Produk</span><span id="mdl-subtotal">-</span></div>
+                        <div class="flex justify-between text-xs text-gray-600"><span>Ongkos Kirim</span><span id="mdl-shipping">-</span></div>
+                        <div class="flex justify-between text-xs text-gray-600"><span>Biaya Admin</span><span id="mdl-admin">-</span></div>
+                        <div class="flex justify-between text-base font-bold text-gray-900 pt-3 mt-2 border-t border-blue-200">
+                            <span>Total Pembayaran</span>
+                            <span class="text-blue-600" id="mdl-total">-</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -328,6 +360,97 @@
     </dialog>
 @endsection
 
+@push('styles')
+    <style>
+        /* Timeline Styles */
+        .timeline-step {
+            position: relative;
+            padding-left: 40px;
+            padding-bottom: 24px;
+        }
+
+        .timeline-step:last-child {
+            padding-bottom: 0;
+        }
+
+        .timeline-step::before {
+            content: '';
+            position: absolute;
+            left: 11px;
+            top: 28px;
+            bottom: 0;
+            width: 2px;
+            background: #e5e7eb;
+        }
+
+        .timeline-step:last-child::before {
+            display: none;
+        }
+
+        .timeline-step.completed::before {
+            background: linear-gradient(to bottom, #3b82f6, #3b82f6);
+        }
+
+        .timeline-step.active::before {
+            background: linear-gradient(to bottom, #3b82f6, #e5e7eb);
+        }
+
+        .timeline-icon {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            z-index: 10;
+        }
+
+        .timeline-step.completed .timeline-icon {
+            background: linear-gradient(135deg, #3b82f6, #6366f1);
+            color: white;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+        }
+
+        .timeline-step.active .timeline-icon {
+            background: white;
+            border: 3px solid #3b82f6;
+            color: #3b82f6;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+            animation: pulse-ring 2s infinite;
+        }
+
+        .timeline-step.pending .timeline-icon {
+            background: #f3f4f6;
+            border: 2px solid #d1d5db;
+            color: #9ca3af;
+        }
+
+        .timeline-step.failed .timeline-icon {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+        }
+
+        @keyframes pulse-ring {
+            0% {
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 8px rgba(59, 130, 246, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+            }
+        }
+    </style>
+@endpush
+
 @push('scripts')
     <script type="text/javascript" src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.client_key') }}"></script>
     <script>
@@ -362,8 +485,126 @@
         };
 
         /**
+         * GENERATE TIMELINE HTML
+         */
+        window.generateTimeline = function(data) {
+            const paymentStatus = data.payment_status;
+            const transactionStatus = data.transaction_status;
+
+            // Helper function untuk format tanggal
+            const formatDate = (dateStr) => {
+                if (!dateStr) return null;
+                return new Date(dateStr).toLocaleString('id-ID', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            };
+
+            // Define timeline steps dengan timestamp dari database
+            const steps = [{
+                    key: 'ordered',
+                    icon: 'fa-shopping-cart',
+                    title: 'Pesanan Dibuat',
+                    desc: 'Pesanan berhasil dibuat',
+                    time: formatDate(data.created_at)
+                },
+                {
+                    key: 'paid',
+                    icon: 'fa-credit-card',
+                    title: 'Pembayaran',
+                    desc: paymentStatus === 'settlement' ? 'Pembayaran diterima' : paymentStatus === 'pending' ? 'Menunggu pembayaran' : paymentStatus === 'expire' ? 'Pembayaran kadaluarsa' : paymentStatus === 'cancel' ? 'Pembayaran dibatalkan' : 'Menunggu pembayaran',
+                    time: formatDate(data.paid_at) || formatDate(data.expired_at) || formatDate(data.cancelled_at)
+                },
+                {
+                    key: 'processing',
+                    icon: 'fa-cog',
+                    title: 'Diproses',
+                    desc: 'Pesanan sedang dikemas',
+                    time: formatDate(data.processing_at)
+                },
+                {
+                    key: 'shipping',
+                    icon: 'fa-truck',
+                    title: 'Dikirim',
+                    desc: data.courier ? `Kurir: ${data.courier.name}` : 'Dalam perjalanan',
+                    time: formatDate(data.shipped_at)
+                },
+                {
+                    key: 'delivered',
+                    icon: 'fa-check-circle',
+                    title: 'Selesai',
+                    desc: 'Pesanan telah sampai',
+                    time: formatDate(data.delivered_at)
+                }
+            ];
+
+            // Determine current step index
+            let currentStepIndex = 0;
+            let isFailed = false;
+
+            if (paymentStatus === 'expire' || paymentStatus === 'cancel' || transactionStatus === 'failed') {
+                isFailed = true;
+                currentStepIndex = 1;
+            } else if (transactionStatus === 'delivered') {
+                currentStepIndex = 4;
+            } else if (transactionStatus === 'shipping') {
+                currentStepIndex = 3;
+            } else if (transactionStatus === 'processing') {
+                currentStepIndex = 2;
+            } else if (paymentStatus === 'settlement') {
+                currentStepIndex = 1;
+            } else if (paymentStatus === 'pending') {
+                currentStepIndex = 0;
+            }
+
+            // Generate HTML
+            let html = '';
+
+            steps.forEach((step, index) => {
+                let stepClass = 'pending';
+
+                if (isFailed && index === 1) {
+                    stepClass = 'failed';
+                } else if (index < currentStepIndex) {
+                    stepClass = 'completed';
+                } else if (index === currentStepIndex) {
+                    stepClass = isFailed ? 'failed' : 'active';
+                }
+
+                if (isFailed && index > 1) {
+                    stepClass = 'pending';
+                }
+
+                html += `
+            <div class="timeline-step ${stepClass}">
+                <div class="timeline-icon">
+                    <i class="fas ${stepClass === 'failed' ? 'fa-times' : step.icon}"></i>
+                </div>
+                <div class="ml-2">
+                    <div class="flex items-center gap-2">
+                        <h5 class="text-sm font-bold ${stepClass === 'pending' ? 'text-gray-400' : stepClass === 'failed' ? 'text-red-600' : 'text-gray-900'}">
+                            ${step.title}
+                        </h5>
+                        ${stepClass === 'active' ? '<span class="badge badge-xs bg-blue-500 text-white border-none animate-pulse">Saat ini</span>' : ''}
+                        ${stepClass === 'failed' ? '<span class="badge badge-xs bg-red-500 text-white border-none">Gagal</span>' : ''}
+                    </div>
+                    <p class="text-xs ${stepClass === 'pending' ? 'text-gray-300' : stepClass === 'failed' ? 'text-red-400' : 'text-gray-500'} mt-0.5">
+                        ${step.desc}
+                    </p>
+                    ${step.time && stepClass !== 'pending' ? `<p class="text-[10px] text-gray-400 mt-1"><i class="far fa-clock mr-1"></i>${step.time}</p>` : ''}
+                </div>
+            </div>
+        `;
+            });
+
+            return html;
+        };
+
+        /**
          * FUNGSI MENAMPILKAN DETAIL PESANAN
-         * (Dipanggil oleh listener tombol .btn-show-detail)
          */
         window.showOrderDetail = function(data) {
             const modal = $('#order_detail_modal')[0];
@@ -374,6 +615,9 @@
                 year: 'numeric'
             }));
 
+            // Generate Timeline
+            $('#mdl-timeline').html(window.generateTimeline(data));
+
             // Alamat
             const addr = data.address;
             $('#mdl-recipient').text(addr.recipient_name);
@@ -381,9 +625,21 @@
             $('#mdl-address').html(`${addr.full_address}<br>Kec. ${addr.district}, ${addr.village}`);
 
             // Status Badges
+            let paymentTypeLabel = data.payment_type ? data.payment_type.replace(/_/g, ' ').toUpperCase() : 'BELUM BAYAR';
+            let paymentStatusClass = data.payment_status === 'settlement' ? 'badge-success' :
+                data.payment_status === 'pending' ? 'badge-warning' : 'badge-error';
+
             $('#mdl-status-badges').html(`
-                <span class="badge badge-outline font-bold text-[10px] uppercase text-black">${data.payment_type ? data.payment_type.replace(/_/g, ' ') : 'PENDING'}</span>
-                <span class="badge badge-info text-white font-bold text-[10px] uppercase">${data.transaction_status}</span>
+                <div class="space-y-2 w-full">
+                    <div class="flex items-center justify-between bg-gray-50 p-2 rounded-lg">
+                        <span class="text-xs text-gray-500">Metode</span>
+                        <span class="text-xs font-bold text-gray-900">${paymentTypeLabel}</span>
+                    </div>
+                    <div class="flex items-center justify-between bg-gray-50 p-2 rounded-lg">
+                        <span class="text-xs text-gray-500">Status</span>
+                        <span class="badge ${paymentStatusClass} text-white text-[10px] font-bold">${data.payment_status.toUpperCase()}</span>
+                    </div>
+                </div>
             `);
 
             // Logika Driver & Bukti Foto
@@ -406,10 +662,22 @@
             // Tabel Barang di Modal Detail
             let tableHtml = '';
             data.details.forEach(item => {
+                const imgPath = item.variant.images && item.variant.images.length > 0 ?
+                    `/storage/${item.variant.images[0].image_path}` :
+                    '/assets/upload/testing/sepatu1.webp';
+
                 tableHtml += `
                 <tr class="border-b border-gray-50 text-xs text-black">
-                    <td><div class="font-bold text-gray-900">${item.variant.shoe.name}</div><div class="text-[10px] text-gray-400 uppercase">Size: ${item.variant.size} | ${item.variant.color}</div></td>
-                    <td class="text-center">${item.qty}</td>
+                    <td>
+                        <div class="flex items-center gap-3">
+                            <img src="${imgPath}" class="w-10 h-10 object-contain bg-gray-50 rounded-lg p-1">
+                            <div>
+                                <div class="font-bold text-gray-900">${item.variant.shoe.name}</div>
+                                <div class="text-[10px] text-gray-400 uppercase">Size: ${item.variant.size} | ${item.variant.color}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="text-center font-medium">${item.qty}x</td>
                     <td class="text-right font-bold">${window.formatRupiah(item.price * item.qty)}</td>
                 </tr>`;
             });
@@ -467,7 +735,6 @@
         <img src="${imagePath}" class="w-14 h-14 object-contain bg-gray-50 rounded-xl border p-1">
         <div class="min-w-0">
             <h4 class="text-sm font-bold text-gray-900 truncate">${item.variant.shoe.name}</h4>
-            {{-- PERBAIKAN: Gunakan pengecekan agar tidak error --}}
             <p class="text-[10px] text-gray-400 uppercase tracking-tight">
                 Kategori: ${item.variant.shoe.category ? item.variant.shoe.category.category_name : 'Sepatu'}
             </p>
@@ -487,7 +754,7 @@
                 <input type="radio" name="reviews[${index}][rating]" value="5" class="mask mask-star-2 bg-orange-400" checked />
             </div>
         </div>
-        <textarea name="reviews[${index}][comment]" class="textarea textarea-bordered w-full bg-white text-sm focus:border-blue-500 rounded-xl resize-none text-black" rows="2" placeholder="Bagaimana kualitas model sepatu ini?"></textarea>
+        <textarea name="reviews[${index}][comment]" class="textarea textarea-bordered w-full bg-white text-sm focus:border-blue-500 rounded-xl resize-none text-black" rows="2" placeholder="Bagaimana kualitas produk ini?"></textarea>
     </div>
 </div>`;
                     container.insertAdjacentHTML('beforeend', itemHtml);
@@ -522,7 +789,6 @@
                                 timer: 1500
                             });
 
-                            // UPDATE UI INSTAN: Ganti tombol ulasan menjadi badge Selesai
                             const container = $(`#btn-container-${transactionId}`);
                             container.find('.btn-open-rating').replaceWith(`
                                 <div class="flex items-center gap-1 text-green-600 font-bold text-xs uppercase px-4 select-none animate-in fade-in zoom-in duration-300">

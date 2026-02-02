@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class DatabaseSeeder extends Seeder
 {
@@ -153,7 +154,7 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
-        // 5. Seed Transactions (50 Data Transaksi)
+        // 5. Seed Transactions (50 Data Transaksi) - DENGAN TIMESTAMP
         $statuses = ['pending', 'settlement', 'expire', 'cancel'];
         $t_statuses = ['pending', 'processing', 'shipping', 'delivered'];
 
@@ -163,21 +164,60 @@ class DatabaseSeeder extends Seeder
             $driver = User::where('role', 'driver')->inRandomOrder()->first();
 
             $pay_status = $statuses[array_rand($statuses)];
-            $trans_status = ($pay_status == 'settlement') ? $t_statuses[array_rand($t_statuses)] : 'pending';
+            $trans_status = ($pay_status == 'settlement') ? $t_statuses[array_rand($t_statuses)] : (($pay_status == 'expire' || $pay_status == 'cancel') ? 'failed' : 'pending');
+
+            // Generate random timestamps untuk simulasi
+            $createdAt = Carbon::now()->subDays(rand(1, 30))->subHours(rand(1, 23));
+            $paidAt = null;
+            $processingAt = null;
+            $shippedAt = null;
+            $deliveredAt = null;
+            $cancelledAt = null;
+            $expiredAt = null;
+
+            // Set timestamps berdasarkan status
+            if ($pay_status == 'settlement') {
+                $paidAt = (clone $createdAt)->addMinutes(rand(5, 60));
+
+                if (in_array($trans_status, ['processing', 'shipping', 'delivered'])) {
+                    $processingAt = (clone $paidAt)->addMinutes(rand(10, 120));
+                }
+
+                if (in_array($trans_status, ['shipping', 'delivered'])) {
+                    $shippedAt = (clone $processingAt)->addHours(rand(1, 5));
+                }
+
+                if ($trans_status == 'delivered') {
+                    $deliveredAt = (clone $shippedAt)->addHours(rand(1, 8));
+                }
+            } elseif ($pay_status == 'expire') {
+                $expiredAt = (clone $createdAt)->addHours(24);
+            } elseif ($pay_status == 'cancel') {
+                $cancelledAt = (clone $createdAt)->addMinutes(rand(30, 300));
+            }
 
             $transaction = Transaction::create([
                 'customer_id' => $customer->id,
                 'address_id' => $address->id,
-                'courier_id' => ($trans_status != 'pending') ? $driver->id : null,
+                'courier_id' => (in_array($trans_status, ['shipping', 'delivered'])) ? $driver->id : null,
                 'invoice' => 'INV-' . date('Ymd') . '-' . Str::upper(Str::random(6)),
-                'subtotal' => 0, // Akan diupdate
+                'subtotal' => 0,
                 'shipping_cost' => 15000,
                 'admin_fee' => 2500,
-                'total_price' => 0, // Akan diupdate
+                'total_price' => 0,
                 'payment_status' => $pay_status,
                 'transaction_status' => $trans_status,
                 'snap_token' => Str::random(32),
                 'proof_of_delivery' => ($trans_status == 'delivered') ? 'variant-shoes/sepatu1.webp' : null,
+                // Timestamp columns
+                'paid_at' => $paidAt,
+                'processing_at' => $processingAt,
+                'shipped_at' => $shippedAt,
+                'delivered_at' => $deliveredAt,
+                'cancelled_at' => $cancelledAt,
+                'expired_at' => $expiredAt,
+                'created_at' => $createdAt,
+                'updated_at' => $deliveredAt ?? $shippedAt ?? $processingAt ?? $paidAt ?? $cancelledAt ?? $expiredAt ?? $createdAt,
             ]);
 
             // Isi Detail Transaksi (1-3 item per transaksi)

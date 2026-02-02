@@ -73,9 +73,17 @@ class TransactionController extends Controller
         ]);
 
         $transaction = Transaction::findOrFail($id);
-        $transaction->update([
+
+        $updateData = [
             'courier_id' => $request->courier_id,
-        ]);
+        ];
+
+        // Jika belum ada processing_at, set juga
+        if (!$transaction->processing_at) {
+            $updateData['processing_at'] = now();
+        }
+
+        $transaction->update($updateData);
 
         return response()->json(['success' => true, 'message' => 'Driver berhasil ditugaskan!']);
     }

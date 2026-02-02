@@ -50,6 +50,7 @@ class CheckExpiredTransactions extends Command
                 $transaction->update([
                     'payment_status' => 'expire',
                     'transaction_status' => 'failed',
+                    'expired_at' => now(),
                 ]);
 
                 DB::commit();

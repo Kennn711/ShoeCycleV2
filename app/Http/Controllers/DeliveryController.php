@@ -30,23 +30,34 @@ class DeliveryController extends Controller
                 return response()->json(['success' => false, 'message' => 'Akses ditolak!'], 403);
             }
 
-            // Update Status
-            $transaction->transaction_status = $request->transaction_status;
+            $newStatus = $request->transaction_status;
+            $updateData = ['transaction_status' => $newStatus];
+
+            // Set timestamp berdasarkan status baru
+            switch ($newStatus) {
+                case 'shipping':
+                    if (!$transaction->shipped_at) {
+                        $updateData['shipped_at'] = now();
+                    }
+                    break;
+                case 'delivered':
+                    $updateData['delivered_at'] = now();
+                    break;
+            }
 
             // Jika ada upload gambar (status delivered)
             if ($request->hasFile('proof_of_delivery')) {
                 $image = $request->file('proof_of_delivery');
 
-                // Logika Penamaan File Anda
                 $extension = $image->getClientOriginalExtension();
                 $filename = 'proof_' . time() . '_' . Str::random(10) . '.' . $extension;
 
                 $path = $image->storeAs('delivery-proofs', $filename, 'public');
 
-                $transaction->proof_of_delivery = $path;
+                $updateData['proof_of_delivery'] = $path;
             }
 
-            $transaction->save();
+            $transaction->update($updateData);
 
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
