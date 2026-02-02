@@ -83,6 +83,9 @@
                                     @if ($transaction->transaction_status == 'delivered')
                                         Selesai
                                     @endif
+                                    @if ($transaction->transaction_status == 'pending')
+                                        Belum Dibayar
+                                    @endif
                                     @if ($transaction->payment_status == 'cancel' && $transaction->transaction_status == 'failed')
                                         Dibatalkan
                                     @endif
@@ -134,15 +137,19 @@
                                 <div class="text-xs text-gray-400 italic">Pesanan dibatalkan oleh Anda</div>
                             @endif
 
-                            @if (empty($transaction->courier_id))
+                            @if (empty($transaction->courier_id) && $transaction->transaction_status == 'processing')
                                 <div class="text-xs text-gray-400 italic">Pesanan sedang diproses oleh Admin</div>
+                            @endif
+
+                            @if (empty($transaction->courier_id) && $transaction->transaction_status == 'pending')
+                                <div class="text-xs text-gray-400 italic">Anda belum membayar pesanan ini !</div>
                             @endif
 
                             {{-- Cari bagian ini dan tambahkan id pada pembungkusnya --}}
                             <div class="flex gap-3 w-full sm:w-auto" id="btn-container-{{ $transaction->id }}">
                                 {{-- Tombol Bayar --}}
                                 @if ($transaction->payment_status == 'pending')
-                                    <button onclick="window.snap.pay('{{ $transaction->snap_token }}')" class="btn btn-sm btn-primary text-white rounded-lg px-6 grow sm:grow-0">Bayar Sekarang</button>
+                                    <button onclick="window.snap.pay('{{ $transaction->snap_token }}')" class="btn btn-sm btn-primary text-white rounded-sm px-6 grow sm:grow-0">Bayar Sekarang</button>
                                 @endif
 
                                 @if ($transaction->transaction_status == 'delivered')
@@ -281,7 +288,7 @@
     </dialog>
 
     {{-- MODAL 2: IMAGE VIEWER (Lightbox) --}}
-    <dialog id="proof_image_viewer" class="modal bg-black/80 backdrop-blur-sm z-[100]">
+    <dialog id="proof_image_viewer" class="modal bg-black/80 backdrop-blur-sm z-100">
         <div class="modal-box p-0 max-w-3xl bg-transparent shadow-none relative">
             <form method="dialog"><button class="btn btn-sm btn-circle absolute right-4 top-4 bg-white/20 text-white border-none">✕</button></form>
             <img id="mdl-proof-full-img" src="" class="w-full h-auto rounded-2xl shadow-2xl object-contain max-h-[85vh]">

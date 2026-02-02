@@ -62,14 +62,12 @@ class CheckoutController extends Controller
         DB::beginTransaction();
         try {
             $user = Auth::user();
-            // Ambil item keranjang beserta relasi variannya
             $cartItems = Cart::with('variant')->where('user_id', $user->id)->get();
 
             if ($cartItems->isEmpty()) {
                 return response()->json(['message' => 'Keranjang Anda kosong.'], 422);
             }
 
-            // 1. Buat Header Transaksi
             $invoice = 'INV-' . strtoupper(bin2hex(random_bytes(3))) . '-' . time();
 
             $transaction = Transaction::create([
@@ -84,7 +82,6 @@ class CheckoutController extends Controller
                 'transaction_status' => 'pending',
             ]);
 
-            // 2. Simpan Detail & Catatan
             foreach ($cartItems as $item) {
                 TransactionDetail::create([
                     'transaction_id' => $transaction->id,
@@ -95,7 +92,6 @@ class CheckoutController extends Controller
                 ]);
             }
 
-            // 3. Konfigurasi Midtrans
             Config::$serverKey = config('midtrans.server_key');
             Config::$isProduction = config('midtrans.is_production');
             Config::$isSanitized = true;
@@ -123,7 +119,6 @@ class CheckoutController extends Controller
             $snapToken = Snap::getSnapToken($params);
             $transaction->update(['snap_token' => $snapToken]);
 
-            // 4. Hapus Keranjang
             Cart::where('user_id', $user->id)->delete();
 
             DB::commit();

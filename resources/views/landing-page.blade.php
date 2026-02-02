@@ -190,16 +190,16 @@
                             </div>
                         @endif
 
-                        {{-- Image Container --}}
-                        <div class="relative bg-gray-50 flex items-center justify-center overflow-hidden">
-                            <img src="{{ $imageUrl }}" alt="{{ $shoe->name }}" class="w-full h-full rounded-[4rem] object-contain p-4 mix-blend-multiply" />
+                        {{-- Image Container - Fixed Height --}}
+                        <div class="relative bg-gray-50 flex items-center justify-center overflow-hidden h-56">
+                            <img src="{{ $imageUrl }}" alt="{{ $shoe->name }}" class="w-full h-full object-contain p-4 mix-blend-multiply" />
                             @if ($isOutOfStock)
                                 <div class="absolute inset-0 bg-gray-900/5 transition-opacity"></div>
                             @endif
                         </div>
 
                         {{-- Content --}}
-                        <div class="p-5 flex flex-col flex-grow relative text-black">
+                        <div class="p-5 flex flex-col grow relative text-black">
                             {{-- Category --}}
                             <div class="text-[14px] font-bold text-blue-600 uppercase mb-2">
                                 {{ $shoe->category->category_name ?? 'Shoes' }}
