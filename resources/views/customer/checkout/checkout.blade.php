@@ -556,6 +556,9 @@
                 currentStep = 1,
                 searchTimeout;
 
+            // Simpan transaction ID untuk force expire
+            let currentTransactionId = null;
+
             window.openAddressListModal = function() {
                 $('#address_list_modal')[0].showModal();
             };
@@ -609,9 +612,9 @@
                                 let html = '';
                                 data.forEach(item => {
                                     html += `<li class="p-3 hover:bg-blue-50 cursor-pointer border-b border-gray-50 text-xs flex items-start gap-3 transition-colors" 
-                                    onclick="selectSearchResult(${item.lat}, ${item.lon}, '${item.display_name.replace(/'/g, "\\'")}')">
-                                    <i class="fas fa-map-marker-alt text-gray-400 mt-1"></i>
-                                    <span class="leading-tight text-black">${item.display_name}</span></li>`;
+                                onclick="selectSearchResult(${item.lat}, ${item.lon}, '${item.display_name.replace(/'/g, "\\'")}')">
+                                <i class="fas fa-map-marker-alt text-gray-400 mt-1"></i>
+                                <span class="leading-tight text-black">${item.display_name}</span></li>`;
                                 });
                                 $('#search-results').html(html).removeClass('hidden');
                             });
@@ -766,14 +769,28 @@
                     },
                     success: function(res) {
                         $btn.addClass('hidden');
+
+                        // Simpan transaction ID
+                        currentTransactionId = res.order_id;
+
                         $('#btn-cancel-trigger').attr('onclick', `cancelOrder('${res.order_id}')`);
                         $('#pay-now-container').removeClass('hidden').fadeIn();
-                        window.startTimer(res.expiry);
+
+                        // Timer menggunakan waktu dari server (sinkron dengan Midtrans)
+                        window.startTimer(res.expiry, res.order_id);
 
                         const triggerSnap = function() {
                             window.snap.pay(res.snap_token, {
+                                onSuccess: function(result) {
+                                    window.location.href = "{{ route('my-order.index') }}";
+                                },
                                 onPending: function(result) {
-                                    window.location.href = "/orders/status?order_id=" + result.order_id;
+                                    Swal.fire({
+                                        title: 'Pembayaran Pending',
+                                        text: 'Segera selesaikan pembayaran sebelum batas waktu berakhir.',
+                                        icon: 'info',
+                                        confirmButtonColor: '#3b82f6'
+                                    });
                                 },
                                 onError: function(result) {
                                     alert("Pembayaran gagal! Silakan coba lagi.");
@@ -805,8 +822,14 @@
                 });
             };
 
-            window.startTimer = function(expiryTime) {
+            /**
+             * Timer yang sinkron dengan Midtrans (24 jam dari created_at)
+             */
+            window.startTimer = function(expiryTime, transactionId) {
                 if (!expiryTime) return;
+
+                // Simpan transaction ID
+                currentTransactionId = transactionId;
 
                 let countDownDate = new Date(expiryTime).getTime();
 
@@ -814,7 +837,6 @@
 
                 window.timerInterval = setInterval(function() {
                     let now = new Date().getTime();
-
                     let distance = countDownDate - now;
 
                     let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -830,13 +852,80 @@
                         timerEl.text(timerText);
                     }
 
+                    // Ketika waktu habis
                     if (distance < 0) {
                         clearInterval(window.timerInterval);
-                        if (timerEl.length) timerEl.text("EXPIRED");
-                        alert('Waktu pembayaran telah habis.');
-                        window.location.reload();
+                        if (timerEl.length) timerEl.text("00:00:00");
+
+                        // Disable tombol bayar
+                        $('#btn-pay-snap').prop('disabled', true).addClass('btn-disabled');
+
+                        // Panggil force expire ke server
+                        window.handleExpiredTransaction(currentTransactionId);
                     }
                 }, 1000);
+            };
+
+            /**
+             * Handle ketika transaksi expired
+             */
+            window.handleExpiredTransaction = function(transactionId) {
+                if (!transactionId) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Transaction ID tidak ditemukan.',
+                        confirmButtonColor: '#3b82f6'
+                    }).then(() => {
+                        window.location.href = "{{ route('cart.index') }}";
+                    });
+                    return;
+                }
+
+                // Tampilkan loading
+                Swal.fire({
+                    title: 'Waktu Pembayaran Habis',
+                    html: 'Memproses pengembalian barang ke keranjang...',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                $.ajax({
+                    url: `/checkout/force-expire/${transactionId}`,
+                    type: "POST",
+                    data: {
+                        _token: csrfToken
+                    },
+                    success: function(res) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Waktu Habis!',
+                            html: `
+                            <p class="text-gray-600">Batas waktu pembayaran telah berakhir.</p>
+                            <p class="text-sm text-gray-500 mt-2">Barang telah dikembalikan ke keranjang Anda.</p>
+                        `,
+                            confirmButtonColor: '#3b82f6',
+                            confirmButtonText: 'Kembali ke Keranjang'
+                        }).then(() => {
+                            window.location.href = "{{ route('cart.index') }}";
+                        });
+                    },
+                    error: function(xhr) {
+                        // Jika error karena sudah diproses oleh Midtrans callback atau schedule
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'Transaksi Expired',
+                            text: 'Transaksi ini sudah tidak berlaku. Silakan cek keranjang Anda.',
+                            confirmButtonColor: '#3b82f6',
+                            confirmButtonText: 'Kembali ke Keranjang'
+                        }).then(() => {
+                            window.location.href = "{{ route('cart.index') }}";
+                        });
+                    }
+                });
             };
 
             window.cancelOrder = function(id) {
@@ -913,33 +1002,52 @@
                 });
 
                 @if (isset($pendingTransaction) && $pendingTransaction->payment_status == 'pending')
+                    // Simpan transaction ID
+                    currentTransactionId = {{ $pendingTransaction->id }};
+
                     $('#btn-confirm').addClass('hidden');
                     $('#pay-now-container').removeClass('hidden').show();
 
                     @php
+                        // Hitung expiry time: created_at + 24 jam (sama dengan Midtrans)
                         $expiryTime = $pendingTransaction->created_at->addHours(24)->toIso8601String();
                     @endphp
 
-                    window.startTimer("{{ $expiryTime }}");
+                    // Cek apakah sudah expired
+                    const expiryDate = new Date("{{ $expiryTime }}");
+                    const now = new Date();
 
-                    $('#btn-pay-snap').off('click').on('click', function() {
-                        window.snap.pay("{{ $pendingTransaction->snap_token }}", {
-                            onSuccess: function(result) {
-                                window.location.href = "/orders/status";
-                            },
-                            onPending: function(result) {
-                                window.location.reload();
-                            },
-                            onClose: function() {
-                                Swal.fire({
-                                    title: 'Lanjutkan Pembayaran?',
-                                    text: 'Pesanan Anda masih berstatus pending. Segera selesaikan pembayaran ya!',
-                                    icon: 'info',
-                                    confirmButtonColor: '#3b82f6'
-                                });
-                            }
+                    if (now >= expiryDate) {
+                        // Sudah expired, langsung handle
+                        window.handleExpiredTransaction({{ $pendingTransaction->id }});
+                    } else {
+                        // Belum expired, jalankan timer
+                        window.startTimer("{{ $expiryTime }}", {{ $pendingTransaction->id }});
+
+                        $('#btn-pay-snap').off('click').on('click', function() {
+                            window.snap.pay("{{ $pendingTransaction->snap_token }}", {
+                                onSuccess: function(result) {
+                                    window.location.href = "{{ route('my-order.index') }}";
+                                },
+                                onPending: function(result) {
+                                    Swal.fire({
+                                        title: 'Pembayaran Pending',
+                                        text: 'Segera selesaikan pembayaran sebelum batas waktu berakhir.',
+                                        icon: 'info',
+                                        confirmButtonColor: '#3b82f6'
+                                    });
+                                },
+                                onClose: function() {
+                                    Swal.fire({
+                                        title: 'Lanjutkan Pembayaran?',
+                                        text: 'Pesanan Anda masih berstatus pending. Segera selesaikan pembayaran ya!',
+                                        icon: 'info',
+                                        confirmButtonColor: '#3b82f6'
+                                    });
+                                }
+                            });
                         });
-                    });
+                    }
                 @endif
 
                 const rules = {

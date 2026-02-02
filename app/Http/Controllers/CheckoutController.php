@@ -266,4 +266,62 @@ class CheckoutController extends Controller
 
         return response()->json(['message' => 'Callback Success']);
     }
+
+    /**
+     * Force expire transaction when timer runs out
+     */
+    public function forceExpire($id)
+    {
+        DB::beginTransaction();
+        try {
+            $transaction = Transaction::with('details')
+                ->where('id', $id)
+                ->where('customer_id', Auth::id())
+                ->where('payment_status', 'pending')
+                ->firstOrFail();
+
+            $expiryTime = $transaction->created_at->addHours(24);
+
+            if (now()->lt($expiryTime)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Transaksi belum expired.'
+                ], 400);
+            }
+
+            foreach ($transaction->details as $detail) {
+                $existingCart = Cart::where('user_id', Auth::id())
+                    ->where('shoes_variant_id', $detail->variant_id)
+                    ->first();
+
+                if ($existingCart) {
+                    $existingCart->increment('quantity', $detail->qty);
+                } else {
+                    Cart::create([
+                        'user_id' => Auth::id(),
+                        'shoes_variant_id' => $detail->variant_id,
+                        'quantity' => $detail->qty,
+                    ]);
+                }
+            }
+
+            $transaction->update([
+                'payment_status' => 'expire',
+                'transaction_status' => 'failed',
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Transaksi telah expired. Barang dikembalikan ke keranjang.'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

@@ -39,6 +39,7 @@ Route::middleware(['auth', 'customer'])->group(function () {
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/checkout/store', [CheckoutController::class, 'store'])->name('checkout.store');
     Route::put('/checkout/cancel/{id}', [CheckoutController::class, 'cancel'])->name('checkout.cancel');
+    Route::post('/checkout/force-expire/{id}', [CheckoutController::class, 'forceExpire'])->name('checkout.force-expire');
 
     Route::get('my-orders', [TransactionController::class, 'indexCustomer'])->name('my-order.index');
 
