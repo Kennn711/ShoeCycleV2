@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use Midtrans\Notification;
 use App\Models\Cart;
+use App\Models\ShoesVariant;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Midtrans\Config;
 use Midtrans\Snap;
 
@@ -189,11 +191,11 @@ class CheckoutController extends Controller
 
         $transaction_status = $notif->transaction_status;
         $payment_type = $notif->payment_type;
-        $order_id = $notif->order_id; // Ini adalah nomor Invoice kita
+        $order_id = $notif->order_id;
         $fraud_status = $notif->fraud_status;
 
         // Cari transaksi di database berdasarkan Invoice
-        $transaction = Transaction::where('invoice', $order_id)->first();
+        $transaction = Transaction::with('details')->where('invoice', $order_id)->first();
 
         if (!$transaction) {
             return response()->json(['message' => 'Transaction not found'], 404);
@@ -201,15 +203,65 @@ class CheckoutController extends Controller
 
         // Update Status Berdasarkan Logic Midtrans
         if ($transaction_status == 'settlement') {
-            $transaction->update([
-                'payment_status' => 'settlement',
-                'payment_type' => $payment_type,
-                'transaction_status' => 'processing' // Langsung masuk ke status diproses
-            ]);
+            DB::beginTransaction();
+            try {
+                // KURANGI STOK saat pembayaran berhasil
+                foreach ($transaction->details as $detail) {
+                    $variant = ShoesVariant::find($detail->variant_id);
+                    if ($variant) {
+                        $variant->decrement('stock', $detail->qty);
+                    }
+                }
+
+                $transaction->update([
+                    'payment_status' => 'settlement',
+                    'payment_type' => $payment_type,
+                    'transaction_status' => 'processing'
+                ]);
+
+                DB::commit();
+                Log::info("Transaction {$order_id} settled. Stock decremented.");
+            } catch (\Exception $e) {
+                DB::rollBack();
+                Log::error("Failed to process settlement for {$order_id}: " . $e->getMessage());
+            }
         } else if ($transaction_status == 'pending') {
             $transaction->update(['payment_status' => 'pending']);
-        } else if ($transaction_status == 'deny' || $transaction_status == 'expire' || $transaction_status == 'cancel') {
-            $transaction->update(['payment_status' => $transaction_status]);
+        } else if ($transaction_status == 'deny') {
+            $transaction->update([
+                'payment_status' => 'deny',
+                'transaction_status' => 'failed'
+            ]);
+        } else if ($transaction_status == 'expire' || $transaction_status == 'cancel') {
+            DB::beginTransaction();
+            try {
+                foreach ($transaction->details as $detail) {
+                    $existingCart = Cart::where('user_id', $transaction->customer_id)
+                        ->where('shoes_variant_id', $detail->variant_id)
+                        ->first();
+
+                    if ($existingCart) {
+                        $existingCart->increment('quantity', $detail->qty);
+                    } else {
+                        Cart::create([
+                            'user_id' => $transaction->customer_id,
+                            'shoes_variant_id' => $detail->variant_id,
+                            'quantity' => $detail->qty,
+                        ]);
+                    }
+                }
+
+                $transaction->update([
+                    'payment_status' => $transaction_status, // 'expire' atau 'cancel'
+                    'transaction_status' => 'failed'
+                ]);
+
+                DB::commit();
+                Log::info("Transaction {$order_id} {$transaction_status}. Items returned to cart for user {$transaction->customer_id}.");
+            } catch (\Exception $e) {
+                DB::rollBack();
+                Log::error("Failed to process {$transaction_status} callback for {$order_id}: " . $e->getMessage());
+            }
         }
 
         return response()->json(['message' => 'Callback Success']);

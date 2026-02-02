@@ -66,28 +66,33 @@
                                     'processing' => 'bg-blue-100 text-blue-600',
                                     'shipping' => 'bg-indigo-100 text-indigo-600',
                                     'delivered' => 'bg-green-100 text-green-600',
+                                    'failed' => 'bg-red-100 text-red-600',
                                 ];
                             @endphp
 
                             <div class="flex gap-2">
                                 <span class="badge badge-sm font-bold border-none {{ $statusClasses[$transaction->payment_status] ?? 'bg-gray-100' }}">
-                                    {{ strtoupper($transaction->payment_status == 'settlement' ? 'Lunas' : $transaction->payment_status) }}
+                                    @if ($transaction->payment_status == 'settlement')
+                                        LUNAS
+                                    @elseif ($transaction->payment_status == 'expire')
+                                        KADALUARSA
+                                    @elseif ($transaction->payment_status == 'cancel')
+                                        DIBATALKAN
+                                    @else
+                                        {{ strtoupper($transaction->payment_status) }}
+                                    @endif
                                 </span>
                                 <span class="badge badge-sm font-bold border-none {{ $shipClasses[$transaction->transaction_status] ?? 'bg-gray-100' }}">
                                     @if ($transaction->transaction_status == 'processing')
-                                        Diproses
-                                    @endif
-                                    @if ($transaction->transaction_status == 'shipping')
-                                        Dikirim
-                                    @endif
-                                    @if ($transaction->transaction_status == 'delivered')
-                                        Selesai
-                                    @endif
-                                    @if ($transaction->transaction_status == 'pending')
-                                        Belum Dibayar
-                                    @endif
-                                    @if ($transaction->payment_status == 'cancel' && $transaction->transaction_status == 'failed')
-                                        Dibatalkan
+                                        DIPROSES
+                                    @elseif ($transaction->transaction_status == 'shipping')
+                                        DIKIRIM
+                                    @elseif ($transaction->transaction_status == 'delivered')
+                                        SELESAI
+                                    @elseif ($transaction->transaction_status == 'failed')
+                                        GAGAL
+                                    @else
+                                        {{ ucfirst($transaction->transaction_status) }}
                                     @endif
                                 </span>
                             </div>
@@ -133,11 +138,13 @@
                                 </div>
                             @endif
 
-                            @if (empty($transaction->courier_id) && $transaction->payment_status == 'cancel')
+                            @if ($transaction->payment_status == 'expire')
+                                <div class="text-xs text-red-500 italic flex items-center gap-2">
+                                    <i class="fas fa-clock"></i> Waktu pembayaran habis. Barang dikembalikan ke keranjang.
+                                </div>
+                            @elseif ($transaction->payment_status == 'cancel' && $transaction->transaction_status == 'failed')
                                 <div class="text-xs text-gray-400 italic">Pesanan dibatalkan oleh Anda</div>
-                            @endif
-
-                            @if (empty($transaction->courier_id) && $transaction->transaction_status == 'processing')
+                            @elseif (empty($transaction->courier_id) && $transaction->transaction_status == 'processing')
                                 <div class="text-xs text-gray-400 italic">Pesanan sedang diproses oleh Admin</div>
                             @endif
 
@@ -145,9 +152,7 @@
                                 <div class="text-xs text-gray-400 italic">Anda belum membayar pesanan ini !</div>
                             @endif
 
-                            {{-- Cari bagian ini dan tambahkan id pada pembungkusnya --}}
                             <div class="flex gap-3 w-full sm:w-auto" id="btn-container-{{ $transaction->id }}">
-                                {{-- Tombol Bayar --}}
                                 @if ($transaction->payment_status == 'pending')
                                     <button onclick="window.snap.pay('{{ $transaction->snap_token }}')" class="btn btn-sm btn-primary text-white rounded-sm px-6 grow sm:grow-0">Bayar Sekarang</button>
                                 @endif
@@ -156,24 +161,20 @@
                                     @php
                                         $orderDetails = $transaction->details;
 
-                                        // Ambil ID Sepatu (model) yang sudah diulas user (Global atau per Transaksi)
-                                        $reviewedShoeIds = \App\Models\Reviews::where('user_id', Auth::id())->pluck('shoe_id')->toArray();
-
-                                        // Filter: Ambil item, tapi buat unik berdasarkan shoe_id
-                                        // Jadi jika ada 2 varian sepatu yang sama, hanya akan muncul 1 kali di list
+                                        $reviewedShoeIdsInThisTransaction = \App\Models\Reviews::where('user_id', Auth::id())->where('transaction_id', $transaction->id)->pluck('shoe_id')->toArray();
                                         $unreviewedItems = $orderDetails
-                                            ->filter(function ($item) use ($reviewedShoeIds) {
-                                                return !in_array($item->variant->shoe_id, $reviewedShoeIds);
+                                            ->filter(function ($item) use ($reviewedShoeIdsInThisTransaction) {
+                                                return !in_array($item->variant->shoe_id, $reviewedShoeIdsInThisTransaction);
                                             })
                                             ->unique(function ($item) {
-                                                return $item->variant->shoe_id; // KUNCI: Unik berdasarkan model sepatu
+                                                return $item->variant->shoe_id;
                                             });
 
                                         $unreviewedCount = $unreviewedItems->count();
                                     @endphp
 
                                     @if ($unreviewedCount > 0)
-                                        <button type="button" class="btn-open-rating btn btn-sm btn-primary px-6 text-white" data-invoice="{{ $transaction->invoice }}" data-tid="{{ $transaction->id }}" data-items="{{ json_encode($unreviewedItems->values()->load(['variant.shoe.category', 'variant.images'])) }}">
+                                        <button type="button" class="btn-open-rating btn btn-sm btn-primary px-6 text-white" data-invoice="{{ $transaction->invoice }}" data-tid="{{ $transaction->id }}" data-items="{{ json_encode($unreviewedItems->values()->load('variant.shoe.category', 'variant.images')) }}">
                                             <i class="fas fa-star mr-1"></i> Beri Ulasan
                                         </button>
                                     @else
