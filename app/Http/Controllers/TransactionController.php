@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Cart;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Midtrans\Config;
 use Midtrans\Snap;
 
@@ -85,8 +88,47 @@ class TransactionController extends Controller
 
     public function indexCustomer()
     {
-        $transactions = Transaction::with(['details.variant.shoe', 'details.variant.images', 'courier'])
-            ->where('customer_id', auth()->id())
+        $user = Auth::user();
+
+        $expiredTransactions = Transaction::with('details')
+            ->where('customer_id', $user->id)
+            ->where('payment_status', 'pending')
+            ->where('created_at', '<=', now()->subMinutes(1))
+            ->get();
+
+        foreach ($expiredTransactions as $transaction) {
+            DB::beginTransaction();
+            try {
+                foreach ($transaction->details as $detail) {
+                    $existingCart = Cart::where('user_id', $user->id)
+                        ->where('shoes_variant_id', $detail->variant_id)
+                        ->first();
+
+                    if ($existingCart) {
+                        $existingCart->increment('quantity', $detail->qty);
+                    } else {
+                        Cart::create([
+                            'user_id' => $user->id,
+                            'shoes_variant_id' => $detail->variant_id,
+                            'quantity' => $detail->qty,
+                        ]);
+                    }
+                }
+
+                $transaction->update([
+                    'payment_status' => 'expire',
+                    'transaction_status' => 'failed',
+                    'expired_at' => now(),
+                ]);
+
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollBack();
+            }
+        }
+
+        $transactions = Transaction::with(['details.variant.shoe', 'details.variant.images', 'address', 'courier'])
+            ->where('customer_id', $user->id)
             ->latest()
             ->get();
 

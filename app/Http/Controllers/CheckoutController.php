@@ -113,8 +113,8 @@ class CheckoutController extends Controller
                     'phone'      => $user->phone ?? '',
                 ],
                 'expiry' => [
-                    'unit'     => 'hours',
-                    'duration' => 24
+                    'unit'     => 'minutes',
+                    'duration' => 1
                 ]
             ];
 
@@ -129,7 +129,7 @@ class CheckoutController extends Controller
                 'status'     => 'success',
                 'snap_token' => $snapToken,
                 'order_id'   => $transaction->id,
-                'expiry'     => date('c', strtotime('+24 hours'))
+                'expiry'     => date('c', strtotime('+1 minutes'))
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -278,7 +278,7 @@ class CheckoutController extends Controller
                 ->where('payment_status', 'pending')
                 ->firstOrFail();
 
-            $expiryTime = $transaction->created_at->addHours(24);
+            $expiryTime = $transaction->created_at->addMinute(1);
 
             if (now()->lt($expiryTime)) {
                 return response()->json([

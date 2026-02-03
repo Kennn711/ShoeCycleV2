@@ -1010,7 +1010,7 @@
 
                     @php
                         // Hitung expiry time: created_at + 24 jam (sama dengan Midtrans)
-                        $expiryTime = $pendingTransaction->created_at->addHours(24)->toIso8601String();
+                        $expiryTime = $pendingTransaction->created_at->addMinutes(1)->toIso8601String();
                     @endphp
 
                     // Cek apakah sudah expired

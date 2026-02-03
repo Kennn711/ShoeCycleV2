@@ -21,7 +21,7 @@ class CheckExpiredTransactions extends Command
         // Ambil transaksi yang pending dan sudah lebih dari 24 jam sejak dibuat
         $expiredTransactions = Transaction::with('details')
             ->where('payment_status', 'pending')
-            ->where('created_at', '<=', Carbon::now()->subHours(24))
+            ->where('created_at', '<=', Carbon::now()->subMinutes(1))
             ->get();
 
         $count = 0;
